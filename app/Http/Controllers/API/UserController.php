@@ -46,7 +46,6 @@ class UserController extends BaseController
             'surname' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|min:6',
-            'c_password' => 'required|same:password',
         ]);
         if($validator->fails()){
             return $this->sendError('Validation Error', $validator->errors(), 400);       
@@ -54,7 +53,7 @@ class UserController extends BaseController
         $input = $request->all();
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
-        $success['token'] = $user->createToken('MyApp')->accessToken;
+        $success['token'] = $user->createToken('Personal Access Token')->accessToken;
         return $this->sendResponse($success, 201);
     }
 
