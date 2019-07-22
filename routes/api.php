@@ -21,5 +21,7 @@ Route::prefix('user')->group(function () {
     ], function() {
         Route::get('logout', 'API\UserController@logout');
         Route::get('details', 'API\UserController@details');
+        Route::post('password-reset-request', 'API\UserController@passwordResetRequest');
+        Route::post('password-reset-confirm', 'API\UserController@passwordResetConfirm');
     });
 });

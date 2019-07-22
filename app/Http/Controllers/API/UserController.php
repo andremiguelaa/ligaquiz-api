@@ -8,6 +8,8 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use Carbon\Carbon;
 use App\User;
 use Validator;
+use Avatar;
+use Storage;
 
 class UserController extends BaseController
 {
@@ -48,12 +50,14 @@ class UserController extends BaseController
             'password' => 'required|min:6',
         ]);
         if($validator->fails()){
-            return $this->sendError('Validation Error', $validator->errors(), 400);       
+            return $this->sendError('Validation Error', $validator->errors(), 400);
         }
         $input = $request->all();
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
         $success['token'] = $user->createToken('Personal Access Token')->accessToken;
+        $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
+        Storage::put('avatars/'.$user->id.'/avatar.png', (string) $avatar);
         return $this->sendResponse($success, 201);
     }
 
@@ -67,4 +71,50 @@ class UserController extends BaseController
     {
         return $this->sendResponse($request->user());
     }
+
+    public function passwordResetRequest(Request $request)
+    {
+        $request->validate([
+            'email' => 'required',
+        ]);
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return $this->sendError('Mail not found', [], 404);
+        }
+        $passwordReset = PasswordReset::updateOrCreate(
+            ['email' => $user->email],
+            [
+                'email' => $user->email,
+                'token' => str_random(60)
+            ]
+        );
+        $user->notify(new PasswordResetRequest($passwordReset->token));
+        return $this->sendResponse(true, 201);
+    }
+
+    public function passwordResetConfirm(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|min:6',
+            'token' => 'required'
+        ]);
+        $passwordReset = PasswordReset::where('token', $request->token)->first();
+        if (!$passwordReset){
+            return $this->sendError('Invalid token', [], 404);
+        }
+        if (Carbon::parse($passwordReset->updated_at)->addDay()->isPast()) {
+            $passwordReset->delete();
+            return $this->sendError('Expired token', [], 401);
+        }
+        $user = User::where('email', $passwordReset->email)->first();
+        if (!$user){
+            return $this->sendError('User not found', [], 404);
+        }
+        $user->password = bcrypt($request->password);
+        $user->save();
+        $passwordReset->delete();
+        $user->notify(new PasswordResetSuccess($passwordReset));
+        return $this->sendResponse(true, 200);
+    }
+    
 }

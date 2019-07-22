@@ -5,6 +5,7 @@ namespace App;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Storage;
 
 class User extends Authenticatable
 {
@@ -27,5 +28,11 @@ class User extends Authenticatable
     protected $hidden = [
         'email', 'active', 'password', 'role', 'remember_token', 'subscription', 'reminders', 'created_at', 'updated_at',
     ];
+
+    protected $appends = ['avatar_url'];
     
+    public function getAvatarUrlAttribute()
+    {
+        return Storage::url('avatars/'.$this->id.'/'.$this->avatar);
+    }
 }
