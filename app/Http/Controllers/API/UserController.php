@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\API\BaseController as BaseController;
 use Carbon\Carbon;
 use App\User;
+use App\PasswordReset;
+use App\Notifications\PasswordResetRequest;
 use Validator;
 use Avatar;
 use Storage;
@@ -89,7 +91,7 @@ class UserController extends BaseController
             ]
         );
         $user->notify(new PasswordResetRequest($passwordReset->token));
-        return $this->sendResponse(true, 201);
+        return $this->sendResponse(null, 201);
     }
 
     public function passwordResetConfirm(Request $request)
@@ -113,8 +115,7 @@ class UserController extends BaseController
         $user->password = bcrypt($request->password);
         $user->save();
         $passwordReset->delete();
-        $user->notify(new PasswordResetSuccess($passwordReset));
-        return $this->sendResponse(true, 200);
+        return $this->sendResponse(null, 200);
     }
     
 }
