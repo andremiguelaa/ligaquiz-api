@@ -26,7 +26,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'email', 'active', 'password', 'role', 'remember_token', 'subscription', 'reminders', 'created_at', 'updated_at',
+        'password', 'remember_token'
     ];
 
     protected $appends = ['avatar_url'];
