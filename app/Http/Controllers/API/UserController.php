@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\API\BaseController as BaseController;
 use Carbon\Carbon;
 use App\User;
+use App\Http\Resources\User as UserResource;
 use App\PasswordReset;
 use App\Notifications\PasswordResetRequest;
 use Validator;
@@ -34,7 +35,7 @@ class UserController extends BaseController
         $success['access_token'] = $tokenResult->accessToken;
         $success['token_type'] = 'Bearer';
         if ($request->remember_me) {
-            $tokenResult->token->expires_at = Carbon::now()->addWeeks(1);
+            $tokenResult->token->expires_at = Carbon::now()->addMonth();
             $tokenResult->token->save();
         }
         $success['expires_at'] = Carbon::parse(
@@ -69,9 +70,14 @@ class UserController extends BaseController
         return $this->sendResponse();
     }
 
-    public function details(Request $request)
+    public function details($user_id)
     {
-        return $this->sendResponse($request->user());
+        if($user_id == Auth::id()) {
+            return $this->sendResponse(Auth::user());
+        }
+        else {
+            return $this->sendResponse(new UserResource(User::find($user_id)));
+        }
     }
 
     public function passwordResetRequest(Request $request)
