@@ -22,11 +22,9 @@ Route::post('users', 'API\UserController@register');
 
 Route::group([
     'middleware' => 'auth:api'
-], function() {
+], function () {
 
     Route::delete('sessions', 'API\UserController@logout');
-    
-    Route::get('users', 'API\UserController@list');
-    Route::get('users/{id}', 'API\UserController@details');
 
+    Route::get('users', 'API\UserController@list');
 });

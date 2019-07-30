@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Input;
 use App\Http\Controllers\API\BaseController as BaseController;
 use Carbon\Carbon;
 use App\User;
@@ -41,6 +42,7 @@ class UserController extends BaseController
         $success['expires_at'] = Carbon::parse(
             $tokenResult->token->expires_at
         )->toDateTimeString();
+        $success['user'] = $user;
         return $this->sendResponse($success);
     }
 
@@ -72,25 +74,19 @@ class UserController extends BaseController
 
     public function list()
     {
-        if (Auth::user()->hasPermission('users_list')) {
-            return $this->sendResponse(UserResource::collection(User::all()));
-        } else {
-            return $this->sendError('no_permissions', [], 403);
-        }
-    }
-
-    public function details($user_id)
-    {
-        if ($user_id == Auth::id() || Auth::user()->isAdmin()) {
-            return $this->sendResponse(Auth::user());
-        } else {
-            $user = User::find($user_id);
-            if ($user) {
-                return $this->sendResponse(new UserResource($user));
+        if (Auth::user()->isAdmin() || Auth::user()->hasPermission('users_list')) {
+            if (!Input::get('id')) {
+                $users = User::all();
             } else {
-                return $this->sendError('user_not_found', [], 404);
+                $user_ids = explode(',', Input::get('id'));
+                $users = User::whereIn('id', $user_ids)->get();
             }
+            if (Auth::user()->isAdmin()) {
+                return $this->sendResponse($users);
+            }
+            return $this->sendResponse(UserResource::collection($users));
         }
+        return $this->sendError('no_permissions', [], 403);
     }
 
     public function passwordResetRequest(Request $request)
