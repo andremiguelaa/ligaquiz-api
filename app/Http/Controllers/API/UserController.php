@@ -26,7 +26,6 @@ class UserController extends BaseController
         if ($validator->fails()) {
             return $this->sendError('validation_error', $validator->errors(), 400);
         }
-        $input = $request->all();
         $credentials = request(['email', 'password']);
         if (!Auth::attempt($credentials)) {
             return $this->sendError('wrong_credentials', [], 401);
@@ -60,10 +59,9 @@ class UserController extends BaseController
         $input = $request->all();
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
-        $success['token'] = $user->createToken('Personal Access Token')->accessToken;
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
         Storage::put('avatars/' . $user->id . '/avatar.png', (string) $avatar);
-        return $this->sendResponse($success, 201);
+        return $this->sendResponse([], 201);
     }
 
     public function logout(Request $request)
