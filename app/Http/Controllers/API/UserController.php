@@ -72,7 +72,11 @@ class UserController extends BaseController
 
     public function list()
     {
-        return $this->sendResponse(UserResource::collection(User::all()));
+        if (Auth::user()->hasPermission('users_list')) {
+            return $this->sendResponse(UserResource::collection(User::all()));
+        } else {
+            return $this->sendError('no_permissions', [], 403);
+        }
     }
 
     public function details($user_id)
