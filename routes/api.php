@@ -13,19 +13,20 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::post('session', 'API\UserController@login');
+Route::post('sessions', 'API\UserController@login');
 
-Route::post('password-reset', 'API\UserController@passwordResetRequest');
-Route::put('password-reset', 'API\UserController@passwordResetConfirm');
+Route::post('password-resets', 'API\UserController@passwordResetRequest');
+Route::put('password-resets', 'API\UserController@passwordResetConfirm');
 
-Route::post('user', 'API\UserController@register');
+Route::post('users', 'API\UserController@register');
 
 Route::group([
     'middleware' => 'auth:api'
 ], function() {
 
-    Route::delete('session', 'API\UserController@logout');
+    Route::delete('sessions', 'API\UserController@logout');
     
-    Route::get('user/{id}', 'API\UserController@details');
+    Route::get('users', 'API\UserController@list');
+    Route::get('users/{id}', 'API\UserController@details');
 
 });

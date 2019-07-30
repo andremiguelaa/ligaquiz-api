@@ -22,13 +22,13 @@ class UserController extends BaseController
             'email' => 'required',
             'password' => 'required',
         ]);
-        if($validator->fails()){
-            return $this->sendError('Validation Error', $validator->errors(), 400);
+        if ($validator->fails()) {
+            return $this->sendError('validation_error', $validator->errors(), 400);
         }
         $input = $request->all();
         $credentials = request(['email', 'password']);
-        if(!Auth::attempt($credentials)){
-            return $this->sendError('Wrong credentials', [] , 401);
+        if (!Auth::attempt($credentials)) {
+            return $this->sendError('wrong_credentials', [], 401);
         }
         $user = $request->user();
         $tokenResult = $user->createToken('Personal Access Token');
@@ -52,15 +52,15 @@ class UserController extends BaseController
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|min:6',
         ]);
-        if($validator->fails()){
-            return $this->sendError('Validation Error', $validator->errors(), 400);
+        if ($validator->fails()) {
+            return $this->sendError('validation_error', $validator->errors(), 400);
         }
         $input = $request->all();
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
         $success['token'] = $user->createToken('Personal Access Token')->accessToken;
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
-        Storage::put('avatars/'.$user->id.'/avatar.png', (string) $avatar);
+        Storage::put('avatars/' . $user->id . '/avatar.png', (string) $avatar);
         return $this->sendResponse($success, 201);
     }
 
@@ -70,13 +70,22 @@ class UserController extends BaseController
         return $this->sendResponse();
     }
 
+    public function list()
+    {
+        return $this->sendResponse(UserResource::collection(User::all()));
+    }
+
     public function details($user_id)
     {
-        if($user_id == Auth::id()) {
+        if ($user_id == Auth::id() || Auth::user()->isAdmin()) {
             return $this->sendResponse(Auth::user());
-        }
-        else {
-            return $this->sendResponse(new UserResource(User::find($user_id)));
+        } else {
+            $user = User::find($user_id);
+            if ($user) {
+                return $this->sendResponse(new UserResource($user));
+            } else {
+                return $this->sendError('user_not_found', [], 404);
+            }
         }
     }
 
@@ -87,7 +96,7 @@ class UserController extends BaseController
         ]);
         $user = User::where('email', $request->email)->first();
         if (!$user) {
-            return $this->sendError('Mail not found', [], 404);
+            return $this->sendError('mail_not_found', [], 404);
         }
         $passwordReset = PasswordReset::updateOrCreate(
             ['email' => $user->email],
@@ -107,21 +116,20 @@ class UserController extends BaseController
             'token' => 'required'
         ]);
         $passwordReset = PasswordReset::where('token', $request->token)->first();
-        if (!$passwordReset){
-            return $this->sendError('Invalid token', [], 404);
+        if (!$passwordReset) {
+            return $this->sendError('invalid_token', [], 404);
         }
         if (Carbon::parse($passwordReset->updated_at)->addDay()->isPast()) {
             $passwordReset->delete();
-            return $this->sendError('Expired token', [], 401);
+            return $this->sendError('expired_token', [], 401);
         }
         $user = User::where('email', $passwordReset->email)->first();
-        if (!$user){
-            return $this->sendError('User not found', [], 404);
+        if (!$user) {
+            return $this->sendError('user_not_found', [], 404);
         }
         $user->password = bcrypt($request->password);
         $user->save();
         $passwordReset->delete();
         return $this->sendResponse(null, 200);
     }
-    
 }

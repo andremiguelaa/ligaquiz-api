@@ -17,7 +17,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'email', 'active', 'name', 'surname', 'password', 'role', 'avatar', 'subscription', 'reminders',
+        'email', 'name', 'surname', 'password', 'roles', 'avatar', 'subscription', 'reminders',
     ];
 
     /**
@@ -30,9 +30,14 @@ class User extends Authenticatable
     ];
 
     protected $appends = ['avatar_url'];
-    
+
     public function getAvatarUrlAttribute()
     {
-        return Storage::url('avatars/'.$this->id.'/'.$this->avatar);
+        return Storage::url('avatars/' . $this->id . '/' . $this->avatar);
+    }
+
+    public function isAdmin()
+    {
+        return isset(json_decode($this->roles)->admin);
     }
 }
