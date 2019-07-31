@@ -28,4 +28,5 @@ Route::group([
     Route::delete('session', 'API\UserController@logout');
 
     Route::get('users', 'API\UserController@list');
+    Route::patch('users', 'API\UserController@update');
 });
