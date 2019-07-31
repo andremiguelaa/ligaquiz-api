@@ -4,8 +4,62 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a8964479cc6d664a484588efa6ab20af",
+    "content-hash": "9652ea3ad4a85318a7fdcc249b7d9945",
     "packages": [
+        {
+            "name": "crazybooot/base64-validation",
+            "version": "1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/crazybooot/base64-validation.git",
+                "reference": "a07cd5e67e5d4fc614417a7457760d62b0ba3758"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/crazybooot/base64-validation/zipball/a07cd5e67e5d4fc614417a7457760d62b0ba3758",
+                "reference": "a07cd5e67e5d4fc614417a7457760d62b0ba3758",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^5.5",
+                "php": "^7.1"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Crazybooot\\Base64Validation\\Providers\\ServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "App\\": "app/",
+                    "Crazybooot\\Base64Validation\\": "/src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "crazybooot",
+                    "email": "crazybooot@gmail.com"
+                }
+            ],
+            "description": "Laravel validators for base64 encoded files",
+            "keywords": [
+                "base64",
+                "download",
+                "encoded",
+                "files",
+                "images",
+                "laravel",
+                "validation"
+            ],
+            "time": "2019-05-14T13:49:48+00:00"
+        },
         {
             "name": "danielstjules/stringy",
             "version": "3.1.0",
@@ -1499,6 +1553,52 @@
                 "server"
             ],
             "time": "2019-05-05T09:22:01+00:00"
+        },
+        {
+            "name": "melihovv/base64-image-decoder",
+            "version": "0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/melihovv/base64-image-decoder.git",
+                "reference": "3c4bdc11f8d4e932a0d9fad48f5fe86cd534daf6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/melihovv/base64-image-decoder/zipball/3c4bdc11f8d4e932a0d9fad48f5fe86cd534daf6",
+                "reference": "3c4bdc11f8d4e932a0d9fad48f5fe86cd534daf6",
+                "shasum": ""
+            },
+            "require": {
+                "ext-fileinfo": "*",
+                "php": ">=7.0"
+            },
+            "require-dev": {
+                "ext-gd": "*",
+                "phpunit/phpunit": "~6.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Melihovv\\Base64ImageDecoder\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alexander Melihov",
+                    "email": "amelihovv@ya.ru"
+                }
+            ],
+            "description": "A base64 image decoder",
+            "keywords": [
+                "base64",
+                "decoder",
+                "image"
+            ],
+            "time": "2018-09-08T08:35:25+00:00"
         },
         {
             "name": "monolog/monolog",

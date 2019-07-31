@@ -17,14 +17,17 @@ class User extends Authenticatable
     ];
 
     protected $hidden = [
-        'password'
+        'password', 'avatar'
     ];
 
     protected $appends = ['avatar_url'];
 
     public function getAvatarUrlAttribute()
     {
-        return Storage::url('avatars/' . $this->id . '/' . $this->avatar);
+        if ($this->avatar) {
+            return Storage::url('avatars/' . $this->avatar . '?' . strtotime($this->updated_at));
+        }
+        return null;
     }
 
     public function isAdmin()

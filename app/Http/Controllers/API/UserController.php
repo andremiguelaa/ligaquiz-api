@@ -15,6 +15,7 @@ use App\Notifications\PasswordResetRequest;
 use Validator;
 use Avatar;
 use Storage;
+use Melihovv\Base64ImageDecoder\Base64ImageDecoder;
 
 class UserController extends BaseController
 {
@@ -125,7 +126,10 @@ class UserController extends BaseController
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
-        Storage::put('avatars/' . $user->id . '/avatar.png', (string) $avatar);
+        $avatar_filename = 'avatar' . $user->id . '.png';
+        Storage::put('avatars/' . $avatar_filename, (string) $avatar);
+        $user->avatar = $avatar_filename;
+        $user->save();
         return $this->sendResponse([], 201);
     }
 
@@ -165,7 +169,7 @@ class UserController extends BaseController
             ],
             'password' => 'min:6',
             'roles' => 'json',
-            'avatar' => 'string',
+            'avatar' => 'base64image|base64max:200',
             'subscription' => 'date',
             'reminders' => 'json',
         ]);
@@ -176,7 +180,15 @@ class UserController extends BaseController
         if (isset($input['password'])) {
             $input['password'] = bcrypt($input['password']);
         }
-        // Todo: avatar upload
+        if (isset($input['avatar'])) {
+            if ($user->avatar) {
+                Storage::delete('avatars/' . $user->avatar);
+            }
+            $avatar = new Base64ImageDecoder($input['avatar']);
+            $avatar_filename = 'avatar' . $user->id . '.' . $avatar->getFormat();
+            Storage::put('avatars/' . $avatar_filename, (string) $avatar->getDecodedContent());
+            $input['avatar'] = $avatar_filename;
+        }
         if (Auth::user()->isAdmin()) {
             $user->fill($input);
             $user->save();

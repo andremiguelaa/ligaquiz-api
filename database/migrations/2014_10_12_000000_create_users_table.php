@@ -20,7 +20,7 @@ class CreateUsersTable extends Migration
             $table->string('surname');
             $table->string('password');
             $table->json('roles')->nullable();
-            $table->string('avatar')->default('avatar.png');;
+            $table->string('avatar')->nullable();
             $table->date('subscription')->nullable();
             $table->json('reminders')->nullable();
             $table->timestamps();
