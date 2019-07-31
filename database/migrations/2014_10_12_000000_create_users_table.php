@@ -23,7 +23,6 @@ class CreateUsersTable extends Migration
             $table->string('avatar')->default('avatar.png');;
             $table->date('subscription')->nullable();
             $table->json('reminders')->nullable();
-            $table->rememberToken();
             $table->timestamps();
         });
     }

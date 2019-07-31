@@ -34,15 +34,35 @@ class UserController extends BaseController
         $tokenResult = $user->createToken('Personal Access Token');
         $success['access_token'] = $tokenResult->accessToken;
         $success['token_type'] = 'Bearer';
-        if ($request->remember_me) {
-            $tokenResult->token->expires_at = Carbon::now()->addMonth();
-            $tokenResult->token->save();
-        }
+        $tokenResult->token->expires_at = Carbon::now()->addMonth();
+        $tokenResult->token->save();
         $success['expires_at'] = Carbon::parse(
             $tokenResult->token->expires_at
         )->toDateTimeString();
         $success['user'] = $user;
         return $this->sendResponse($success);
+    }
+
+    public function renew(Request $request)
+    {
+        $user = $request->user();
+        $user->token()->revoke();
+        $tokenResult = $user->createToken('Personal Access Token');
+        $success['access_token'] = $tokenResult->accessToken;
+        $success['token_type'] = 'Bearer';
+        $tokenResult->token->expires_at = Carbon::now()->addMonth();
+        $tokenResult->token->save();
+        $success['expires_at'] = Carbon::parse(
+            $tokenResult->token->expires_at
+        )->toDateTimeString();
+        $success['user'] = $user;
+        return $this->sendResponse($success);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->token()->revoke();
+        return $this->sendResponse();
     }
 
     public function register(Request $request)
@@ -64,25 +84,24 @@ class UserController extends BaseController
         return $this->sendResponse([], 201);
     }
 
-    public function logout(Request $request)
-    {
-        $request->user()->token()->revoke();
-        return $this->sendResponse();
-    }
-
     public function list()
     {
         if (Auth::user()->isAdmin() || Auth::user()->hasPermission('users_list')) {
+            $partial = false;
             if (!Input::get('id')) {
                 $users = User::all();
             } else {
                 $user_ids = explode(',', Input::get('id'));
                 $users = User::whereIn('id', $user_ids)->get();
+                if (count($user_ids) !== $users->count()) {
+                    return $this->sendError('users_not_found', [], 400);
+                }
+                $partial = true;
             }
             if (Auth::user()->isAdmin()) {
-                return $this->sendResponse($users);
+                return $this->sendResponse($users, $partial ? 206 : 200);
             }
-            return $this->sendResponse(UserResource::collection($users));
+            return $this->sendResponse(UserResource::collection($users), $partial ? 206 : 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
