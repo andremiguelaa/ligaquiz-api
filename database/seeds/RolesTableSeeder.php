@@ -13,11 +13,11 @@ class RolesTableSeeder extends Seeder
     {
         DB::table('roles')->insert([
             ['slug' => 'admin'],
-            ['slug' => 'quiz_player'],
-            ['slug' => 'special_quiz_player'],
+            ['slug' => 'ranking_manager'],
             ['slug' => 'quiz_editor'],
             ['slug' => 'special_quiz_editor'],
-            ['slug' => 'ranking_manager'],
+            ['slug' => 'regular_player'],
+            ['slug' => 'special_quiz_player'],
         ]);
     }
 }

@@ -135,7 +135,7 @@ class UserController extends BaseController
 
     public function list()
     {
-        if (Auth::user()->isAdmin() || Auth::user()->hasPermission('users_list')) {
+        if (Auth::user()->isAdmin() || Auth::user()->hasPermission('user_list')) {
             $partial = false;
             if (!Input::get('id')) {
                 $users = User::all();
@@ -189,7 +189,7 @@ class UserController extends BaseController
             Storage::put('avatars/' . $avatar_filename, (string) $avatar->getDecodedContent());
             $input['avatar'] = $avatar_filename;
         }
-        if (Auth::user()->isAdmin()) {
+        if (Auth::user()->isAdmin() || Auth::user()->hasPermission('user_edit')) {
             $user->fill($input);
             $user->save();
             return $this->sendResponse();

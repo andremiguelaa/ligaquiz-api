@@ -37,7 +37,10 @@ class User extends Authenticatable
 
     public function getRoles()
     {
-        return array_keys(get_object_vars(json_decode($this->roles)));
+        if ($this->roles) {
+            return array_keys(get_object_vars(json_decode($this->roles)));
+        }
+        return [];
     }
 
     public function hasPermission($slug)
