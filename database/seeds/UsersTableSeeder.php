@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class UsersTableSeeder extends Seeder
 {
@@ -20,6 +21,8 @@ class UsersTableSeeder extends Seeder
                 'roles' => json_encode((object) [
                     'admin' => true,
                 ]),
+                'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
             ],
         ]);
         DB::table('users')->insert([
@@ -31,6 +34,8 @@ class UsersTableSeeder extends Seeder
                 'roles' => json_encode((object) [
                     'ranking_manager' => true,
                 ]),
+                'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
             ],
         ]);
         for ($i = 0; $i < 10; $i++) {
@@ -43,6 +48,8 @@ class UsersTableSeeder extends Seeder
                     'roles' => json_encode((object) [
                         'player' => true,
                     ]),
+                    'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                    'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
                 ],
             ]);
         }
