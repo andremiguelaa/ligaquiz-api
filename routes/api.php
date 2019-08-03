@@ -35,4 +35,6 @@ Route::group([
     Route::get('permissions', 'API\PermissionController@list');
 
     Route::get('individual-quizzes', 'API\IndividualQuizController@list');
+    Route::get('individual-quiz-types', 'API\IndividualQuizTypeController@list');
+    Route::get('individual-quiz-players', 'API\IndividualQuizPlayerController@list');
 });
