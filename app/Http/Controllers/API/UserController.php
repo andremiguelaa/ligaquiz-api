@@ -135,7 +135,7 @@ class UserController extends BaseController
 
     public function list()
     {
-        if (Auth::user()->isAdmin() || Auth::user()->hasPermission('user_list')) {
+        if (Auth::user()->hasPermission('user_list')) {
             $partial = false;
             if (!Input::get('id')) {
                 $users = User::all();
@@ -147,7 +147,7 @@ class UserController extends BaseController
                 }
                 $partial = true;
             }
-            if (Auth::user()->isAdmin()) {
+            if (Auth::user()->hasPermission('user_edit')) {
                 return $this->sendResponse($users, $partial ? 206 : 200);
             }
             return $this->sendResponse(UserResource::collection($users), $partial ? 206 : 200);
@@ -176,30 +176,38 @@ class UserController extends BaseController
         if ($validator->fails()) {
             return $this->sendError('validation_error', $validator->errors(), 400);
         }
-        $user = User::find($input['id']);
-        if (isset($input['password'])) {
-            $input['password'] = bcrypt($input['password']);
-        }
-        if (isset($input['avatar'])) {
-            if ($user->avatar) {
-                Storage::delete('avatars/' . $user->avatar);
+
+        if (Auth::user()->isAdmin() || Auth::user()->hasPermission('user_edit') || Auth::id() === $input['id']) {
+            $user = User::find($input['id']);
+            if (isset($input['password'])) {
+                $input['password'] = bcrypt($input['password']);
             }
-            $avatar = new Base64ImageDecoder($input['avatar']);
-            $avatar_filename = 'avatar' . $user->id . '.' . $avatar->getFormat();
-            Storage::put('avatars/' . $avatar_filename, (string) $avatar->getDecodedContent());
-            $input['avatar'] = $avatar_filename;
-        }
-        if (Auth::user()->isAdmin() || Auth::user()->hasPermission('user_edit')) {
+            if (Auth::user()->hasPermission('user_edit')) {
+                $authUserRoles = Auth::user()->getRoles();
+                $currentUserRoles = $user->getRoles();
+                $permittedRoles = array_merge($authUserRoles, $currentUserRoles);
+                $inputRoles = array_keys(get_object_vars(json_decode($input['roles'])));
+                if (count(array_intersect($permittedRoles, $inputRoles)) < count($inputRoles)) {
+                    return $this->sendError('no_permissions', [], 403);
+                }
+            }
+            if (Auth::id() === $input['id']) {
+                unset($input['roles'], $input['subscription']);
+            }
+            if (isset($input['avatar'])) {
+                if ($user->avatar) {
+                    Storage::delete('avatars/' . $user->avatar);
+                }
+                $avatar = new Base64ImageDecoder($input['avatar']);
+                $avatar_filename = 'avatar' . $user->id . '.' . $avatar->getFormat();
+                Storage::put('avatars/' . $avatar_filename, (string) $avatar->getDecodedContent());
+                $input['avatar'] = $avatar_filename;
+            }
             $user->fill($input);
             $user->save();
             return $this->sendResponse();
         }
-        if (Auth::id() === $input['id']) {
-            unset($input['roles'], $input['subscription']);
-            $user->fill($input);
-            $user->save();
-            return $this->sendResponse();
-        }
+
         return $this->sendError('no_permissions', [], 403);
     }
 }

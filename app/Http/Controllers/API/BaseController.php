@@ -36,17 +36,14 @@ class BaseController extends Controller
 
     public function defaults()
     {
-        $admin = Auth::user()->isAdmin();
         $defaults = [];
 
-        if ($admin) {
+        if (Auth::user()->isAdmin()) {
             $permissions = array_map(function ($value) {
                 return $value['slug'];
             }, Permission::all()->toArray());
             $defaults['permissions'] = $permissions;
-        }
 
-        if ($admin || Auth::user()->hasPermission('user_create') || Auth::user()->hasPermission('user_edit')) {
             $roles = array_map(function ($value) {
                 return $value['slug'];
             }, Role::all()->toArray());

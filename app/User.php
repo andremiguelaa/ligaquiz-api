@@ -45,9 +45,12 @@ class User extends Authenticatable
 
     public function hasPermission($slug)
     {
+        if ($this->isAdmin()) {
+            return true;
+        }
         $roles = $this->getRoles();
-        $permissions = RolesPermissions::whereIn('role', $roles)->select('permissions')->get();
-        foreach ($permissions as $permission) {
+        $rolePermissions = RolesPermissions::whereIn('role', $roles)->select('permissions')->get();
+        foreach ($rolePermissions as $permission) {
             if (isset(json_decode($permission->permissions)->$slug)) {
                 return true;
             }
