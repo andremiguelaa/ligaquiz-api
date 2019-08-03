@@ -17,11 +17,18 @@ class RolesPermissionsTableSeeder extends Seeder
                 'role' => 'ranking_manager',
                 'permissions' => json_encode((object) [
                     'user_list' => true,
-                    'ranking_manage' => true,
+                    'individual_quiz_list' => true,
+                    'individual_quiz_create' => true,
+                    'individual_quiz_edit' => true,
+                    'individual_quiz_type_list' => true,
+                    'individual_quiz_result_list' => true,
+                    'individual_quiz_result_create' => true,
+                    'individual_quiz_result_edit' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
             ],
+            /*
             [
                 'role' => 'quiz_editor',
                 'permissions' => json_encode((object) [
@@ -64,6 +71,7 @@ class RolesPermissionsTableSeeder extends Seeder
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
             ],
+            */
         ]);
     }
 }

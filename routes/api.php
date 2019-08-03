@@ -30,5 +30,6 @@ Route::group([
     Route::get('users', 'API\UserController@list');
     Route::patch('users', 'API\UserController@update');
 
-    Route::get('defaults', 'API\BaseController@defaults');
+    Route::get('roles', 'API\RoleController@list');
+    Route::get('permissions', 'API\PermissionController@list');
 });

@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller as Controller;
-use App\Role;
-use App\Permission;
 
 class BaseController extends Controller
 {
@@ -32,24 +29,5 @@ class BaseController extends Controller
         }
 
         return response()->json($response, $code);
-    }
-
-    public function defaults()
-    {
-        $defaults = [];
-
-        if (Auth::user()->isAdmin()) {
-            $permissions = array_map(function ($value) {
-                return $value['slug'];
-            }, Permission::all()->toArray());
-            $defaults['permissions'] = $permissions;
-
-            $roles = array_map(function ($value) {
-                return $value['slug'];
-            }, Role::all()->toArray());
-            $defaults['roles'] = $roles;
-        }
-
-        return response()->json((object) $defaults);
     }
 }
