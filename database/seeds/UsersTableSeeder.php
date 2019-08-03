@@ -32,7 +32,7 @@ class UsersTableSeeder extends Seeder
                 'email' => 'ranking_manager@ligaquiz.pt',
                 'password' => bcrypt('secret'),
                 'roles' => json_encode((object) [
-                    'ranking_manager' => true,
+                    'national_ranking_manager' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')

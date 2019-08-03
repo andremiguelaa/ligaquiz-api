@@ -14,18 +14,15 @@ class RolesPermissionsTableSeeder extends Seeder
     {
         DB::table('roles_permissions')->insert([
             [
-                'role' => 'ranking_manager',
+                'role' => 'national_ranking_manager',
                 'permissions' => json_encode((object) [
-                    'user_list' => true,
                     'individual_quiz_list' => true,
                     'individual_quiz_create' => true,
                     'individual_quiz_edit' => true,
                     'individual_quiz_type_list' => true,
                     'individual_quiz_player_list' => true,
                     'individual_quiz_player_create' => true,
-                    'individual_quiz_result_list' => true,
-                    'individual_quiz_result_create' => true,
-                    'individual_quiz_result_edit' => true,
+                    'user_list' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
