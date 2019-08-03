@@ -13,7 +13,7 @@ class CreateIndividualQuizTable extends Migration
      */
     public function up()
     {
-        Schema::create('individual_quiz', function (Blueprint $table) {
+        Schema::create('individual_quizzes', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->integer('individual_quiz_type_id');
             $table->date('date');
@@ -28,6 +28,6 @@ class CreateIndividualQuizTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('individual_quiz');
+        Schema::dropIfExists('individual_quizzes');
     }
 }

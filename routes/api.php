@@ -31,5 +31,8 @@ Route::group([
     Route::patch('users', 'API\UserController@update');
 
     Route::get('roles', 'API\RoleController@list');
+
     Route::get('permissions', 'API\PermissionController@list');
+
+    Route::get('individual-quizzes', 'API\IndividualQuizController@list');
 });

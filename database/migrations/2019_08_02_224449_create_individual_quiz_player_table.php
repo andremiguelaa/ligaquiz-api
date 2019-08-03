@@ -13,11 +13,11 @@ class CreateIndividualQuizPlayerTable extends Migration
      */
     public function up()
     {
-        Schema::create('individual_quiz_player', function (Blueprint $table) {
+        Schema::create('individual_quiz_players', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('name');
-            $table->string('surname');
-            $table->integer('user_id');
+            $table->string('name')->nullable();
+            $table->string('surname')->nullable();
+            $table->integer('user_id')->nullable();
             $table->timestamps();
         });
     }
@@ -29,6 +29,6 @@ class CreateIndividualQuizPlayerTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('individual_quiz_player');
+        Schema::dropIfExists('individual_quiz_players');
     }
 }

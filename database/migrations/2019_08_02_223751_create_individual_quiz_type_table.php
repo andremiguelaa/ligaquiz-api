@@ -13,10 +13,9 @@ class CreateIndividualQuizTypeTable extends Migration
      */
     public function up()
     {
-        Schema::create('individual_quiz_type', function (Blueprint $table) {
-            $table->bigIncrements('id');
+        Schema::create('individual_quiz_types', function (Blueprint $table) {
             $table->string('slug');
-            $table->string('name');
+            $table->primary('slug');
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ class CreateIndividualQuizTypeTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('individual_quiz_type');
+        Schema::dropIfExists('individual_quiz_types');
     }
 }
