@@ -177,12 +177,12 @@ class UserController extends BaseController
             return $this->sendError('validation_error', $validator->errors(), 400);
         }
 
-        if (Auth::user()->isAdmin() || Auth::user()->hasPermission('user_edit') || Auth::id() === $input['id']) {
+        if (Auth::user()->hasPermission('user_edit') || Auth::id() === $input['id']) {
             $user = User::find($input['id']);
             if (isset($input['password'])) {
                 $input['password'] = bcrypt($input['password']);
             }
-            if (Auth::user()->hasPermission('user_edit')) {
+            if (Auth::user()->hasPermission('user_edit') && !Auth::user()->isAdmin()) {
                 $authUserRoles = Auth::user()->getRoles();
                 $currentUserRoles = $user->getRoles();
                 $permittedRoles = array_merge($authUserRoles, $currentUserRoles);
@@ -191,7 +191,7 @@ class UserController extends BaseController
                     return $this->sendError('no_permissions', [], 403);
                 }
             }
-            if (Auth::id() === $input['id']) {
+            if (Auth::id() === $input['id'] && !Auth::user()->isAdmin()) {
                 unset($input['roles'], $input['subscription']);
             }
             if (isset($input['avatar'])) {

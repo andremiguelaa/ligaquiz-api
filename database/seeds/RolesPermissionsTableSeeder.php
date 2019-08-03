@@ -21,6 +21,8 @@ class RolesPermissionsTableSeeder extends Seeder
                     'individual_quiz_create' => true,
                     'individual_quiz_edit' => true,
                     'individual_quiz_type_list' => true,
+                    'individual_quiz_player_list' => true,
+                    'individual_quiz_player_create' => true,
                     'individual_quiz_result_list' => true,
                     'individual_quiz_result_create' => true,
                     'individual_quiz_result_edit' => true,
