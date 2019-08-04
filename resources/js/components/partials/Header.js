@@ -20,10 +20,10 @@ const Header = () => (
           <div className="navbar-end">
             <div className="navbar-item has-dropdown">
               <NavLink to="/login" className="navbar-item">
-                Login
+                Entrar
               </NavLink>
               <NavLink to="/register" className="navbar-item">
-                Register
+                Registar
               </NavLink>
             </div>
           </div>

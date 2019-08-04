@@ -27,8 +27,8 @@ class App extends Component {
                 <div className="columns">
                   <Switch>
                     <Page title="Liga Quiz" exact path="/" component={Home} />
-                    <Page title="Liga Quiz | Login" exact path="/login" component={Login} />
-                    <Page title="Liga Quiz | Page not found" component={NoMatch} />
+                    <Page title="Liga Quiz | Entrar" exact path="/login" component={Login} />
+                    <Page title="Liga Quiz | Página não encontrada" component={NoMatch} />
                   </Switch>
                 </div>
               </div>
