@@ -1,9 +1,19 @@
-import React, { Component } from 'react';
+import React, { Component, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-import Header from './Header';
-import Home from './Home';
-import Login from './Login';
+
+import Header from './partials/Header';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import NoMatch from './pages/NoMatch';
+
+const Page = props => {
+  useEffect(() => {
+    document.title = props.title;
+  }, [props.title]);
+  const { title, ...rest } = props;
+  return <Route {...rest} />;
+};
 
 class App extends Component {
   render() {
@@ -16,8 +26,9 @@ class App extends Component {
               <div className="container">
                 <div className="columns">
                   <Switch>
-                    <Route exact path="/" component={Home} />
-                    <Route exact path="/login" component={Login} />
+                    <Page title="Liga Quiz" exact path="/" component={Home} />
+                    <Page title="Liga Quiz | Login" exact path="/login" component={Login} />
+                    <Page title="Liga Quiz | Page not found" component={NoMatch} />
                   </Switch>
                 </div>
               </div>
