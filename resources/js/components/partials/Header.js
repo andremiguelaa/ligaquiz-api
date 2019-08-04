@@ -2,29 +2,30 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 const Header = () => (
-  <header id="header">
-    <nav className="navbar has-shadow is-light">
+  <header>
+    <nav className="navbar has-shadow is-fixed-top" role="navigation" aria-label="main navigation">
       <div className="container">
         <div className="navbar-brand">
           <NavLink to="/" className="navbar-item">
             <img src="/img/logo.png" alt="logo" />
           </NavLink>
-          <div className="navbar-burger burger">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+          <a className="navbar-burger burger">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </a>
         </div>
         <div className="navbar-menu">
-          <div className="navbar-start"></div>
           <div className="navbar-end">
-            <div className="navbar-item has-dropdown">
-              <NavLink to="/login" className="navbar-item">
-                Entrar
-              </NavLink>
-              <NavLink to="/register" className="navbar-item">
-                Registar
-              </NavLink>
+            <div className="navbar-item">
+              <div className="buttons">
+                <NavLink to="/login" className="button is-light">
+                  Entrar
+                </NavLink>
+                <NavLink to="/register" className="button is-primary">
+                  Registar
+                </NavLink>
+              </div>
             </div>
           </div>
         </div>

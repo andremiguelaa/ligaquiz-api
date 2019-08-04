@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import Header from './partials/Header';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import NoMatch from './pages/NoMatch';
 
 const Page = props => {
@@ -28,6 +29,12 @@ class App extends Component {
                   <Switch>
                     <Page title="Liga Quiz" exact path="/" component={Home} />
                     <Page title="Liga Quiz | Entrar" exact path="/login" component={Login} />
+                    <Page
+                      title="Liga Quiz | Registar"
+                      exact
+                      path="/register"
+                      component={Register}
+                    />
                     <Page title="Liga Quiz | Página não encontrada" component={NoMatch} />
                   </Switch>
                 </div>
