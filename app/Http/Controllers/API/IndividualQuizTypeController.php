@@ -11,7 +11,10 @@ class IndividualQuizTypeController extends BaseController
     public function list()
     {
         if (Auth::user()->hasPermission('individual_quiz_type_list')) {
-            return $this->sendResponse(IndividualQuizType::all(), 200);
+            $individualQuizTypes = array_map(function ($value) {
+                return $value['slug'];
+            }, IndividualQuizType::all()->toArray());
+            return $this->sendResponse($individualQuizTypes, 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }

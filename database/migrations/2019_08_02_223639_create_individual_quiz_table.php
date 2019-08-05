@@ -15,7 +15,7 @@ class CreateIndividualQuizTable extends Migration
     {
         Schema::create('individual_quizzes', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('individual_quiz_type_id');
+            $table->string('individual_quiz_type');
             $table->date('date');
             $table->timestamps();
         });
