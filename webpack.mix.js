@@ -5,6 +5,9 @@ const ImageminPlugin = require('imagemin-webpack-plugin').default;
 const imageminMozjpeg = require('imagemin-mozjpeg');
 
 mix.webpackConfig({
+  resolve: {
+    modules: [path.resolve(__dirname, './resources/js'), path.resolve(__dirname, './node_modules')]
+  },
   plugins: [
     new CopyWebpackPlugin([
       {

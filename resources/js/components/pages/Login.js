@@ -1,21 +1,35 @@
 import React, { useState } from 'react';
+import Cookies from 'js-cookie';
+import { useStateValue } from 'state/State';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const Login = ({ history }) => {
+  const [formData, setformData] = useState({
+    email: '',
+    password: ''
+  });
+
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [{ user }, dispatch] = useStateValue();
 
   const handleSubmit = () => {
     event.preventDefault();
+    setSubmitting(true);
+    setErrorMessage(null);
     axios
-      .post('/api/session', {
-        email,
-        password
+      .post('/api/session', formData)
+      .then(({ data: { data } }) => {
+        Cookies.set('BEARER-TOKEN', data.access_token);
+        dispatch({
+          type: 'user.login',
+          payload: data.user
+        });
+        history.push('/');
       })
-      .then(function(response) {
-        console.log(response);
-      })
-      .catch(function(error) {
-        console.log(error);
+      .catch(error => {
+        setErrorMessage(error.response.data.message);
+        setSubmitting(false);
       });
   };
 
@@ -29,38 +43,47 @@ const Login = () => {
               <label className="label">E-Mail</label>
               <div className="control has-icons-left">
                 <input
-                  className="input is-danger"
+                  className="input"
                   type="email"
+                  required
                   onChange={() => {
-                    setEmail(event.target.value);
+                    setformData({
+                      ...formData,
+                      email: event.target.value
+                    });
                   }}
                 />
                 <span className="icon is-small is-left">
                   <i className="fa fa-envelope"></i>
                 </span>
               </div>
-              <p className="help is-danger">erro</p>
             </div>
             <div className="field">
               <label className="label">Palavra-passe</label>
               <div className="control has-icons-left">
                 <input
-                  className="input is-danger"
+                  className="input"
                   type="password"
                   name="password"
+                  required
                   onChange={() => {
-                    setPassword(event.target.value);
+                    setformData({
+                      ...formData,
+                      password: event.target.value
+                    });
                   }}
                 />
                 <span className="icon is-small is-left">
                   <i className="fa fa-key"></i>
                 </span>
               </div>
-              <p className="help is-danger">erro</p>
+              {errorMessage && <p className="help is-danger">{errorMessage}</p>}
             </div>
             <div className="field is-grouped">
               <div className="control">
-                <button className="button is-primary">Entrar</button>
+                <button className="button is-primary" disabled={submitting}>
+                  Entrar
+                </button>
               </div>
               <div className="control">
                 <a href="#" className="button is-link">

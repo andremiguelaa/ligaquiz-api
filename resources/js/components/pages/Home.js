@@ -1,4 +1,5 @@
 import React from 'react';
+import { useStateValue } from 'state/State';
 
 const Home = () => (
   <div className="column is-10-widescreen is-offset-1-widescreen">

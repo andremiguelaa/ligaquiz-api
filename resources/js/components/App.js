@@ -1,50 +1,48 @@
-import React, { Component, useEffect } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Switch } from 'react-router-dom';
 
-import Header from './partials/Header';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import NoMatch from './pages/NoMatch';
+import { StateProvider } from 'state/State';
+import { initialState, MainReducer } from 'state/MainReducer';
+import RouteWithTitle from 'utils/RouteWithTitle';
 
-const Page = props => {
-  useEffect(() => {
-    document.title = props.title;
-  }, [props.title]);
-  const { title, ...rest } = props;
-  return <Route {...rest} />;
-};
+import Header from 'components/partials/Header';
+import Home from 'components/pages/Home';
+import Login from 'components/pages/Login';
+import Register from 'components/pages/Register';
+import NoMatch from 'components/pages/NoMatch';
 
-class App extends Component {
-  render() {
-    return (
-      <BrowserRouter>
-        <>
-          <Header />
-          <main>
-            <section className="section">
-              <div className="container">
-                <div className="columns">
-                  <Switch>
-                    <Page title="Liga Quiz" exact path="/" component={Home} />
-                    <Page title="Liga Quiz | Entrar" exact path="/login" component={Login} />
-                    <Page
-                      title="Liga Quiz | Registar"
-                      exact
-                      path="/register"
-                      component={Register}
-                    />
-                    <Page title="Liga Quiz | Página não encontrada" component={NoMatch} />
-                  </Switch>
-                </div>
+const App = () => (
+  <StateProvider initialState={initialState} reducer={MainReducer}>
+    <BrowserRouter>
+      <>
+        <Header />
+        <main>
+          <section className="section">
+            <div className="container">
+              <div className="columns">
+                <Switch>
+                  <RouteWithTitle title="Liga Quiz" exact path="/" component={Home} />
+                  <RouteWithTitle
+                    title="Liga Quiz | Entrar"
+                    exact
+                    path="/login"
+                    component={Login}
+                  />
+                  <RouteWithTitle
+                    title="Liga Quiz | Registar"
+                    exact
+                    path="/register"
+                    component={Register}
+                  />
+                  <RouteWithTitle title="Liga Quiz | Página não encontrada" component={NoMatch} />
+                </Switch>
               </div>
-            </section>
-          </main>
-        </>
-      </BrowserRouter>
-    );
-  }
-}
-
+            </div>
+          </section>
+        </main>
+      </>
+    </BrowserRouter>
+  </StateProvider>
+);
 ReactDOM.render(<App />, document.getElementById('app'));
