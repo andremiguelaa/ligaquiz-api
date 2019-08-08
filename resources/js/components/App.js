@@ -4,6 +4,8 @@ import { BrowserRouter, Switch } from 'react-router-dom';
 
 import { StateProvider } from 'state/State';
 import { initialState, MainReducer } from 'state/MainReducer';
+
+import Auth from 'utils/Auth';
 import RouteWithTitle from 'utils/RouteWithTitle';
 
 import Header from 'components/partials/Header';
@@ -15,7 +17,7 @@ import NoMatch from 'components/pages/NoMatch';
 const App = () => (
   <StateProvider initialState={initialState} reducer={MainReducer}>
     <BrowserRouter>
-      <>
+      <Auth>
         <Header />
         <main>
           <section className="section">
@@ -41,7 +43,7 @@ const App = () => (
             </div>
           </section>
         </main>
-      </>
+      </Auth>
     </BrowserRouter>
   </StateProvider>
 );

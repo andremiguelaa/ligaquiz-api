@@ -11,7 +11,7 @@ const Login = ({ history }) => {
   const [errorMessage, setErrorMessage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [{ user }, dispatch] = useStateValue();
+  const [state, dispatch] = useStateValue();
 
   const handleSubmit = () => {
     event.preventDefault();
@@ -20,7 +20,10 @@ const Login = ({ history }) => {
     axios
       .post('/api/session', formData)
       .then(({ data: { data } }) => {
-        Cookies.set('BEARER-TOKEN', data.access_token);
+        const validity = Math.round(
+          (Date.parse(data.expires_at) - Date.now()) / 1000 / 60 / 60 / 24 / 2
+        );
+        Cookies.set('BEARER-TOKEN', data.access_token, { expires: validity });
         dispatch({
           type: 'user.login',
           payload: data.user
