@@ -22,6 +22,7 @@ export default props => {
         });
         setLoading(false);
       });
+      // TODO: when fails
     } else {
       setLoading(false);
     }

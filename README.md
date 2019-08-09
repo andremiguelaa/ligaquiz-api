@@ -1,3 +1,3 @@
-#Liga Quiz API
+# Liga Quiz API
 
-Built with Laravel 5.8
+Built with Laravel 5.8 (still in development)
