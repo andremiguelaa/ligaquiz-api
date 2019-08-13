@@ -102,9 +102,6 @@ class UserController extends BaseController
             return $this->sendError('expired_token', [], 401);
         }
         $user = User::where('email', $passwordReset->email)->first();
-        if (!$user) {
-            return $this->sendError('user_not_found', [], 404);
-        }
         $user->password = bcrypt($request->password);
         $user->save();
         $passwordReset->delete();
