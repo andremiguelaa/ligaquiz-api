@@ -22,8 +22,8 @@ class UserController extends BaseController
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required',
-            'password' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string',
         ]);
         if ($validator->fails()) {
             return $this->sendError('validation_error', $validator->errors(), 400);
@@ -70,7 +70,8 @@ class UserController extends BaseController
     public function passwordResetRequest(Request $request)
     {
         $request->validate([
-            'email' => 'required',
+            'email' => 'required|email',
+            'language' => 'required|string',
         ]);
         $user = User::where('email', $request->email)->first();
         if (!$user) {
@@ -83,15 +84,15 @@ class UserController extends BaseController
                 'token' => str_random(60)
             ]
         );
-        $user->notify(new PasswordResetRequest($passwordReset->token));
+        $user->notify((new PasswordResetRequest($passwordReset->token))->locale($request->language));
         return $this->sendResponse(null, 201);
     }
 
     public function passwordResetConfirm(Request $request)
     {
         $request->validate([
-            'password' => 'required|min:6',
-            'token' => 'required'
+            'password' => 'required|string|min:6|max:255',
+            'token' => 'required|string'
         ]);
         $passwordReset = PasswordReset::where('token', $request->token)->first();
         if (!$passwordReset) {
@@ -111,10 +112,10 @@ class UserController extends BaseController
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|max:255',
-            'surname' => 'required|max:255',
+            'name' => 'required|string|max:255',
+            'surname' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|min:6',
+            'password' => 'required|min:6|max:255',
         ]);
         if ($validator->fails()) {
             return $this->sendError('validation_error', $validator->errors(), 400);
@@ -164,7 +165,7 @@ class UserController extends BaseController
                 'max:255',
                 Rule::unique('users')->ignore($input['id']),
             ],
-            'password' => 'min:6',
+            'password' => 'min:6|max:255',
             'roles' => 'json',
             'avatar' => 'base64image|base64max:200',
             'subscription' => 'date',
