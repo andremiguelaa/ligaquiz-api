@@ -49,15 +49,17 @@ class UserController extends BaseController
     public function renew(Request $request)
     {
         $user = $request->user();
-        $user->token()->revoke();
-        $tokenResult = $user->createToken('Personal Access Token');
-        $success['access_token'] = $tokenResult->accessToken;
-        $success['token_type'] = 'Bearer';
-        $tokenResult->token->expires_at = Carbon::now()->addMonth();
-        $tokenResult->token->save();
-        $success['expires_at'] = Carbon::parse(
-            $tokenResult->token->expires_at
-        )->toDateTimeString();
+        if (Carbon::parse($user->token()->expires_at)->diffInDays() < 15) {
+            $user->token()->revoke();
+            $tokenResult = $user->createToken('Personal Access Token');
+            $success['access_token'] = $tokenResult->accessToken;
+            $success['token_type'] = 'Bearer';
+            $tokenResult->token->expires_at = Carbon::now()->addMonth();
+            $tokenResult->token->save();
+            $success['expires_at'] = Carbon::parse(
+                $tokenResult->token->expires_at
+            )->toDateTimeString();
+        }
         $success['user'] = $user;
         return $this->sendResponse($success);
     }
