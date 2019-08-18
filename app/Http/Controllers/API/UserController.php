@@ -16,6 +16,7 @@ use Validator;
 use Avatar;
 use Storage;
 use Melihovv\Base64ImageDecoder\Base64ImageDecoder;
+use Image;
 
 class UserController extends BaseController
 {
@@ -198,7 +199,9 @@ class UserController extends BaseController
                 }
                 $avatar = new Base64ImageDecoder($input['avatar']);
                 $avatar_filename = 'avatar' . $user->id . '.' . $avatar->getFormat();
-                Storage::put('avatars/' . $avatar_filename, (string) $avatar->getDecodedContent());
+                Image::make($input['avatar'])->fit(200, 200, function ($constraint) {
+                    $constraint->upsize();
+                })->save(storage_path('app/public/avatars/' . $avatar_filename));;
                 $input['avatar'] = $avatar_filename;
             }
             $user->fill($input);
