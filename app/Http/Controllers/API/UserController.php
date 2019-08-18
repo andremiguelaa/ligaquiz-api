@@ -158,14 +158,14 @@ class UserController extends BaseController
         $input = $request->all();
         $validator = Validator::make($request->all(), [
             'id' => 'required|exists:users,id',
-            'name' => 'max:255',
-            'surname' => 'max:255',
+            'name' => 'string|max:255',
+            'surname' => 'string|max:255',
             'email' => [
                 'email',
                 'max:255',
                 Rule::unique('users')->ignore($input['id']),
             ],
-            'password' => 'min:6|max:255',
+            'password' => 'string|min:6|max:255',
             'roles' => 'json',
             'avatar' => 'base64image|base64max:200',
             'subscription' => 'date',
