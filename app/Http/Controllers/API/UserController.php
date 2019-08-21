@@ -208,7 +208,8 @@ class UserController extends BaseController
             }
             $user->fill($input);
             $user->save();
-            return $this->sendResponse();
+            $success['user'] = $user;
+            return $this->sendResponse($success);
         }
 
         return $this->sendError('no_permissions', [], 403);
