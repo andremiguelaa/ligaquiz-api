@@ -133,8 +133,8 @@ class UserController extends BaseController
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
-        $avatar_filename = 'avatar'.$user->id.'.png';
-        Storage::put('avatars/'.$avatar_filename, (string) $avatar);
+        $avatar_filename = 'avatar' . $user->id . '.png';
+        Storage::put('avatars/' . $avatar_filename, (string) $avatar);
         $user->avatar = $avatar_filename;
         $user->save();
 
@@ -206,13 +206,13 @@ class UserController extends BaseController
             }
             if (isset($input['avatar'])) {
                 if ($user->avatar) {
-                    Storage::delete('avatars/'.$user->avatar);
+                    Storage::delete('avatars/' . $user->avatar);
                 }
                 $avatar = new Base64ImageDecoder($input['avatar']);
-                $avatar_filename = 'avatar'.$user->id.'.'.$avatar->getFormat();
+                $avatar_filename = 'avatar' . $user->id . '.' . $avatar->getFormat();
                 Image::make($input['avatar'])->fit(200, 200, function ($constraint) {
                     $constraint->upsize();
-                })->save(storage_path('app/public/avatars/'.$avatar_filename));
+                })->save(storage_path('app/public/avatars/' . $avatar_filename));
                 $input['avatar'] = $avatar_filename;
             }
             $user->fill($input);

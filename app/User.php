@@ -24,7 +24,7 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute()
     {
         if ($this->avatar) {
-            return Storage::url('avatars/'.$this->avatar.'?'.strtotime($this->updated_at));
+            return Storage::url('avatars/' . $this->avatar . '?' . strtotime($this->updated_at));
         }
 
         return null;

@@ -39,9 +39,9 @@ class UsersTableSeeder extends Seeder
         for ($i = 0; $i < 10; ++$i) {
             DB::table('users')->insert([
                 [
-                    'name' => 'user name '.$i,
-                    'surname' => 'user surname '.$i,
-                    'email' => 'user'.$i.'@ligaquiz.pt',
+                    'name' => 'user name ' . $i,
+                    'surname' => 'user surname ' . $i,
+                    'email' => 'user' . $i . '@ligaquiz.pt',
                     'password' => bcrypt('secret'),
                     'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                     'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),

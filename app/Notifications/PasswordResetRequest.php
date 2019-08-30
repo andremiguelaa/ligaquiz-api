@@ -37,7 +37,7 @@ class PasswordResetRequest extends Notification
      */
     public function toMail()
     {
-        $url = env('SPA_URL').'/reset-password/'.$this->token;
+        $url = env('SPA_URL') . '/reset-password/' . $this->token;
 
         return (new MailMessage())
             ->subject(__('notifications.reset_password_subject'))
