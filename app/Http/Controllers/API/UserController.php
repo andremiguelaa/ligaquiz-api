@@ -43,6 +43,7 @@ class UserController extends BaseController
             $tokenResult->token->expires_at
         )->toDateTimeString();
         $success['user'] = $user;
+
         return $this->sendResponse($success);
     }
 
@@ -61,12 +62,14 @@ class UserController extends BaseController
             )->toDateTimeString();
         }
         $success['user'] = $user;
+
         return $this->sendResponse($success);
     }
 
     public function logout(Request $request)
     {
         $request->user()->token()->revoke();
+
         return $this->sendResponse();
     }
 
@@ -84,10 +87,11 @@ class UserController extends BaseController
             ['email' => $user->email],
             [
                 'email' => $user->email,
-                'token' => str_random(60)
+                'token' => str_random(60),
             ]
         );
         $user->notify((new PasswordResetRequest($passwordReset->token))->locale($request->language));
+
         return $this->sendResponse(null, 201);
     }
 
@@ -95,7 +99,7 @@ class UserController extends BaseController
     {
         $request->validate([
             'password' => 'required|string|min:6|max:255',
-            'token' => 'required|string'
+            'token' => 'required|string',
         ]);
         $passwordReset = PasswordReset::where('token', $request->token)->first();
         if (!$passwordReset) {
@@ -103,12 +107,14 @@ class UserController extends BaseController
         }
         if (Carbon::parse($passwordReset->updated_at)->addDay()->isPast()) {
             $passwordReset->delete();
+
             return $this->sendError('expired_token', [], 401);
         }
         $user = User::where('email', $passwordReset->email)->first();
         $user->password = bcrypt($request->password);
         $user->save();
         $passwordReset->delete();
+
         return $this->sendResponse(null, 200);
     }
 
@@ -127,10 +133,11 @@ class UserController extends BaseController
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
-        $avatar_filename = 'avatar' . $user->id . '.png';
-        Storage::put('avatars/' . $avatar_filename, (string) $avatar);
+        $avatar_filename = 'avatar'.$user->id.'.png';
+        Storage::put('avatars/'.$avatar_filename, (string) $avatar);
         $user->avatar = $avatar_filename;
         $user->save();
+
         return $this->sendResponse([], 201);
     }
 
@@ -151,8 +158,10 @@ class UserController extends BaseController
             if (Auth::user()->hasPermission('user_edit')) {
                 return $this->sendResponse($users, $partial ? 206 : 200);
             }
+
             return $this->sendResponse(UserResource::collection($users), $partial ? 206 : 200);
         }
+
         return $this->sendError('no_permissions', [], 403);
     }
 
@@ -197,18 +206,19 @@ class UserController extends BaseController
             }
             if (isset($input['avatar'])) {
                 if ($user->avatar) {
-                    Storage::delete('avatars/' . $user->avatar);
+                    Storage::delete('avatars/'.$user->avatar);
                 }
                 $avatar = new Base64ImageDecoder($input['avatar']);
-                $avatar_filename = 'avatar' . $user->id . '.' . $avatar->getFormat();
+                $avatar_filename = 'avatar'.$user->id.'.'.$avatar->getFormat();
                 Image::make($input['avatar'])->fit(200, 200, function ($constraint) {
                     $constraint->upsize();
-                })->save(storage_path('app/public/avatars/' . $avatar_filename));;
+                })->save(storage_path('app/public/avatars/'.$avatar_filename));
                 $input['avatar'] = $avatar_filename;
             }
             $user->fill($input);
             $user->save();
             $success['user'] = $user;
+
             return $this->sendResponse($success);
         }
 

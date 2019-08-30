@@ -14,8 +14,10 @@ class IndividualQuizTypeController extends BaseController
             $individualQuizTypes = array_map(function ($value) {
                 return $value['slug'];
             }, IndividualQuizType::all()->toArray());
+
             return $this->sendResponse($individualQuizTypes, 200);
         }
+
         return $this->sendError('no_permissions', [], 403);
     }
 }

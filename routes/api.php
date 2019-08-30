@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -21,9 +19,8 @@ Route::patch('password-reset', 'API\UserController@passwordResetConfirm');
 Route::post('users', 'API\UserController@register');
 
 Route::group([
-    'middleware' => 'auth:api'
+    'middleware' => 'auth:api',
 ], function () {
-
     Route::patch('session', 'API\UserController@renew');
     Route::delete('session', 'API\UserController@logout');
 

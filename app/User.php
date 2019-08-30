@@ -6,7 +6,6 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Storage;
-use App\RolesPermissions;
 
 class User extends Authenticatable
 {
@@ -17,7 +16,7 @@ class User extends Authenticatable
     ];
 
     protected $hidden = [
-        'password', 'avatar'
+        'password', 'avatar',
     ];
 
     protected $appends = ['avatar_url'];
@@ -25,8 +24,9 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute()
     {
         if ($this->avatar) {
-            return Storage::url('avatars/' . $this->avatar . '?' . strtotime($this->updated_at));
+            return Storage::url('avatars/'.$this->avatar.'?'.strtotime($this->updated_at));
         }
+
         return null;
     }
 
@@ -40,6 +40,7 @@ class User extends Authenticatable
         if ($this->roles) {
             return array_keys(get_object_vars(json_decode($this->roles)));
         }
+
         return [];
     }
 
@@ -55,6 +56,7 @@ class User extends Authenticatable
                 return true;
             }
         }
+
         return false;
     }
 }

@@ -14,6 +14,7 @@ class BaseController extends Controller
         if ($result) {
             $response['data'] = $result;
         }
+
         return response()->json($response, $code);
     }
 

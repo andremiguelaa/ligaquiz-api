@@ -7,8 +7,6 @@ class UsersTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
     public function run()
     {
@@ -22,7 +20,7 @@ class UsersTableSeeder extends Seeder
                     'admin' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+                'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
         ]);
         DB::table('users')->insert([
@@ -35,18 +33,18 @@ class UsersTableSeeder extends Seeder
                     'national_ranking_manager' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+                'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
         ]);
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 10; ++$i) {
             DB::table('users')->insert([
                 [
-                    'name' => 'user name ' . $i,
-                    'surname' => 'user surname ' . $i,
-                    'email' => 'user' . $i . '@ligaquiz.pt',
+                    'name' => 'user name '.$i,
+                    'surname' => 'user surname '.$i,
+                    'email' => 'user'.$i.'@ligaquiz.pt',
                     'password' => bcrypt('secret'),
                     'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                    'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+                    'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 ],
             ]);
         }

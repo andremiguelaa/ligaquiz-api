@@ -13,6 +13,7 @@ class IndividualQuizController extends BaseController
         if (Auth::user()->hasPermission('individual_quiz_list')) {
             return $this->sendResponse(IndividualQuiz::all(), 200);
         }
+
         return $this->sendError('no_permissions', [], 403);
     }
 }

@@ -14,8 +14,6 @@ class PasswordResetRequest extends Notification
 
     /**
      * Create a new notification instance.
-     *
-     * @return void
      */
     public function __construct($token)
     {
@@ -39,8 +37,9 @@ class PasswordResetRequest extends Notification
      */
     public function toMail()
     {
-        $url = env('SPA_URL') . '/reset-password/' . $this->token;
-        return (new MailMessage)
+        $url = env('SPA_URL').'/reset-password/'.$this->token;
+
+        return (new MailMessage())
             ->subject(__('notifications.reset_password_subject'))
             ->line(__('notifications.reset_password_intro'))
             ->action(__('notifications.reset_password_button'), $url)

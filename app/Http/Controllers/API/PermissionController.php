@@ -14,8 +14,10 @@ class PermissionController extends BaseController
             $permissions = array_map(function ($value) {
                 return $value['slug'];
             }, Permission::all()->toArray());
+
             return $this->sendResponse($permissions, 200);
         }
+
         return $this->sendError('no_permissions', [], 403);
     }
 }

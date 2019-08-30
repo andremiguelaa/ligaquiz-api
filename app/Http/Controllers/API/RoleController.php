@@ -14,8 +14,10 @@ class RoleController extends BaseController
             $roles = array_map(function ($value) {
                 return $value['slug'];
             }, Role::all()->toArray());
+
             return $this->sendResponse($roles, 200);
         }
+
         return $this->sendError('no_permissions', [], 403);
     }
 }

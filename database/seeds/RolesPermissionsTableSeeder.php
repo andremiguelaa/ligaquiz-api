@@ -7,8 +7,6 @@ class RolesPermissionsTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
     public function run()
     {
@@ -25,7 +23,7 @@ class RolesPermissionsTableSeeder extends Seeder
                     'user_list' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+                'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
             /*
             [
