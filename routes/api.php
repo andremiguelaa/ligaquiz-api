@@ -33,5 +33,7 @@ Route::group([
 
     Route::get('individual-quizzes', 'API\IndividualQuizController@list');
     Route::get('individual-quiz-types', 'API\IndividualQuizTypeController@list');
+
     Route::get('individual-quiz-players', 'API\IndividualQuizPlayerController@list');
+    Route::post('individual-quiz-players', 'API\IndividualQuizPlayerController@create');
 });
