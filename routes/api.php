@@ -32,6 +32,9 @@ Route::group([
     Route::get('permissions', 'API\PermissionController@list');
 
     Route::get('individual-quizzes', 'API\IndividualQuizController@list');
+    Route::post('individual-quizzes', 'API\IndividualQuizController@create');
+    Route::patch('individual-quizzes', 'API\IndividualQuizController@update');
+
     Route::get('individual-quiz-types', 'API\IndividualQuizTypeController@list');
 
     Route::get('individual-quiz-players', 'API\IndividualQuizPlayerController@list');

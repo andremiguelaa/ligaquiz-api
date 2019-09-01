@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Validator;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuizPlayer;
