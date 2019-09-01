@@ -14,6 +14,7 @@ class CreateIndividualQuizResultTable extends Migration
         Schema::create('individual_quiz_results', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->integer('individual_quiz_id');
+            $table->integer('individual_quiz_player_id');
             $table->integer('result');
             $table->timestamps();
         });
