@@ -33,7 +33,6 @@ class IndividualQuizPlayerController extends BaseController
             $input = $request->all();
 
             $player = IndividualQuizPlayer::create($input);
-            $player->save();
 
             return $this->sendResponse([], 201);
         }

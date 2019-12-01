@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Validator;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuiz;
+use App\IndividualQuizResult;
 
 class IndividualQuizController extends BaseController
 {
@@ -44,8 +45,12 @@ class IndividualQuizController extends BaseController
                 }
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            IndividualQuiz::create($input)->save();
-            // TODO: save results
+            $individualQuiz = IndividualQuiz::create($input);
+
+            foreach ($input['results'] as $result) {
+                $result['individual_quiz_id'] = $individualQuiz->id;
+                IndividualQuizResult::create($result);
+            }
             return $this->sendResponse([], 201);
         }
 
