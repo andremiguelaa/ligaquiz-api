@@ -118,7 +118,7 @@ class IndividualQuizController extends BaseController
                     } else {
                         $savedResult->delete();
                     }
-                } else {
+                } elseif (array_key_exists('result', $result)) {
                     $result['individual_quiz_id'] = $input['id'];
                     IndividualQuizResult::create($result);
                 }
