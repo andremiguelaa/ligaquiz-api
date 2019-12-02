@@ -25,7 +25,7 @@ class IndividualQuizController extends BaseController
                 if ($individualQuizzes->count() != count($input['id'])) {
                     return $this->sendError('quizzes_not_found', 404);
                 }
-                if (array_key_exists('details', $input)) {
+                if (array_key_exists('results', $input)) {
                     foreach ($individualQuizzes as $individualQuiz) {
                         $individualQuiz->results = IndividualQuizResult::where('individual_quiz_id', $individualQuiz->id)
                             ->select('individual_quiz_player_id', 'result')
