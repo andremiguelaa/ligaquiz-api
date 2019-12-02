@@ -76,4 +76,56 @@ class IndividualQuizController extends BaseController
 
         return $this->sendError('no_permissions', [], 403);
     }
+
+    public function update(Request $request)
+    {
+        if (Auth::user()->hasPermission('individual_quiz_edit')) {
+            $input = $request->all();
+            $validator = Validator::make($input, [
+                'id' => 'required|exists:individual_quizzes,id',
+                'individual_quiz_type' => [
+                    'required',
+                    'exists:individual_quiz_types,slug',
+                    'unique_with:individual_quizzes,date,' . $input['id'],
+                ],
+                'date' => 'required|date_format:Y-m-d',
+                'results' => 'required|array',
+            ]);
+            $validResults = true;
+            foreach ($input['results'] as $result) {
+                $resultValidator = Validator::make($result, [
+                    'individual_quiz_player_id' => 'required|exists:individual_quiz_players,id',
+                    'result' => 'integer',
+                ]);
+                if ($resultValidator->fails()) {
+                    $validResults = false;
+                }
+            }
+            if ($validator->fails() || !$validResults) {
+                if (!$validResults) {
+                    $validator->errors()->add('results', 'validation.results');
+                }
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $individualQuiz = IndividualQuiz::find($input['id']);
+
+            foreach ($input['results'] as $result) {
+                $savedResult = IndividualQuizResult::where('individual_quiz_player_id', $result['individual_quiz_player_id'])->first();
+                if ($savedResult) {
+                    if (array_key_exists('result', $result)) {
+                        $savedResult->result = $result['result'];
+                        $savedResult->save();
+                    } else {
+                        $savedResult->delete();
+                    }
+                } else {
+                    $result['individual_quiz_id'] = $input['id'];
+                    IndividualQuizResult::create($result);
+                }
+            }
+            return $this->sendResponse([], 201);
+        }
+
+        return $this->sendError('no_permissions', [], 403);
+    }
 }
