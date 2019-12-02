@@ -11,9 +11,29 @@ use App\IndividualQuizResult;
 
 class IndividualQuizController extends BaseController
 {
-    public function list()
+    public function list(Request $request)
     {
         if (Auth::user()->hasPermission('individual_quiz_list')) {
+            $input = $request->all();
+            if (array_key_exists('id', $input)) {
+                if (!is_array($input['id'])) {
+                    return $this->sendError('id_must_be_array', 400);
+                }
+                $individualQuizzes = IndividualQuiz::whereIn('id', $input['id'])
+                    ->select('id', 'individual_quiz_type', 'date')
+                    ->get();
+                if ($individualQuizzes->count() != count($input['id'])) {
+                    return $this->sendError('quizzes_not_found', 404);
+                }
+                if (array_key_exists('details', $input)) {
+                    foreach ($individualQuizzes as $individualQuiz) {
+                        $individualQuiz->results = IndividualQuizResult::where('individual_quiz_id', $individualQuiz->id)
+                            ->select('individual_quiz_player_id', 'result')
+                            ->get();
+                    }
+                }
+                return $this->sendResponse($individualQuizzes, 200);
+            }
             return $this->sendResponse(IndividualQuiz::all(), 200);
         }
 
