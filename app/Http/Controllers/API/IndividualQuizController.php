@@ -23,18 +23,16 @@ class IndividualQuizController extends BaseController
                     ->select('id', 'individual_quiz_type', 'date')
                     ->get();
                 if ($individualQuizzes->count() != count($input['id'])) {
-                    return $this->sendError('quizzes_not_found', 404);
+                    return $this->sendError('individual_quiz_not_found', 404);
                 }
-                if (array_key_exists('results', $input)) {
-                    foreach ($individualQuizzes as $individualQuiz) {
-                        $individualQuiz->results = IndividualQuizResult::where('individual_quiz_id', $individualQuiz->id)
-                            ->select('individual_quiz_player_id', 'result')
-                            ->get();
-                    }
+                foreach ($individualQuizzes as $individualQuiz) {
+                    $individualQuiz->results = IndividualQuizResult::where('individual_quiz_id', $individualQuiz->id)
+                        ->select('individual_quiz_player_id', 'result')
+                        ->get();
                 }
                 return $this->sendResponse($individualQuizzes, 200);
             }
-            return $this->sendResponse(IndividualQuiz::all(), 200);
+            return $this->sendResponse(IndividualQuiz::all('id', 'individual_quiz_type', 'date'), 200);
         }
 
         return $this->sendError('no_permissions', [], 403);

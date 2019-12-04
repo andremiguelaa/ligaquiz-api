@@ -16,7 +16,7 @@ class User extends Authenticatable
     ];
 
     protected $hidden = [
-        'password', 'avatar',
+        'password', 'avatar', 'created_at', 'updated_at'
     ];
 
     protected $appends = ['avatar_url'];

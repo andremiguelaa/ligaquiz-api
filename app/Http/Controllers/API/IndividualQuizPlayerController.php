@@ -13,9 +13,13 @@ class IndividualQuizPlayerController extends BaseController
     public function list()
     {
         if (Auth::user()->hasPermission('individual_quiz_player_list')) {
-            return $this->sendResponse(IndividualQuizPlayer::all(), 200);
+            return $this->sendResponse(IndividualQuizPlayer::all(
+                'id',
+                'name',
+                'surname',
+                'user_id'
+            ), 200);
         }
-
         return $this->sendError('no_permissions', [], 403);
     }
 
