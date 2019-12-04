@@ -42,19 +42,25 @@ class IndividualQuizController extends BaseController
     {
         if (Auth::user()->hasPermission('individual_quiz_create')) {
             $input = $request->all();
+            $input['date'] = null;
+            if (array_key_exists('month', $input)) {
+                $input['date'] = $input['month'] . '-01';
+            }
             $validator = Validator::make($input, [
                 'individual_quiz_type' => 'required|exists:individual_quiz_types,slug|unique_with:individual_quizzes,date',
-                'date' => 'required|date_format:Y-m-d',
+                'month' => 'required|date_format:Y-m',
                 'results' => 'required|array',
             ]);
             $validResults = true;
-            foreach ($input['results'] as $result) {
-                $resultValidator = Validator::make($result, [
-                    'individual_quiz_player_id' => 'required|exists:individual_quiz_players,id',
-                    'result' => 'required|integer',
-                ]);
-                if ($resultValidator->fails()) {
-                    $validResults = false;
+            if (array_key_exists('results', $input)) {
+                foreach ($input['results'] as $result) {
+                    $resultValidator = Validator::make($result, [
+                        'individual_quiz_player_id' => 'required|exists:individual_quiz_players,id',
+                        'result' => 'required|integer',
+                    ]);
+                    if ($resultValidator->fails()) {
+                        $validResults = false;
+                    }
                 }
             }
             if ($validator->fails() || !$validResults) {
@@ -79,6 +85,10 @@ class IndividualQuizController extends BaseController
     {
         if (Auth::user()->hasPermission('individual_quiz_edit')) {
             $input = $request->all();
+            $input['date'] = null;
+            if (array_key_exists('month', $input)) {
+                $input['date'] = $input['month'] . '-01';
+            }
             $validator = Validator::make($input, [
                 'id' => 'required|exists:individual_quizzes,id',
                 'individual_quiz_type' => [
@@ -86,7 +96,7 @@ class IndividualQuizController extends BaseController
                     'exists:individual_quiz_types,slug',
                     'unique_with:individual_quizzes,date,' . $input['id'],
                 ],
-                'date' => 'required|date_format:Y-m-d',
+                'month' => 'required|date_format:Y-m',
                 'results' => 'required|array',
             ]);
             $validResults = true;
@@ -106,6 +116,7 @@ class IndividualQuizController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $individualQuiz = IndividualQuiz::find($input['id']);
+            $individualQuiz->fill($input)->save();
 
             foreach ($input['results'] as $result) {
                 $savedResult = IndividualQuizResult::where('individual_quiz_player_id', $result['individual_quiz_player_id'])->first();
