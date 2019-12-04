@@ -26,9 +26,7 @@ class IndividualQuizController extends BaseController
                     return $this->sendError('individual_quiz_not_found', 404);
                 }
                 foreach ($individualQuizzes as $individualQuiz) {
-                    $individualQuiz->results = IndividualQuizResult::where('individual_quiz_id', $individualQuiz->id)
-                        ->select('individual_quiz_player_id', 'result')
-                        ->get();
+                    $individualQuiz->results = $individualQuiz->results;
                 }
                 return $this->sendResponse($individualQuizzes, 200);
             }

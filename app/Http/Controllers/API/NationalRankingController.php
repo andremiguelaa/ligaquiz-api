@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuiz;
 
@@ -12,8 +13,16 @@ class NationalRankingController extends BaseController
     {
         $input = $request->all();
         if (array_key_exists('month', $input)) {
+            $endDate = $input['month'] . '-01';
+            $startDate = Carbon::createFromFormat('Y-m-d', $endDate)->subMonths(11)->format('Y-m-d');
+            $individualQuizzes = IndividualQuiz::whereBetween('date', [$startDate, $endDate])
+                ->select('id', 'date', 'individual_quiz_type')
+                ->get();
+            foreach ($individualQuizzes as $individualQuiz) {
+                $individualQuiz->results = $individualQuiz->results;
+            }
             // TODO: calculate ranking for month
-            $response = null;
+            $response = $individualQuizzes;
         } else {
             $response = array_map(function ($value) {
                 return substr($value['date'], 0, -3);
