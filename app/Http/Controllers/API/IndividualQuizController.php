@@ -30,7 +30,12 @@ class IndividualQuizController extends BaseController
                 }
                 return $this->sendResponse($individualQuizzes, 200);
             }
-            return $this->sendResponse(IndividualQuiz::all('id', 'individual_quiz_type', 'date'), 200);
+            $response = array_map(function ($individualQuiz) {
+                $individualQuiz['month'] = substr($individualQuiz['date'], 0, -3);
+                unset($individualQuiz['date']);
+                return $individualQuiz;
+            }, IndividualQuiz::all('id', 'individual_quiz_type', 'date')->toArray());
+            return $this->sendResponse($response, 200);
         }
 
         return $this->sendError('no_permissions', [], 403);

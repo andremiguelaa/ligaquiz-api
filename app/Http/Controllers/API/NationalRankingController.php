@@ -22,17 +22,40 @@ class NationalRankingController extends BaseController
                     $startDate->format('Y-m-d'),
                     $endDate->format('Y-m-d')
                 ]
-            )->select('id', 'date', 'individual_quiz_type')->get();
+            )
+            ->select('id', 'date', 'individual_quiz_type')
+            ->orderBy('date', 'asc')
+            ->get();
 
             foreach ($individualQuizzes as $individualQuiz) {
                 $individualQuiz->results = $individualQuiz->results;
             }
 
-            // TODO: calculate ranking for month
             $response = $individualQuizzes;
+            // TODO: calculate ranking for month
+            $ranking = array_reduce($individualQuizzes->toArray(), function ($acc, $individualQuiz) {
+                foreach ($individualQuiz['results'] as $result) {
+                    if (!array_key_exists($result['individual_quiz_player_id'], $acc)) {
+                        $acc[$result['individual_quiz_player_id']] = (object) [
+                            'individual_quiz_player_id' => $result['individual_quiz_player_id'],
+                            'rank' => null,
+                            'score' => 0,
+                            'months' => []
+                        ];
+                    }
+                    $acc[$result['individual_quiz_player_id']]->score += $result['score'];
+                    $month = substr($individualQuiz['date'], 0, -3);
+                    if (!array_key_exists($month, $acc[$result['individual_quiz_player_id']]->months)) {
+                        $acc[$result['individual_quiz_player_id']]->months[$month] = [];
+                    }
+                    array_push($acc[$result['individual_quiz_player_id']]->months[$month], $result);
+                }
+                return $acc;
+            }, []);
+            $response = array_values($ranking);
         } else {
-            $response = array_map(function ($value) {
-                return substr($value['date'], 0, -3);
+            $response = array_map(function ($individualQuiz) {
+                return substr($individualQuiz['date'], 0, -3);
             }, IndividualQuiz::select('date')->distinct()->get()->toArray());
         }
         return $this->sendResponse($response, 200);
