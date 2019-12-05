@@ -13,32 +13,28 @@ class IndividualQuizController extends BaseController
 {
     public function list(Request $request)
     {
-        if (Auth::user()->hasPermission('individual_quiz_list')) {
-            $input = $request->all();
-            if (array_key_exists('id', $input)) {
-                if (!is_array($input['id'])) {
-                    return $this->sendError('id_must_be_array', 400);
-                }
-                $individualQuizzes = IndividualQuiz::whereIn('id', $input['id'])
+        $input = $request->all();
+        if (array_key_exists('id', $input)) {
+            if (!is_array($input['id'])) {
+                return $this->sendError('id_must_be_array', 400);
+            }
+            $individualQuizzes = IndividualQuiz::whereIn('id', $input['id'])
                     ->select('id', 'individual_quiz_type', 'date')
                     ->get();
-                if ($individualQuizzes->count() != count($input['id'])) {
-                    return $this->sendError('individual_quiz_not_found', 404);
-                }
-                foreach ($individualQuizzes as $individualQuiz) {
-                    $individualQuiz->results = $individualQuiz->results;
-                }
-                return $this->sendResponse($individualQuizzes, 200);
+            if ($individualQuizzes->count() != count($input['id'])) {
+                return $this->sendError('individual_quiz_not_found', 404);
             }
-            $response = array_map(function ($individualQuiz) {
-                $individualQuiz['month'] = substr($individualQuiz['date'], 0, -3);
-                unset($individualQuiz['date']);
-                return $individualQuiz;
-            }, IndividualQuiz::all('id', 'individual_quiz_type', 'date')->toArray());
-            return $this->sendResponse($response, 200);
+            foreach ($individualQuizzes as $individualQuiz) {
+                $individualQuiz->results = $individualQuiz->results;
+            }
+            return $this->sendResponse($individualQuizzes, 200);
         }
-
-        return $this->sendError('no_permissions', [], 403);
+        $response = array_map(function ($individualQuiz) {
+            $individualQuiz['month'] = substr($individualQuiz['date'], 0, -3);
+            unset($individualQuiz['date']);
+            return $individualQuiz;
+        }, IndividualQuiz::all('id', 'individual_quiz_type', 'date')->toArray());
+        return $this->sendResponse($response, 200);
     }
 
     public function create(Request $request)

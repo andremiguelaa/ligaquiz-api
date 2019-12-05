@@ -14,11 +14,8 @@ class RolesPermissionsTableSeeder extends Seeder
             [
                 'role' => 'national_ranking_manager',
                 'permissions' => json_encode((object) [
-                    'individual_quiz_list' => true,
                     'individual_quiz_create' => true,
                     'individual_quiz_edit' => true,
-                    'individual_quiz_type_list' => true,
-                    'individual_quiz_player_list' => true,
                     'individual_quiz_player_create' => true,
                     'user_list' => true,
                 ]),
