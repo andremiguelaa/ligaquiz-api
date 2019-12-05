@@ -32,7 +32,7 @@ class NationalRankingController extends BaseController
             }
 
             $response = $individualQuizzes;
-            $ranking = array_reduce($individualQuizzes->toArray(), function ($acc, $individualQuiz) {
+            $rankingPlayers = array_reduce($individualQuizzes->toArray(), function ($acc, $individualQuiz) {
                 foreach ($individualQuiz['results'] as $result) {
                     if (!array_key_exists($result['individual_quiz_player_id'], $acc)) {
                         $acc[$result['individual_quiz_player_id']] = (object) [
@@ -52,13 +52,19 @@ class NationalRankingController extends BaseController
                 return $acc;
             }, []);
 
-            usort($ranking, function ($a, $b) {
+            usort($rankingPlayers, function ($a, $b) {
                 return strcmp($b->score, $a->score);
             });
 
-            // TODO: calculate rank for each player
+            $rank = 1;
+            foreach ($rankingPlayers as $key => $player) {
+                if (!($key > 0 && $rankingPlayers[$key - 1]->score === $rankingPlayers[$key]->score)) {
+                    $rank = $key + 1;
+                }
+                $player->rank = $rank;
+            }
 
-            $response = array_values($ranking);
+            $response = array_values($rankingPlayers);
         } else {
             $response = array_map(function ($individualQuiz) {
                 return substr($individualQuiz['date'], 0, -3);
