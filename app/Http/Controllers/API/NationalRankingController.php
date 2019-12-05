@@ -32,7 +32,6 @@ class NationalRankingController extends BaseController
             }
 
             $response = $individualQuizzes;
-            // TODO: calculate ranking for month
             $ranking = array_reduce($individualQuizzes->toArray(), function ($acc, $individualQuiz) {
                 foreach ($individualQuiz['results'] as $result) {
                     if (!array_key_exists($result['individual_quiz_player_id'], $acc)) {
@@ -52,6 +51,13 @@ class NationalRankingController extends BaseController
                 }
                 return $acc;
             }, []);
+
+            usort($ranking, function ($a, $b) {
+                return strcmp($b->score, $a->score);
+            });
+
+            // TODO: calculate rank for each player
+
             $response = array_values($ranking);
         } else {
             $response = array_map(function ($individualQuiz) {
