@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
+use Request;
 use Validator;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuiz;
@@ -13,7 +13,7 @@ class IndividualQuizController extends BaseController
 {
     public function list(Request $request)
     {
-        $input = $request->all();
+        $input = $request::all();
         $query = IndividualQuiz::select('id', 'individual_quiz_type', 'date');
 
         if (array_key_exists('individual_quiz_player_id', $input) && is_array($input['individual_quiz_player_id'])) {
@@ -60,7 +60,7 @@ class IndividualQuizController extends BaseController
     public function create(Request $request)
     {
         if (Auth::user()->hasPermission('individual_quiz_create')) {
-            $input = $request->all();
+            $input = $request::all();
             $input['date'] = null;
             if (array_key_exists('month', $input)) {
                 $input['date'] = $input['month'] . '-01';
@@ -103,7 +103,7 @@ class IndividualQuizController extends BaseController
     public function update(Request $request)
     {
         if (Auth::user()->hasPermission('individual_quiz_edit')) {
-            $input = $request->all();
+            $input = $request::all();
             $input['date'] = null;
             if (array_key_exists('month', $input)) {
                 $input['date'] = $input['month'] . '-01';

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Http\Request;
+use Request;
 use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuiz;
@@ -11,7 +11,7 @@ class NationalRankingController extends BaseController
 {
     public function list(Request $request)
     {
-        $input = $request->all();
+        $input = $request::all();
         if (array_key_exists('month', $input)) {
             $endDate = Carbon::createFromFormat('Y-m-d', $input['month'] . '-01');
             $startDate = (clone $endDate)->subMonths(11);
