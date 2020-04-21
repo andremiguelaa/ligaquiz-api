@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Str;
 use App\Http\Controllers\API\BaseController as BaseController;
 use Carbon\Carbon;
 use App\User;
 use App\Http\Resources\User as UserResource;
 use App\PasswordReset;
 use App\Notifications\PasswordResetRequest;
+use Request;
 use Validator;
 use Avatar;
 use Storage;
@@ -22,7 +22,7 @@ class UserController extends BaseController
 {
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request::all(), [
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
@@ -33,7 +33,7 @@ class UserController extends BaseController
         if (!Auth::attempt($credentials)) {
             return $this->sendError('wrong_credentials', [], 401);
         }
-        $user = $request->user();
+        $user = $request::user();
         $tokenResult = $user->createToken('Personal Access Token');
         $success['access_token'] = $tokenResult->accessToken;
         $success['token_type'] = 'Bearer';
@@ -49,7 +49,7 @@ class UserController extends BaseController
 
     public function renew(Request $request)
     {
-        $user = $request->user();
+        $user = $request::user();
         if (Carbon::parse($user->token()->expires_at)->diffInDays() < 15) {
             $user->token()->revoke();
             $tokenResult = $user->createToken('Personal Access Token');
@@ -68,18 +68,18 @@ class UserController extends BaseController
 
     public function logout(Request $request)
     {
-        $request->user()->token()->revoke();
+        $request::user()->token()->revoke();
 
         return $this->sendResponse();
     }
 
     public function passwordResetRequest(Request $request)
     {
-        $request->validate([
+        $request::validate([
             'email' => 'required|email',
             'language' => 'required|string',
         ]);
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request::get('email'))->first();
         if (!$user) {
             return $this->sendError('mail_not_found', [], 404);
         }
@@ -87,21 +87,21 @@ class UserController extends BaseController
             ['email' => $user->email],
             [
                 'email' => $user->email,
-                'token' => str_random(60),
+                'token' => Str::random(60),
             ]
         );
-        $user->notify((new PasswordResetRequest($passwordReset->token))->locale($request->language));
+        $user->notify((new PasswordResetRequest($passwordReset->token))->locale($request::get('language')));
 
         return $this->sendResponse(null, 201);
     }
 
     public function passwordResetConfirm(Request $request)
     {
-        $request->validate([
+        $request::validate([
             'password' => 'required|string|min:6|max:255',
             'token' => 'required|string',
         ]);
-        $passwordReset = PasswordReset::where('token', $request->token)->first();
+        $passwordReset = PasswordReset::where('token', $request::get('token'))->first();
         if (!$passwordReset) {
             return $this->sendError('invalid_token', [], 404);
         }
@@ -111,8 +111,9 @@ class UserController extends BaseController
             return $this->sendError('expired_token', [], 401);
         }
         $user = User::where('email', $passwordReset->email)->first();
-        $user->password = bcrypt($request->password);
+        $user->password = bcrypt($request::get('password'));
         $user->save();
+        $user->touch();
         $passwordReset->delete();
 
         return $this->sendResponse(null, 200);
@@ -120,7 +121,7 @@ class UserController extends BaseController
 
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request::all(), [
             'name' => 'required|string|max:255',
             'surname' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
@@ -129,7 +130,7 @@ class UserController extends BaseController
         if ($validator->fails()) {
             return $this->sendError('validation_error', $validator->errors(), 400);
         }
-        $input = $request->all();
+        $input = $request::all();
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
@@ -141,14 +142,14 @@ class UserController extends BaseController
         return $this->sendResponse([], 201);
     }
 
-    public function list()
+    public function list(Request $request)
     {
         if (Auth::user()->hasPermission('user_list')) {
             $partial = false;
-            if (!Input::get('id')) {
+            if (!$request::get('id')) {
                 $users = User::all();
             } else {
-                $user_ids = explode(',', Input::get('id'));
+                $user_ids = explode(',', $request::get('id'));
                 $users = User::whereIn('id', $user_ids)->get();
                 if (count($user_ids) !== $users->count()) {
                     return $this->sendError('users_not_found', [], 400);
@@ -167,8 +168,8 @@ class UserController extends BaseController
 
     public function update(Request $request)
     {
-        $input = $request->all();
-        $validator = Validator::make($request->all(), [
+        $input = $request::all();
+        $validator = Validator::make($request::all(), [
             'id' => 'required|exists:users,id',
             'name' => 'string|max:255',
             'surname' => 'string|max:255',
@@ -217,6 +218,7 @@ class UserController extends BaseController
             }
             $user->fill($input);
             $user->save();
+            $user->touch();
             $success['user'] = $user;
 
             return $this->sendResponse($success);
