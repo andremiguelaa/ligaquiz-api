@@ -6,6 +6,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Storage;
+use Carbon\Carbon;
 
 class User extends Authenticatable
 {
@@ -38,7 +39,13 @@ class User extends Authenticatable
     public function getRoles()
     {
         if ($this->roles) {
-            return array_keys(get_object_vars(json_decode($this->roles)));
+            $roles = get_object_vars(json_decode($this->roles));
+            return array_keys(array_filter($roles, function ($roleValue) {
+                if ($roleValue === true || Carbon::now()->lessThanOrEqualTo(Carbon::createFromFormat('Y-m-d', $roleValue))) {
+                    return true;
+                }
+                return false;
+            }));
         }
 
         return [];
