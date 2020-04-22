@@ -11,7 +11,7 @@ class BaseController extends Controller
         $response = [
             'success' => true,
         ];
-        if ($result) {
+        if ($result || $result === []) {
             $response['data'] = $result;
         }
 
