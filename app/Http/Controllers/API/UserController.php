@@ -183,7 +183,6 @@ class UserController extends BaseController
                 'password' => 'string|min:6|max:255',
                 'roles' => 'json',
                 'avatar' => 'base64image|base64max:200',
-                'subscription' => 'date',
                 'reminders' => 'json',
             ]);
             $validRoles = true;
@@ -215,7 +214,7 @@ class UserController extends BaseController
                 }
             }
             if (Auth::id() === $input['id'] && !Auth::user()->isAdmin()) {
-                unset($input['roles'], $input['subscription']);
+                unset($input['roles']);
             }
             if (isset($input['avatar'])) {
                 if ($user->avatar) {

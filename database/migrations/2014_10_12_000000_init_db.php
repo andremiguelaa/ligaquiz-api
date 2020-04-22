@@ -21,7 +21,6 @@ class InitDB extends Migration
             $table->string('password');
             $table->json('roles')->nullable();
             $table->string('avatar')->nullable();
-            $table->date('subscription')->nullable();
             $table->json('reminders')->nullable();
             $table->timestamps();
         });
