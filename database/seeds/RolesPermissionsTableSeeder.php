@@ -16,6 +16,7 @@ class RolesPermissionsTableSeeder extends Seeder
                 'permissions' => json_encode((object) [
                     'individual_quiz_create' => true,
                     'individual_quiz_edit' => true,
+                    'individual_quiz_delete' => true,
                     'individual_quiz_player_create' => true,
                     'user_list' => true,
                 ]),

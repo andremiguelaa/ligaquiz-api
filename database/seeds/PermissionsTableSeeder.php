@@ -37,6 +37,11 @@ class PermissionsTableSeeder extends Seeder
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
             [
+                'slug' => 'individual_quiz_delete',
+                'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
+            ],
+            [
                 'slug' => 'individual_quiz_player_create',
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),

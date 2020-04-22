@@ -17,7 +17,7 @@ class RolesTableSeeder extends Seeder
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
             [
-                'slug' => 'ranking_manager',
+                'slug' => 'national_ranking_manager',
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],

@@ -156,4 +156,22 @@ class IndividualQuizController extends BaseController
 
         return $this->sendError('no_permissions', [], 403);
     }
+
+    public function delete(Request $request)
+    {
+        if (Auth::user()->hasPermission('individual_quiz_delete')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'id' => 'required|exists:individual_quizzes,id',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            IndividualQuiz::find($input['id'])->delete();
+            IndividualQuizResult::where('individual_quiz_id', $input['id'])->delete();
+            return $this->sendResponse();
+        }
+
+        return $this->sendError('no_permissions', [], 403);
+    }
 }

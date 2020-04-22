@@ -43,4 +43,5 @@ Route::group([
 
     Route::post('individual-quizzes', 'API\IndividualQuizController@create');
     Route::patch('individual-quizzes', 'API\IndividualQuizController@update');
+    Route::delete('individual-quizzes', 'API\IndividualQuizController@delete');
 });
