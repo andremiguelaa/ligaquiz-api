@@ -169,26 +169,38 @@ class UserController extends BaseController
     public function update(Request $request)
     {
         $input = $request::all();
-        $validator = Validator::make($request::all(), [
-            'id' => 'required|exists:users,id',
-            'name' => 'string|max:255',
-            'surname' => 'string|max:255',
-            'email' => [
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($input['id']),
-            ],
-            'password' => 'string|min:6|max:255',
-            'roles' => 'json',
-            'avatar' => 'base64image|base64max:200',
-            'subscription' => 'date',
-            'reminders' => 'json',
-        ]);
-        if ($validator->fails()) {
-            return $this->sendError('validation_error', $validator->errors(), 400);
-        }
 
         if (Auth::user()->hasPermission('user_edit') || Auth::id() === $input['id']) {
+            $validator = Validator::make($request::all(), [
+                'id' => 'required|exists:users,id',
+                'name' => 'string|max:255',
+                'surname' => 'string|max:255',
+                'email' => [
+                    'email',
+                    'max:255',
+                    Rule::unique('users')->ignore($input['id']),
+                ],
+                'password' => 'string|min:6|max:255',
+                'roles' => 'json',
+                'avatar' => 'base64image|base64max:200',
+                'subscription' => 'date',
+                'reminders' => 'json',
+            ]);
+            $validRoles = true;
+            if (array_key_exists('roles', $input)) {
+                foreach (get_object_vars(json_decode($input['roles'])) as $role) {
+                    if (!($role === true || strtotime($role) && Carbon::now() < Carbon::createFromFormat('Y-m-d', $role)->endOfDay())) {
+                        $validRoles = false;
+                    }
+                }
+            }
+            if ($validator->fails() || !$validRoles) {
+                if (!$validRoles) {
+                    $validator->errors()->add('roles', 'validation.roles');
+                }
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+
             $user = User::find($input['id']);
             if (isset($input['password'])) {
                 $input['password'] = bcrypt($input['password']);
