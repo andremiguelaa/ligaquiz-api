@@ -80,7 +80,7 @@ class NationalRankingController extends BaseController
         } else {
             $response = array_map(function ($individualQuiz) {
                 return substr($individualQuiz['date'], 0, -3);
-            }, IndividualQuiz::select('date')->distinct()->get()->toArray());
+            }, IndividualQuiz::select('date')->distinct()->orderBy('date', 'desc')->get()->toArray());
         }
         return $this->sendResponse($response, 200);
     }
