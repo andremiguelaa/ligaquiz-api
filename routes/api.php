@@ -20,9 +20,9 @@ Route::patch('password-reset', 'API\UserController@passwordResetConfirm');
 
 Route::post('users', 'API\UserController@register');
 
-Route::get('national-rankings', 'API\NationalRankingController@list');
-Route::get('individual-quiz-players', 'API\IndividualQuizPlayerController@list');
-Route::get('individual-quizzes', 'API\IndividualQuizController@list');
+Route::get('national-rankings', 'API\NationalRankingController@get');
+Route::get('individual-quiz-players', 'API\IndividualQuizPlayerController@get');
+Route::get('individual-quizzes', 'API\IndividualQuizController@get');
 
 Route::group([
     'middleware' => 'auth:api',
@@ -30,14 +30,14 @@ Route::group([
     Route::patch('session', 'API\UserController@renew');
     Route::delete('session', 'API\UserController@logout');
 
-    Route::get('users', 'API\UserController@list');
+    Route::get('users', 'API\UserController@get');
     Route::patch('users', 'API\UserController@update');
 
-    Route::get('roles', 'API\RoleController@list');
+    Route::get('roles', 'API\RoleController@get');
 
-    Route::get('permissions', 'API\PermissionController@list');
+    Route::get('permissions', 'API\PermissionController@get');
 
-    Route::get('individual-quiz-types', 'API\IndividualQuizTypeController@list');
+    Route::get('individual-quiz-types', 'API\IndividualQuizTypeController@get');
 
     Route::post('individual-quiz-players', 'API\IndividualQuizPlayerController@create');
 

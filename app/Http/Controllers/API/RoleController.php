@@ -8,7 +8,7 @@ use App\Role;
 
 class RoleController extends BaseController
 {
-    public function list()
+    public function get()
     {
         if (Auth::user()->isAdmin()) {
             $roles = array_map(function ($value) {

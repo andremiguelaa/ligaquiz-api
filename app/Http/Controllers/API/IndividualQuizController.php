@@ -11,7 +11,7 @@ use App\IndividualQuizResult;
 
 class IndividualQuizController extends BaseController
 {
-    public function list(Request $request)
+    public function get(Request $request)
     {
         $input = $request::all();
         $query = IndividualQuiz::select('id', 'individual_quiz_type', 'date');

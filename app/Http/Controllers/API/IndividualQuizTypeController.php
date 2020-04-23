@@ -7,7 +7,7 @@ use App\IndividualQuizType;
 
 class IndividualQuizTypeController extends BaseController
 {
-    public function list()
+    public function get()
     {
         $individualQuizTypes = array_map(function ($value) {
             return $value['slug'];

@@ -8,7 +8,7 @@ use App\Permission;
 
 class PermissionController extends BaseController
 {
-    public function list()
+    public function get()
     {
         if (Auth::user()->isAdmin()) {
             $permissions = array_map(function ($value) {

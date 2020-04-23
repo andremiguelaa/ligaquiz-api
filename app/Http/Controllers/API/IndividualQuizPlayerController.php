@@ -10,7 +10,7 @@ use App\IndividualQuizPlayer;
 
 class IndividualQuizPlayerController extends BaseController
 {
-    public function list()
+    public function get()
     {
         return $this->sendResponse(IndividualQuizPlayer::all(
             'id',

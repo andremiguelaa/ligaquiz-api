@@ -142,7 +142,7 @@ class UserController extends BaseController
         return $this->sendResponse(null, 201);
     }
 
-    public function list(Request $request)
+    public function get(Request $request)
     {
         if (Auth::user()->hasPermission('user_list')) {
             $partial = false;

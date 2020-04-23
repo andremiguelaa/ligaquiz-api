@@ -9,7 +9,7 @@ use App\IndividualQuiz;
 
 class NationalRankingController extends BaseController
 {
-    public function list(Request $request)
+    public function get(Request $request)
     {
         $input = $request::all();
         if (array_key_exists('month', $input)) {
