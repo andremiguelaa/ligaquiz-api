@@ -139,7 +139,7 @@ class UserController extends BaseController
         $user->avatar = $avatar_filename;
         $user->save();
 
-        return $this->sendResponse([], 201);
+        return $this->sendResponse(null, 201);
     }
 
     public function list(Request $request)

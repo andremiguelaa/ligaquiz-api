@@ -94,7 +94,7 @@ class IndividualQuizController extends BaseController
                 $result['individual_quiz_id'] = $individualQuiz->id;
                 IndividualQuizResult::create($result);
             }
-            return $this->sendResponse([], 201);
+            return $this->sendResponse(null, 201);
         }
 
         return $this->sendError('no_permissions', [], 403);
@@ -151,7 +151,7 @@ class IndividualQuizController extends BaseController
                     IndividualQuizResult::create($result);
                 }
             }
-            return $this->sendResponse([], 201);
+            return $this->sendResponse(null, 201);
         }
 
         return $this->sendError('no_permissions', [], 403);

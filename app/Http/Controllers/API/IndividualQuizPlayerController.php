@@ -35,7 +35,7 @@ class IndividualQuizPlayerController extends BaseController
 
             IndividualQuizPlayer::create($input);
 
-            return $this->sendResponse([], 201);
+            return $this->sendResponse(null, 201);
         }
 
         return $this->sendError('no_permissions', [], 403);
