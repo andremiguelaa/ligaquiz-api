@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Auth;
 use Request;
+use Validator;
 use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuiz;
+use App\IndividualQuizResult;
 
 class NationalRankingController extends BaseController
 {
@@ -26,6 +29,10 @@ class NationalRankingController extends BaseController
             ->select('id', 'date', 'individual_quiz_type')
             ->orderBy('date', 'asc')
             ->get();
+
+            if (!count($individualQuizzes)) {
+                return $this->sendError('not_found', null, 404);
+            }
 
             foreach ($individualQuizzes as $individualQuiz) {
                 $individualQuiz->results = $individualQuiz->results;
@@ -83,5 +90,29 @@ class NationalRankingController extends BaseController
             }, IndividualQuiz::select('date')->distinct()->orderBy('date', 'desc')->get()->toArray());
         }
         return $this->sendResponse($response, 200);
+    }
+
+    public function delete(Request $request)
+    {
+        if (Auth::user()->hasPermission('individual_quiz_delete')) {
+            $input = $request::all();
+            if (array_key_exists('month', $input)) {
+                $input['month'] = $input['month'].'-01';
+            }
+            $validator = Validator::make($input, [
+                'month' => 'required|exists:individual_quizzes,date',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $individualQuizzes = IndividualQuiz::where('date', $input['month'])->get();
+            foreach ($individualQuizzes as $individualQuiz) {
+                IndividualQuizResult::where('individual_quiz_id', $individualQuiz->id)->delete();
+            }
+            IndividualQuiz::where('date', $input['month'])->delete();
+            return $this->sendResponse();
+        }
+
+        return $this->sendError('no_permissions', [], 403);
     }
 }
