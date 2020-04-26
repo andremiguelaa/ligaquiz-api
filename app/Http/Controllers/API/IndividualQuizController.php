@@ -113,7 +113,7 @@ class IndividualQuizController extends BaseController
                 'individual_quiz_type' => [
                     'required',
                     'exists:individual_quiz_types,slug',
-                    'unique_with:individual_quizzes,date,' . $input['id'],
+                    array_key_exists('id', $input) ? 'unique_with:individual_quizzes,date,' . $input['id'] : '',
                 ],
                 'month' => 'required|date_format:Y-m',
                 'results' => 'required|array',
