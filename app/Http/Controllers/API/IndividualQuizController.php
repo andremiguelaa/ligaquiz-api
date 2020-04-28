@@ -46,10 +46,11 @@ class IndividualQuizController extends BaseController
 
         foreach ($individualQuizzes as $individualQuiz) {
             $individualQuiz->month = substr($individualQuiz->date, 0, -3);
-            unset($individualQuiz->date);
             if (array_key_exists('results', $input)) {
                 $individualQuiz->results = $individualQuiz->results;
             }
+            unset($individualQuiz->id);
+            unset($individualQuiz->date);
         }
 
         return $this->sendResponse($individualQuizzes, 200);

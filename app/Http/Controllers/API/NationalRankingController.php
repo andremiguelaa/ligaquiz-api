@@ -100,11 +100,9 @@ class NationalRankingController extends BaseController
                 'month' => 'required|date_format:Y-m',
                 'individual_quizzes' => 'required|array',
             ]);
-
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            
             foreach ($input['individual_quizzes'] as $individualQuiz) {
                 $individualQuiz['date'] = $input['month'] . '-01';
                 $individualQuizValidator = Validator::make($individualQuiz, [
@@ -133,6 +131,7 @@ class NationalRankingController extends BaseController
                     IndividualQuizResult::create($result);
                 }
             }
+
             $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')->where('date', $input['month'] . '-01')->get();
             foreach ($individualQuizzes as $individualQuiz) {
                 $individualQuiz->results = $individualQuiz->results;
@@ -158,11 +157,9 @@ class NationalRankingController extends BaseController
                 'individual_quizzes' => 'required|array',
                 'date' => 'exists:individual_quizzes,date'
             ]);
-
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            
             foreach ($input['individual_quizzes'] as $individualQuiz) {
                 $individualQuiz['date'] = $input['month'] . '-01';
                 $individualQuizValidator = Validator::make($individualQuiz, [
@@ -196,6 +193,7 @@ class NationalRankingController extends BaseController
                     IndividualQuizResult::create($result);
                 }
             }
+
             $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')->where('date', $input['month'] . '-01')->get();
             foreach ($individualQuizzes as $individualQuiz) {
                 $individualQuiz->results = $individualQuiz->results;
