@@ -94,7 +94,7 @@ class NationalRankingController extends BaseController
 
     public function create(Request $request)
     {
-        if (Auth::user()->hasPermission('individual_quiz_create')) {
+        if (Auth::user()->hasPermission('national_ranking_create')) {
             $input = $request::all();
             $validator = Validator::make($input, [
                 'month' => 'required|date_format:Y-m',
@@ -124,6 +124,7 @@ class NationalRankingController extends BaseController
                     }
                 }
             }
+
             foreach ($input['individual_quizzes'] as $individualQuiz) {
                 $individualQuiz['date'] = $input['month'] . '-01';
                 $newIndividualQuiz = IndividualQuiz::create($individualQuiz);
@@ -132,7 +133,6 @@ class NationalRankingController extends BaseController
                     IndividualQuizResult::create($result);
                 }
             }
-
             $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')->where('date', $input['month'] . '-01')->get();
             foreach ($individualQuizzes as $individualQuiz) {
                 unset($individualQuiz->date);
@@ -141,6 +141,63 @@ class NationalRankingController extends BaseController
             return $this->sendResponse($individualQuizzes, 201);
         }
 
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function update(Request $request)
+    {
+        if (Auth::user()->hasPermission('national_ranking_edit')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'month' => 'required|date_format:Y-m',
+                'individual_quizzes' => 'required|array',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            
+            foreach ($input['individual_quizzes'] as $individualQuiz) {
+                $individualQuiz['date'] = $input['month'] . '-01';
+                $individualQuizValidator = Validator::make($individualQuiz, [
+                    'individual_quiz_type' => 'required|exists:individual_quiz_types,slug',
+                    'results' => 'required|array',
+                ]);
+                if ($individualQuizValidator->fails()) {
+                    return $this->sendError('validation_error', ['individual_quizzes' => 'validation.format'], 400);
+                }
+                foreach ($individualQuiz['results'] as $result) {
+                    $resultValidator = Validator::make($result, [
+                        'individual_quiz_player_id' => 'required|exists:individual_quiz_players,id',
+                        'result' => 'required|integer',
+                    ]);
+                    if ($resultValidator->fails()) {
+                        return $this->sendError('validation_error', ['individual_quizzes' => 'validation.format'], 400);
+                    }
+                }
+            }
+
+            $oldIndividualQuizzes = IndividualQuiz::where('date', $input['month'].'-01')->get();
+            foreach ($oldIndividualQuizzes as $oldIndividualQuiz) {
+                IndividualQuizResult::where('individual_quiz_id', $oldIndividualQuiz->id)->delete();
+                $oldIndividualQuiz->delete();
+            }         
+            foreach ($input['individual_quizzes'] as $individualQuiz) {
+                $individualQuiz['date'] = $input['month'] . '-01';
+                $newIndividualQuiz = IndividualQuiz::create($individualQuiz);
+                foreach ($individualQuiz['results'] as $result) {
+                    $result['individual_quiz_id'] = $newIndividualQuiz->id;
+                    IndividualQuizResult::create($result);
+                }
+            }
+            $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')->where('date', $input['month'] . '-01')->get();
+            foreach ($individualQuizzes as $individualQuiz) {
+                $individualQuiz->results = $individualQuiz->results;
+                unset($individualQuiz->date);
+                unset($individualQuiz->id);
+            }
+            return $this->sendResponse($individualQuizzes, 201);
+        }
         return $this->sendError('no_permissions', [], 403);
     }
 
