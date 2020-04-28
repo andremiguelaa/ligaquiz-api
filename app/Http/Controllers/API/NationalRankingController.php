@@ -135,8 +135,9 @@ class NationalRankingController extends BaseController
             }
             $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')->where('date', $input['month'] . '-01')->get();
             foreach ($individualQuizzes as $individualQuiz) {
-                unset($individualQuiz->date);
                 $individualQuiz->results = $individualQuiz->results;
+                unset($individualQuiz->id);
+                unset($individualQuiz->date);
             }
             return $this->sendResponse($individualQuizzes, 201);
         }
@@ -148,9 +149,14 @@ class NationalRankingController extends BaseController
     {
         if (Auth::user()->hasPermission('national_ranking_edit')) {
             $input = $request::all();
+            $input['date'] = null;
+            if (array_key_exists('month', $input)) {
+                $input['date'] = $input['month'] . '-01';
+            }
             $validator = Validator::make($input, [
                 'month' => 'required|date_format:Y-m',
                 'individual_quizzes' => 'required|array',
+                'date' => 'exists:individual_quizzes,date'
             ]);
 
             if ($validator->fails()) {
@@ -193,8 +199,8 @@ class NationalRankingController extends BaseController
             $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')->where('date', $input['month'] . '-01')->get();
             foreach ($individualQuizzes as $individualQuiz) {
                 $individualQuiz->results = $individualQuiz->results;
-                unset($individualQuiz->date);
                 unset($individualQuiz->id);
+                unset($individualQuiz->date);
             }
             return $this->sendResponse($individualQuizzes, 201);
         }
