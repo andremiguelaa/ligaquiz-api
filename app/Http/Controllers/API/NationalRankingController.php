@@ -45,15 +45,20 @@ class NationalRankingController extends BaseController
                             'individual_quiz_player_id' => $result['individual_quiz_player_id'],
                             'rank' => null,
                             'score' => 0,
-                            'months' => []
+                            'quizzes' => []
                         ];
                     }
                     $acc[$result['individual_quiz_player_id']]->score += $result['score'];
                     $month = substr($individualQuiz['date'], 0, -3);
-                    if (!array_key_exists($month, $acc[$result['individual_quiz_player_id']]->months)) {
-                        $acc[$result['individual_quiz_player_id']]->months[$month] = [];
+                    if (!array_key_exists($month, $acc[$result['individual_quiz_player_id']]->quizzes)) {
+                        $acc[$result['individual_quiz_player_id']]->quizzes[$month] = (object) [];
                     }
-                    array_push($acc[$result['individual_quiz_player_id']]->months[$month], $result);
+                    $result['individual_quiz_id'] = $individualQuiz['id'];
+                    
+                    $playerId = $result['individual_quiz_player_id'];
+                    unset($result['individual_quiz_player_id']);
+                    
+                    $acc[$playerId]->quizzes[$month]->{$individualQuiz['individual_quiz_type']} = $result;
                 }
                 return $acc;
             }, []);
@@ -73,10 +78,11 @@ class NationalRankingController extends BaseController
             $ranking = array_values($rankingPlayers);
 
             $quizzes = array_reduce($individualQuizzes->toArray(), function ($acc, $individualQuiz) {
-                if (!array_key_exists($individualQuiz['date'], $acc)) {
-                    $acc[$individualQuiz['date']] = [];
+                $month = substr($individualQuiz['date'], 0, -3);
+                if (!array_key_exists($individualQuiz['individual_quiz_type'], $acc)) {
+                    $acc[$individualQuiz['individual_quiz_type']] = [];
                 }
-                array_push($acc[$individualQuiz['date']], $individualQuiz['individual_quiz_type']);
+                array_push($acc[$individualQuiz['individual_quiz_type']], $month);
                 return $acc;
             }, []);
 
@@ -184,7 +190,7 @@ class NationalRankingController extends BaseController
             foreach ($oldIndividualQuizzes as $oldIndividualQuiz) {
                 IndividualQuizResult::where('individual_quiz_id', $oldIndividualQuiz->id)->delete();
                 $oldIndividualQuiz->delete();
-            }         
+            }
             foreach ($input['individual_quizzes'] as $individualQuiz) {
                 $individualQuiz['date'] = $input['month'] . '-01';
                 $newIndividualQuiz = IndividualQuiz::create($individualQuiz);
