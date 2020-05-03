@@ -7,17 +7,30 @@ use Request;
 use Validator;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuizPlayer;
+use App\User;
+use App\Http\Resources\User as UserResource;
 
 class IndividualQuizPlayerController extends BaseController
 {
     public function get()
     {
-        return $this->sendResponse(IndividualQuizPlayer::all(
+        $individualUsers = IndividualQuizPlayer::all(
             'id',
             'name',
             'surname',
             'user_id'
-        ), 200);
+        );
+
+        $individualUsersIds = $individualUsers->pluck('user_id');
+        $users = User::whereIn('id', $individualUsersIds)->get();
+
+        return $this->sendResponse(array_map(function ($individualUser) use ($users) {
+            $user = $users->find($individualUser['user_id']);
+            if ($user) {
+                $individualUser['user_id'] = new UserResource($user);
+            }
+            return $individualUser;
+        }, $individualUsers->toArray()), 200);
     }
 
     public function create(Request $request)
