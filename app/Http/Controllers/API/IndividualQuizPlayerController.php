@@ -27,8 +27,9 @@ class IndividualQuizPlayerController extends BaseController
         return $this->sendResponse(array_map(function ($individualUser) use ($users) {
             $user = $users->find($individualUser['user_id']);
             if ($user) {
-                $individualUser['user_id'] = new UserResource($user);
+                $individualUser['info'] = new UserResource($user);
             }
+            unset($individualUser['user_id']);
             return $individualUser;
         }, $individualUsers->toArray()), 200);
     }
