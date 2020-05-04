@@ -64,7 +64,7 @@ class NationalRankingController extends BaseController
             }, []);
 
             usort($rankingPlayers, function ($a, $b) {
-                return strcmp($b->score, $a->score);
+                return $b->score > $a->score;
             });
 
             $rank = 1;
