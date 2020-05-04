@@ -14,12 +14,12 @@ class IndividualQuizPlayerController extends BaseController
 {
     public function get()
     {
-        $individualUsers = IndividualQuizPlayer::all(
+        $individualUsers = IndividualQuizPlayer::select(
             'id',
             'name',
             'surname',
             'user_id'
-        );
+        )->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
 
         $individualUsersIds = $individualUsers->pluck('user_id');
         $users = User::whereIn('id', $individualUsersIds)->get();
@@ -38,7 +38,7 @@ class IndividualQuizPlayerController extends BaseController
     {
         if (Auth::user()->hasPermission('individual_quiz_player_create')) {
             $errors = [];
-            if(!count($request::all())){
+            if (!count($request::all())) {
                 return $this->sendError('validation_error', 'bad_format', 400);
             }
             foreach ($request::all() as $player) {
@@ -47,7 +47,7 @@ class IndividualQuizPlayerController extends BaseController
                     'surname' => 'required|string|max:255',
                     'user_id' => 'exists:users,id|unique:individual_quiz_players',
                 ]);
-                if(count($validator->errors()->getMessages())){
+                if (count($validator->errors()->getMessages())) {
                     array_push($errors, $validator->errors()->getMessages());
                 }
             }
@@ -55,7 +55,7 @@ class IndividualQuizPlayerController extends BaseController
                 return $this->sendError('validation_error', $errors, 400);
             }
             foreach ($request::all() as $player) {
-                IndividualQuizPlayer::create($player);    
+                IndividualQuizPlayer::create($player);
             }
             return $this->sendResponse(null, 201);
         }
