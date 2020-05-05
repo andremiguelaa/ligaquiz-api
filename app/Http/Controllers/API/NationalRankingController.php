@@ -40,28 +40,45 @@ class NationalRankingController extends BaseController
 
             $rankingPlayers = array_reduce($individualQuizzes->toArray(), function ($acc, $individualQuiz) {
                 foreach ($individualQuiz['results'] as $result) {
-                    if (!array_key_exists($result['individual_quiz_player_id'], $acc)) {
-                        $acc[$result['individual_quiz_player_id']] = (object) [
-                            'individual_quiz_player_id' => $result['individual_quiz_player_id'],
+                    $playerId = $result['individual_quiz_player_id'];
+                    if (!array_key_exists($playerId, $acc)) {
+                        $acc[$playerId] = (object) [
+                            'individual_quiz_player_id' => $playerId,
                             'rank' => null,
-                            'score' => 0,
-                            'quizzes' => []
+                            'sum' => 0,
+                            'quizzes' => [],
+                            'resultsByQuizType' => []
                         ];
                     }
-                    $acc[$result['individual_quiz_player_id']]->score += $result['score'];
+                    $acc[$playerId]->sum += $result['score'];
                     $month = substr($individualQuiz['date'], 0, -3);
-                    if (!array_key_exists($month, $acc[$result['individual_quiz_player_id']]->quizzes)) {
-                        $acc[$result['individual_quiz_player_id']]->quizzes[$month] = (object) [];
+                    if (!array_key_exists($month, $acc[$playerId]->quizzes)) {
+                        $acc[$playerId]->quizzes[$month] = (object) [];
                     }
                     $result['individual_quiz_id'] = $individualQuiz['id'];
-                    
-                    $playerId = $result['individual_quiz_player_id'];
                     unset($result['individual_quiz_player_id']);
-                    
                     $acc[$playerId]->quizzes[$month]->{$individualQuiz['individual_quiz_type']} = $result;
+
+                    if (!array_key_exists($individualQuiz['individual_quiz_type'], $acc[$playerId]->resultsByQuizType)) {
+                        $acc[$playerId]->resultsByQuizType[$individualQuiz['individual_quiz_type']] = [];
+                    }
+                    array_push($acc[$playerId]->resultsByQuizType[$individualQuiz['individual_quiz_type']], $result['score']);
                 }
                 return $acc;
             }, []);
+
+            foreach ($rankingPlayers as $player) {
+                $validResults = array_reduce($player->resultsByQuizType, function ($acc, $results) {
+                    arsort($results);
+                    $bestFive = array_slice($results, 0, 5);
+                    $acc = array_merge($acc, $bestFive);
+                    return $acc;
+                }, []);
+                arsort($validResults);
+                $bestTen = array_slice($validResults, 0, 10);
+                $player->score = array_sum($bestTen);
+                unset($player->resultsByQuizType);
+            }
 
             usort($rankingPlayers, function ($a, $b) {
                 return $b->score > $a->score;
