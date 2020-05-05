@@ -41,6 +41,7 @@ class NationalRankingController extends BaseController
             $rankingPlayers = array_reduce($individualQuizzes->toArray(), function ($acc, $individualQuiz) {
                 foreach ($individualQuiz['results'] as $result) {
                     $playerId = $result['individual_quiz_player_id'];
+                    $quizType = $individualQuiz['individual_quiz_type'];
                     if (!array_key_exists($playerId, $acc)) {
                         $acc[$playerId] = (object) [
                             'individual_quiz_player_id' => $playerId,
@@ -52,17 +53,17 @@ class NationalRankingController extends BaseController
                     }
                     $acc[$playerId]->sum += $result['score'];
                     $month = substr($individualQuiz['date'], 0, -3);
-                    if (!array_key_exists($month, $acc[$playerId]->quizzes)) {
-                        $acc[$playerId]->quizzes[$month] = (object) [];
+                    if (!array_key_exists($quizType, $acc[$playerId]->quizzes)) {
+                        $acc[$playerId]->quizzes[$quizType] = (object) [];
                     }
                     $result['individual_quiz_id'] = $individualQuiz['id'];
                     unset($result['individual_quiz_player_id']);
-                    $acc[$playerId]->quizzes[$month]->{$individualQuiz['individual_quiz_type']} = $result;
+                    $acc[$playerId]->quizzes[$quizType]->{$month} = $result;
 
-                    if (!array_key_exists($individualQuiz['individual_quiz_type'], $acc[$playerId]->resultsByQuizType)) {
-                        $acc[$playerId]->resultsByQuizType[$individualQuiz['individual_quiz_type']] = [];
+                    if (!array_key_exists($quizType, $acc[$playerId]->resultsByQuizType)) {
+                        $acc[$playerId]->resultsByQuizType[$quizType] = [];
                     }
-                    array_push($acc[$playerId]->resultsByQuizType[$individualQuiz['individual_quiz_type']], $result['score']);
+                    array_push($acc[$playerId]->resultsByQuizType[$quizType], $result['score']);
                 }
                 return $acc;
             }, []);
