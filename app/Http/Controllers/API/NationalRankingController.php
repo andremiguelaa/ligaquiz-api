@@ -48,6 +48,7 @@ class NationalRankingController extends BaseController
                             'rank' => null,
                             'sum' => 0,
                             'quizzes' => [],
+                            'quiz_count' => 0,
                             'resultsByQuizType' => []
                         ];
                     }
@@ -59,11 +60,11 @@ class NationalRankingController extends BaseController
                     $result['individual_quiz_id'] = $individualQuiz['id'];
                     unset($result['individual_quiz_player_id']);
                     $acc[$playerId]->quizzes[$quizType]->{$month} = $result;
-
                     if (!array_key_exists($quizType, $acc[$playerId]->resultsByQuizType)) {
                         $acc[$playerId]->resultsByQuizType[$quizType] = [];
                     }
                     array_push($acc[$playerId]->resultsByQuizType[$quizType], $result['score']);
+                    $acc[$playerId]->quiz_count++;
                 }
                 return $acc;
             }, []);
@@ -79,6 +80,7 @@ class NationalRankingController extends BaseController
                 $bestTen = array_slice($validResults, 0, 10);
                 $player->score = array_sum($bestTen);
                 unset($player->resultsByQuizType);
+                $player->average = $player->sum/$player->quiz_count;
             }
 
             usort($rankingPlayers, function ($a, $b) {
@@ -114,7 +116,7 @@ class NationalRankingController extends BaseController
             }, IndividualQuiz::select('date')->distinct()->orderBy('date', 'desc')->get()->toArray());
             $response = array_reduce($all, function ($acc, $month) use ($all) {
                 $yearAgo = Carbon::createFromFormat('Y-m', $month)->subMonths(11)->format('Y-m');
-                if(in_array($yearAgo, $all)){
+                if (in_array($yearAgo, $all)) {
                     array_push($acc, $month);
                 }
                 return $acc;
