@@ -108,6 +108,17 @@ class NationalRankingController extends BaseController
                 'ranking' => $ranking,
                 'quizzes' => $quizzes
             ];
+        } elseif (array_key_exists('complete', $input)) {
+            $all = array_map(function ($individualQuiz) {
+                return substr($individualQuiz['date'], 0, -3);
+            }, IndividualQuiz::select('date')->distinct()->orderBy('date', 'desc')->get()->toArray());
+            $response = array_reduce($all, function ($acc, $month) use ($all) {
+                $yearAgo = Carbon::createFromFormat('Y-m', $month)->subMonths(11)->format('Y-m');
+                if(in_array($yearAgo, $all)){
+                    array_push($acc, $month);
+                }
+                return $acc;
+            }, []);
         } else {
             $response = array_map(function ($individualQuiz) {
                 return substr($individualQuiz['date'], 0, -3);
