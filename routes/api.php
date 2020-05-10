@@ -40,6 +40,7 @@ Route::group([
     Route::get('individual-quiz-types', 'API\IndividualQuizTypeController@get');
 
     Route::post('individual-quiz-players', 'API\IndividualQuizPlayerController@create');
+    Route::patch('individual-quiz-players', 'API\IndividualQuizPlayerController@update');
 
     Route::post('national-rankings', 'API\NationalRankingController@create');
     Route::patch('national-rankings', 'API\NationalRankingController@update');

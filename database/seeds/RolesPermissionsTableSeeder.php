@@ -18,6 +18,8 @@ class RolesPermissionsTableSeeder extends Seeder
                     'national_ranking_edit' => true,
                     'national_ranking_delete' => true,
                     'individual_quiz_player_create' => true,
+                    'individual_quiz_player_edit' => true,
+                    'individual_quiz_player_delete' => true,
                     'user_list' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
