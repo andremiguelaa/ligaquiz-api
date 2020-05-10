@@ -38,7 +38,7 @@ class IndividualQuizPlayerController extends BaseController
     {
         if (Auth::user()->hasPermission('individual_quiz_player_create')) {
             $errors = [];
-            if (!count($request::all())) {
+            if (!count($request::all()) || !isset($request::all()[0])) {
                 return $this->sendError('validation_error', 'bad_format', 400);
             }
             foreach ($request::all() as $player) {
