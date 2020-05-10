@@ -7,6 +7,7 @@ use Request;
 use Validator;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuizPlayer;
+use App\IndividualQuizResult;
 use App\User;
 use App\Http\Resources\User as UserResource;
 
@@ -90,6 +91,28 @@ class IndividualQuizPlayerController extends BaseController
                 $dbPlayer->user_id = null;
                 $dbPlayer->fill($player);
                 $dbPlayer->save();
+            }
+            return $this->sendResponse();
+        }
+
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function delete(Request $request)
+    {
+        if (Auth::user()->hasPermission('individual_quiz_player_delete')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'id' => 'required|exists:individual_quiz_players,id',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            if (!IndividualQuizResult::where('individual_quiz_player_id', $input['id'])->count()) {
+                IndividualQuizPlayer::find($input['id'])->delete();
+            }
+            else {
+                return $this->sendError('player_with_results', [], 400);
             }
             return $this->sendResponse();
         }

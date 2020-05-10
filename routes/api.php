@@ -41,6 +41,7 @@ Route::group([
 
     Route::post('individual-quiz-players', 'API\IndividualQuizPlayerController@create');
     Route::patch('individual-quiz-players', 'API\IndividualQuizPlayerController@update');
+    Route::delete('individual-quiz-players', 'API\IndividualQuizPlayerController@delete');
 
     Route::post('national-rankings', 'API\NationalRankingController@create');
     Route::patch('national-rankings', 'API\NationalRankingController@update');
