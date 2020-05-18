@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Auth;
 use Request;
+use Validator;
 use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\IndividualQuiz;
+use App\NationalRanking;
 
 class NationalRankingController extends BaseController
 {
@@ -107,22 +110,52 @@ class NationalRankingController extends BaseController
                 'ranking' => $ranking,
                 'quizzes' => $quizzes
             ];
-        } elseif (array_key_exists('complete', $input)) {
-            $all = array_map(function ($individualQuiz) {
-                return substr($individualQuiz['date'], 0, -3);
-            }, IndividualQuiz::select('date')->distinct()->orderBy('date', 'desc')->get()->toArray());
-            $response = array_reduce($all, function ($acc, $month) use ($all) {
-                $yearAgo = Carbon::createFromFormat('Y-m', $month)->subMonths(11)->format('Y-m');
-                if (in_array($yearAgo, $all)) {
-                    array_push($acc, $month);
-                }
-                return $acc;
-            }, []);
         } else {
-            $response = array_map(function ($individualQuiz) {
-                return substr($individualQuiz['date'], 0, -3);
-            }, IndividualQuiz::select('date')->distinct()->orderBy('date', 'desc')->get()->toArray());
+            $response = array_map(function ($ranking) {
+                return substr($ranking['date'], 0, -3);
+            }, NationalRanking::orderBy('date', 'desc')->get()->toArray());
         }
         return $this->sendResponse($response, 200);
+    }
+
+    public function create(Request $request)
+    {
+        if (Auth::user()->hasPermission('national_ranking_create')) {
+            $input = $request::all();
+            if (array_key_exists('month', $input)) {
+                $input['month'] = $input['month'].'-01';
+            }
+            $validator = Validator::make($input, [
+                'month' => 'required|date_format:Y-m-d|unique:national_rankings,date',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $input['date'] = $input['month'];
+            NationalRanking::create($input);
+            return $this->sendResponse(null, 201);
+        }
+
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function delete(Request $request)
+    {
+        if (Auth::user()->hasPermission('national_ranking_delete')) {
+            $input = $request::all();
+            if (array_key_exists('month', $input)) {
+                $input['month'] = $input['month'].'-01';
+            }
+            $validator = Validator::make($input, [
+                'month' => 'required|exists:national_rankings,date',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            NationalRanking::where('date', $input['month'])->delete();
+            return $this->sendResponse();
+        }
+
+        return $this->sendError('no_permissions', [], 403);
     }
 }
