@@ -15,10 +15,10 @@ class CreateNotificationsTable extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->string('content');
+            $table->text('content');
             $table->enum('type', ['info', 'warning', 'danger']);
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->timestamp('start_date');
+            $table->timestamp('end_date');
             $table->timestamps();
         });
     }

@@ -57,17 +57,17 @@ class PermissionsTableSeeder extends Seeder
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
             [
-                'slug' => 'notifications_create',
+                'slug' => 'notification_create',
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
             [
-                'slug' => 'notifications_edit',
+                'slug' => 'notification_edit',
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
             [
-                'slug' => 'notifications_delete',
+                'slug' => 'notification_delete',
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],

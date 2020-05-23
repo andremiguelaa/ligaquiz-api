@@ -49,4 +49,9 @@ Route::group([
 
     Route::post('national-rankings', 'API\NationalRankingController@create');
     Route::delete('national-rankings', 'API\NationalRankingController@delete');
+
+    Route::get('notifications', 'API\NotificationController@get');
+    Route::post('notifications', 'API\NotificationController@create');
+    Route::patch('notifications', 'API\NotificationController@update');
+    Route::delete('notifications', 'API\NotificationController@delete');
 });
