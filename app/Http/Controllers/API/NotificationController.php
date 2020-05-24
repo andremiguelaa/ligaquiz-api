@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Support\Facades\Auth;
 use Request;
 use Validator;
+use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Notification;
 
@@ -12,7 +13,15 @@ class NotificationController extends BaseController
 {
     public function get(Request $request)
     {
-        $notifications = Notification::all();
+        if (Auth::user()->hasPermission('notifications_list')) {
+            $notifications = Notification::orderBy('start_date', 'desc')->get();
+        } else {
+            $now = Carbon::now();
+            $notifications = Notification::whereDate('start_date', '<', $now)
+                ->whereDate('end_date', '>', $now)
+                ->orderBy('start_date', 'desc')
+                ->get();
+        }
         return $this->sendResponse($notifications, 200);
     }
 
@@ -24,7 +33,7 @@ class NotificationController extends BaseController
                 'content' => 'required|string',
                 'type' => 'required|in:info,warning,danger',
                 'start_date' => 'required|date_format:Y-m-d H:i:s',
-                'end_date' => 'required|date_format:Y-m-d H:i:s',
+                'end_date' => 'required|date_format:Y-m-d H:i:s|after:start_date',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -45,7 +54,7 @@ class NotificationController extends BaseController
                 'content' => 'string',
                 'type' => 'in:info,warning,danger',
                 'start_date' => 'date_format:Y-m-d H:i:s',
-                'end_date' => 'date_format:Y-m-d H:i:s',
+                'end_date' => 'date_format:Y-m-d H:i:s|after:start_date',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
