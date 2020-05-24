@@ -13,12 +13,16 @@ class NotificationController extends BaseController
 {
     public function get(Request $request)
     {
-        if (Auth::user()->hasPermission('notifications_list')) {
+        $current = false;
+        if (array_key_exists('current', $request::all())) {
+            $current = true;
+        }
+        if (Auth::user()->hasPermission('notifications_list') && !$current) {
             $notifications = Notification::orderBy('start_date', 'desc')->get();
         } else {
             $now = Carbon::now();
-            $notifications = Notification::whereDate('start_date', '<', $now)
-                ->whereDate('end_date', '>', $now)
+            $notifications = Notification::where('start_date', '<', $now)
+                ->where('end_date', '>', $now)
                 ->orderBy('start_date', 'desc')
                 ->get();
         }
