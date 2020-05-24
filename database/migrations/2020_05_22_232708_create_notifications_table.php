@@ -17,8 +17,8 @@ class CreateNotificationsTable extends Migration
             $table->id();
             $table->text('content');
             $table->enum('type', ['info', 'warning', 'danger']);
-            $table->timestamp('start_date');
-            $table->timestamp('end_date');
+            $table->timestamp('start_date')->nullable();
+            $table->timestamp('end_date')->nullable();
             $table->timestamps();
         });
     }
