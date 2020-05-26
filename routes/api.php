@@ -29,12 +29,12 @@ Route::group([
 ], function () {
     Route::patch('session', 'API\UserController@renew');
     Route::delete('session', 'API\UserController@logout');
+    Route::patch('users', 'API\UserController@update');
 
     Route::group([
         'middleware' => 'blocked',
     ], function () {
         Route::get('users', 'API\UserController@get');
-        Route::patch('users', 'API\UserController@update');
 
         Route::get('roles', 'API\RoleController@get');
 
