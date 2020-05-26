@@ -20,6 +20,11 @@ class User extends Authenticatable
         'password', 'avatar', 'created_at', 'updated_at'
     ];
 
+    protected $casts = [
+        'roles' => 'array',
+        'reminders' => 'array',
+    ];
+
     protected $appends = ['avatar_url'];
 
     public function getAvatarUrlAttribute()
@@ -33,13 +38,18 @@ class User extends Authenticatable
 
     public function isAdmin()
     {
-        return isset(json_decode($this->roles)->admin);
+        return isset($this->roles['admin']);
+    }
+
+    public function isBlocked()
+    {
+        return isset($this->roles['blocked']);
     }
 
     public function getRoles()
     {
         if ($this->roles) {
-            $roles = get_object_vars(json_decode($this->roles));
+            $roles = get_object_vars($this->roles);
             return array_keys(array_filter($roles, function ($roleValue) {
                 if ($roleValue === true || Carbon::now()->lessThanOrEqualTo(Carbon::createFromFormat('Y-m-d', $roleValue))) {
                     return true;

@@ -30,28 +30,32 @@ Route::group([
     Route::patch('session', 'API\UserController@renew');
     Route::delete('session', 'API\UserController@logout');
 
-    Route::get('users', 'API\UserController@get');
-    Route::patch('users', 'API\UserController@update');
+    Route::group([
+        'middleware' => 'blocked',
+    ], function () {
+        Route::get('users', 'API\UserController@get');
+        Route::patch('users', 'API\UserController@update');
 
-    Route::get('roles', 'API\RoleController@get');
+        Route::get('roles', 'API\RoleController@get');
 
-    Route::get('permissions', 'API\PermissionController@get');
+        Route::get('permissions', 'API\PermissionController@get');
 
-    Route::get('individual-quiz-types', 'API\IndividualQuizTypeController@get');
+        Route::get('individual-quiz-types', 'API\IndividualQuizTypeController@get');
 
-    Route::post('individual-quiz-players', 'API\IndividualQuizPlayerController@create');
-    Route::patch('individual-quiz-players', 'API\IndividualQuizPlayerController@update');
-    Route::delete('individual-quiz-players', 'API\IndividualQuizPlayerController@delete');
+        Route::post('individual-quiz-players', 'API\IndividualQuizPlayerController@create');
+        Route::patch('individual-quiz-players', 'API\IndividualQuizPlayerController@update');
+        Route::delete('individual-quiz-players', 'API\IndividualQuizPlayerController@delete');
 
-    Route::post('individual-quizzes', 'API\IndividualQuizController@create');
-    Route::patch('individual-quizzes', 'API\IndividualQuizController@update');
-    Route::delete('individual-quizzes', 'API\IndividualQuizController@delete');
+        Route::post('individual-quizzes', 'API\IndividualQuizController@create');
+        Route::patch('individual-quizzes', 'API\IndividualQuizController@update');
+        Route::delete('individual-quizzes', 'API\IndividualQuizController@delete');
 
-    Route::post('national-rankings', 'API\NationalRankingController@create');
-    Route::delete('national-rankings', 'API\NationalRankingController@delete');
+        Route::post('national-rankings', 'API\NationalRankingController@create');
+        Route::delete('national-rankings', 'API\NationalRankingController@delete');
 
-    Route::get('notifications', 'API\NotificationController@get');
-    Route::post('notifications', 'API\NotificationController@create');
-    Route::patch('notifications', 'API\NotificationController@update');
-    Route::delete('notifications', 'API\NotificationController@delete');
+        Route::get('notifications', 'API\NotificationController@get');
+        Route::post('notifications', 'API\NotificationController@create');
+        Route::patch('notifications', 'API\NotificationController@update');
+        Route::delete('notifications', 'API\NotificationController@delete');
+    });
 });
