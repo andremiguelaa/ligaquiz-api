@@ -170,8 +170,12 @@ class UserController extends BaseController
     {
         $input = $request::all();
 
+        if (!Auth::user()->isAdmin() && array_key_exists('roles', $input)) {
+            return $this->sendError('no_permissions', [], 403);
+        }
+
         if (Auth::user()->hasPermission('user_edit') || Auth::id() === $input['id']) {
-            $validator = Validator::make($request::all(), [
+            $validator = Validator::make($input, [
                 'id' => 'required|exists:users,id',
                 'name' => 'string|max:255',
                 'surname' => 'string|max:255',
@@ -181,14 +185,14 @@ class UserController extends BaseController
                     Rule::unique('users')->ignore($input['id']),
                 ],
                 'password' => 'string|min:6|max:255',
-                'roles' => 'json',
+                'roles' => 'array',
                 'avatar' => 'base64image|base64max:200',
-                'reminders' => 'json',
+                'reminders' => 'array',
             ]);
             $validRoles = true;
             if (array_key_exists('roles', $input)) {
-                foreach (get_object_vars(json_decode($input['roles'])) as $role) {
-                    if (!($role === true || strtotime($role) && Carbon::now() < Carbon::createFromFormat('Y-m-d', $role)->endOfDay())) {
+                foreach ($input['roles'] as $role) {
+                    if (!($role === true || strtotime($role))) {
                         $validRoles = false;
                     }
                 }
@@ -203,18 +207,6 @@ class UserController extends BaseController
             $user = User::find($input['id']);
             if (isset($input['password'])) {
                 $input['password'] = bcrypt($input['password']);
-            }
-            if (Auth::user()->hasPermission('user_edit') && !Auth::user()->isAdmin()) {
-                $authUserRoles = Auth::user()->getRoles();
-                $currentUserRoles = $user->getRoles();
-                $permittedRoles = array_merge($authUserRoles, $currentUserRoles);
-                $inputRoles = array_keys(get_object_vars(json_decode($input['roles'])));
-                if (count(array_intersect($permittedRoles, $inputRoles)) < count($inputRoles)) {
-                    return $this->sendError('no_permissions', [], 403);
-                }
-            }
-            if (Auth::id() === $input['id'] && !Auth::user()->isAdmin()) {
-                unset($input['roles']);
             }
             if (isset($input['avatar'])) {
                 if ($user->avatar) {

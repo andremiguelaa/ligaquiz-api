@@ -49,8 +49,7 @@ class User extends Authenticatable
     public function getRoles()
     {
         if ($this->roles) {
-            $roles = get_object_vars($this->roles);
-            return array_keys(array_filter($roles, function ($roleValue) {
+            return array_keys(array_filter($this->roles, function ($roleValue) {
                 if ($roleValue === true || Carbon::now()->lessThanOrEqualTo(Carbon::createFromFormat('Y-m-d', $roleValue))) {
                     return true;
                 }
