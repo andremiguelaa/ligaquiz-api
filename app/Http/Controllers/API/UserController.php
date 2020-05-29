@@ -157,6 +157,7 @@ class UserController extends BaseController
             $user_ids = explode(',', $request::get('id'));
             $users = User::with('individual_quiz_player')
                 ->with('individual_quiz_results')
+                ->with('individual_quiz_results.individual_quiz')
                 ->whereIn('id', $user_ids)
                 ->get();
             if (count($user_ids) !== $users->count()) {

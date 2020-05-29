@@ -17,8 +17,9 @@ class IndividualQuizResult extends JsonResource
     public function toArray($request)
     {
         return [
-            'individual_quiz_id' => $this->individual_quiz_id,
             'result' => $this->result,
+            'individual_quiz_type' => $this->individual_quiz->individual_quiz_type,
+            'month' => substr($this->individual_quiz->date, 0, -3)
         ];
     }
 }
