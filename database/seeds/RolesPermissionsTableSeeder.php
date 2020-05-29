@@ -20,7 +20,6 @@ class RolesPermissionsTableSeeder extends Seeder
                     'individual_quiz_player_create' => true,
                     'individual_quiz_player_edit' => true,
                     'individual_quiz_player_delete' => true,
-                    'user_list' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
