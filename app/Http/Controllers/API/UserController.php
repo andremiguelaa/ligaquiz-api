@@ -42,6 +42,9 @@ class UserController extends BaseController
         $success['expires_at'] = Carbon::parse(
             $tokenResult->token->expires_at
         )->toDateTimeString();
+        $user = $user->toArray();
+        $user['avatar'] = $user['avatar_url'];
+        unset($user['avatar_url']);
         $success['user'] = $user;
 
         return $this->sendResponse($success);
@@ -61,6 +64,9 @@ class UserController extends BaseController
                 $tokenResult->token->expires_at
             )->toDateTimeString();
         }
+        $user = $user->toArray();
+        $user['avatar'] = $user['avatar_url'];
+        unset($user['avatar_url']);
         $success['user'] = $user;
 
         return $this->sendResponse($success);
