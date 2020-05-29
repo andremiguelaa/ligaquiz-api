@@ -7,6 +7,8 @@ use Laravel\Passport\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Storage;
 use Carbon\Carbon;
+use App\IndividualQuizResult;
+use App\IndividualQuizPlayer;
 
 class User extends Authenticatable
 {
@@ -34,6 +36,16 @@ class User extends Authenticatable
         }
 
         return null;
+    }
+
+    public function individual_quiz_player()
+    {
+        return $this->hasOne('App\IndividualQuizPlayer');
+    }
+
+    public function individual_quiz_results()
+    {
+        return $this->hasManyThrough('App\IndividualQuizResult', 'App\IndividualQuizPlayer');
     }
 
     public function isAdmin()

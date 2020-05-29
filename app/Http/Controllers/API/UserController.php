@@ -144,26 +144,21 @@ class UserController extends BaseController
 
     public function get(Request $request)
     {
-        if (Auth::user()->hasPermission('user_list')) {
-            $partial = false;
-            if (!$request::get('id')) {
-                $users = User::all();
-            } else {
-                $user_ids = explode(',', $request::get('id'));
-                $users = User::whereIn('id', $user_ids)->get();
-                if (count($user_ids) !== $users->count()) {
-                    return $this->sendError('users_not_found', [], 400);
-                }
-                $partial = true;
+        $partial = false;
+        if (!$request::get('id')) {
+            $users = User::all();
+        } else {
+            $user_ids = explode(',', $request::get('id'));
+            $users = User::with('individual_quiz_player')
+                ->with('individual_quiz_results')
+                ->whereIn('id', $user_ids)
+                ->get();
+            if (count($user_ids) !== $users->count()) {
+                return $this->sendError('users_not_found', [], 400);
             }
-            if (Auth::user()->hasPermission('user_edit')) {
-                return $this->sendResponse($users, $partial ? 206 : 200);
-            }
-
-            return $this->sendResponse(UserResource::collection($users), $partial ? 206 : 200);
+            $partial = true;
         }
-
-        return $this->sendError('no_permissions', [], 403);
+        return $this->sendResponse(UserResource::collection($users), $partial ? 206 : 200);
     }
 
     public function update(Request $request)
