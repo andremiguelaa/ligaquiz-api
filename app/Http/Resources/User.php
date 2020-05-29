@@ -23,6 +23,9 @@ class User extends JsonResource
             'surname' => $this->surname,
             'avatar' => $this->getAvatarUrlAttribute(),
         ];
+        if(!$user['avatar']){
+            unset($user['avatar']);
+        }
         if ($request->get('id')) {
             if ($this->individual_quiz_player) {
                 $user['individual_quiz_player_id'] = $this->individual_quiz_player['id'];
@@ -31,7 +34,7 @@ class User extends JsonResource
                 $user['individual_quiz_results'] = IndividualQuizResultResource::collection($this->individual_quiz_results);
             }
         }
-        if (Auth::user()->isAdmin()) {
+        if (Auth::user() && Auth::user()->isAdmin()) {
             $user['email'] = $this->email;
             $user['roles'] = $this->roles;
             $user['reminders'] = $this->reminders;
