@@ -30,10 +30,10 @@ class UserController extends BaseController
             return $this->sendError('validation_error', $validator->errors(), 400);
         }
         $credentials = request(['email', 'password']);
-        if (!Auth::attempt($credentials)) {
+        if (!Auth::guard('web')->attempt($credentials)) {
             return $this->sendError('wrong_credentials', [], 401);
         }
-        $user = $request::user();
+        $user = Auth::guard('web')->user();
         $tokenResult = $user->createToken('Personal Access Token');
         $success['access_token'] = $tokenResult->accessToken;
         $success['token_type'] = 'Bearer';
