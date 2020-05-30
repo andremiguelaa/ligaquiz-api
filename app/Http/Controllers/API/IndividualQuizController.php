@@ -44,7 +44,7 @@ class IndividualQuizController extends BaseController
             }
         }
 
-        $individualQuizzes = $query->orderBy('date')->get();
+        $individualQuizzes = $query->orderBy('date', 'desc')->get();
 
         foreach ($individualQuizzes as $individualQuiz) {
             $individualQuiz->month = substr($individualQuiz->date, 0, -3);
