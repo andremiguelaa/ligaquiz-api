@@ -43,11 +43,6 @@ class User extends Authenticatable
         return $this->hasOne('App\IndividualQuizPlayer');
     }
 
-    public function individual_quiz_results()
-    {
-        return $this->hasManyThrough('App\IndividualQuizResult', 'App\IndividualQuizPlayer');
-    }
-
     public function isAdmin()
     {
         return isset($this->roles['admin']);
