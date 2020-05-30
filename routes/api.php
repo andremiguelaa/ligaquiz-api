@@ -23,6 +23,7 @@ Route::post('users', 'API\UserController@register');
 Route::get('national-rankings', 'API\NationalRankingController@get');
 Route::get('individual-quiz-players', 'API\IndividualQuizPlayerController@get');
 Route::get('individual-quizzes', 'API\IndividualQuizController@get');
+Route::get('users', 'API\UserController@get');
 
 Route::group([
     'middleware' => 'auth:api',
@@ -34,8 +35,6 @@ Route::group([
     Route::group([
         'middleware' => 'blocked',
     ], function () {
-        Route::get('users', 'API\UserController@get');
-
         Route::get('roles', 'API\RoleController@get');
 
         Route::get('permissions', 'API\PermissionController@get');
