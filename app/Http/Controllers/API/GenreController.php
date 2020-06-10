@@ -8,6 +8,22 @@ class GenreController extends BaseController
 {
     public function get()
     {
-        return $this->sendResponse(Genre::all(), 200);
+        $genres = Genre::all();
+        $baseGenres = $genres->where('parent_id', null);
+        $nestedGenres = array_reduce($baseGenres->toArray(), function ($acc, $genre) use ($genres) {
+            array_push($acc, (object) [
+                'id' => $genre['id'],
+                'slug' => $genre['slug'],
+                'subgenres' => array_values(
+                    $genres
+                        ->where('parent_id', $genre['id'])
+                        ->map
+                        ->only(['id', 'slug', 'target'])
+                        ->toArray()
+                )
+            ]);
+            return $acc;
+        }, []);
+        return $this->sendResponse($nestedGenres, 200);
     }
 }
