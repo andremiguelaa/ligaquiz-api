@@ -56,5 +56,7 @@ Route::group([
         Route::post('notifications', 'API\NotificationController@create');
         Route::patch('notifications', 'API\NotificationController@update');
         Route::delete('notifications', 'API\NotificationController@delete');
+
+        Route::get('genres', 'API\GenreController@get');
     });
 });
