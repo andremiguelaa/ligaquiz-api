@@ -24,14 +24,13 @@ class RolesPermissionsTableSeeder extends Seeder
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ],
-            /*
             [
                 'role' => 'quiz_editor',
                 'permissions' => json_encode((object) [
-                    'quiz_list' => true,
                     'quiz_create' => true,
                     'quiz_edit' => true,
-                    'question_search' => true,
+                    'quiz_delete' => true,
+                    'quiz_correct' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
@@ -39,10 +38,10 @@ class RolesPermissionsTableSeeder extends Seeder
             [
                 'role' => 'specialquiz_editor',
                 'permissions' => json_encode((object) [
-                    'specialquiz_list' => true,
                     'specialquiz_create' => true,
                     'specialquiz_edit' => true,
-                    'user_list' => true,
+                    'specialquiz_delete' => true,
+                    'specialquiz_correct' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
@@ -50,8 +49,6 @@ class RolesPermissionsTableSeeder extends Seeder
             [
                 'role' => 'regular_player',
                 'permissions' => json_encode((object) [
-                    'league_list' => true,
-                    'quiz_list' => true,
                     'quiz_play' => true,
                     'specialquiz_play' => true,
                 ]),
@@ -61,13 +58,11 @@ class RolesPermissionsTableSeeder extends Seeder
             [
                 'role' => 'specialquiz_player',
                 'permissions' => json_encode((object) [
-                    'specialquiz_list' => true,
                     'specialquiz_play' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
             ],
-            */
         ]);
     }
 }
