@@ -63,5 +63,10 @@ Route::group([
         Route::post('quizzes', 'API\QuizController@create');
         Route::patch('quizzes', 'API\QuizController@update');
         Route::delete('quizzes', 'API\QuizController@delete');
+
+        Route::get('special-quizzes', 'API\SpecialQuizController@get');
+        Route::post('special-quizzes', 'API\SpecialQuizController@create');
+        Route::patch('special-quizzes', 'API\SpecialQuizController@update');
+        Route::delete('special-quizzes', 'API\SpecialQuizController@delete');
     });
 });

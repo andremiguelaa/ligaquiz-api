@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Question;
 
 class SpecialQuiz extends Model
 {
@@ -14,7 +15,16 @@ class SpecialQuiz extends Model
         'description',
     ];
 
-    protected $hidden = [
-        'created_at', 'updated_at'
+    protected $casts = [
+        'question_ids' => 'array',
     ];
+
+    protected $hidden = [
+        'question_ids', 'created_at', 'updated_at'
+    ];
+
+    public function getQuestions()
+    {
+        return Question::whereIn('id', $this->question_ids)->get();
+    }
 }
