@@ -58,5 +58,10 @@ Route::group([
         Route::delete('notifications', 'API\NotificationController@delete');
 
         Route::get('genres', 'API\GenreController@get');
+
+        Route::get('quizzes', 'API\QuizController@get');
+        Route::post('quizzes', 'API\QuizController@create');
+        Route::patch('quizzes', 'API\QuizController@update');
+        Route::delete('quizzes', 'API\QuizController@delete');
     });
 });
