@@ -7,19 +7,16 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class Quiz extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return array
-     */
     public function toArray($request)
     {
         $quiz = [
             'date' => $this->date
         ];
-        if (Auth::user()->hasPermission('quiz_create')) {
+        if (
+            Auth::user()->hasPermission('quiz_create') ||
+            Auth::user()->hasPermission('quiz_edit') ||
+            Auth::user()->hasPermission('quiz_play')
+        ) {
             $quiz['questions'] = $this->getQuestions();
         };
         return $quiz;

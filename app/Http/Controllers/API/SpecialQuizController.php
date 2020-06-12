@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Support\Facades\Auth;
 use Request;
 use Validator;
+use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\SpecialQuiz;
 use App\Question;
@@ -12,10 +13,47 @@ use App\Http\Resources\SpecialQuiz as SpecialQuizResource;
 
 class SpecialQuizController extends BaseController
 {
-    public function get()
+    public function get(Request $request)
     {
-        if (Auth::user()->hasPermission('specialquiz_create') || Auth::user()->hasPermission('specialquiz_play')) {
-            return $this->sendResponse(SpecialQuiz::all(), 200);
+        $input = $request::all();
+        if (
+            Auth::user()->hasPermission('specialquiz_create') ||
+            Auth::user()->hasPermission('specialquiz_edit') ||
+            Auth::user()->hasPermission('specialquiz_delete')
+        ) {
+            if (array_key_exists('date', $input)) {
+                $validator = Validator::make($input, [
+                    'date' => 'date_format:Y-m-d',
+                ]);
+                if ($validator->fails()) {
+                    return $this->sendError('validation_error', $validator->errors(), 400);
+                }
+                $quiz = SpecialQuiz::where('date', $input['date'])->first();
+                if ($quiz) {
+                    return $this->sendResponse(new SpecialQuizResource($quiz), 200);
+                }
+                return $this->sendError('not_found', [], 404);
+            } else {
+                return $this->sendResponse(SpecialQuiz::all(), 200);
+            }
+        } elseif (Auth::user()->hasPermission('specialquiz_play')) {
+            $now = Carbon::now();
+            if (array_key_exists('date', $input)) {
+                $validator = Validator::make($input, [
+                    'date' => 'date_format:Y-m-d',
+                ]);
+                if ($validator->fails()) {
+                    return $this->sendError('validation_error', $validator->errors(), 400);
+                }
+                $quiz = SpecialQuiz::where('date', '<=', $now)->where('date', $input['date'])->first();
+                if ($quiz) {
+                    return $this->sendResponse(new SpecialQuizResource($quiz), 200);
+                }
+                return $this->sendError('not_found', [], 404);
+            } else {
+                $quizzes = Quiz::where('date', '<=', $now)->get();
+                return $this->sendResponse($quizzes, 200);
+            }
         }
         return $this->sendError('no_permissions', [], 403);
     }

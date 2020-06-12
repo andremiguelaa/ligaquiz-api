@@ -7,13 +7,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class SpecialQuiz extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return array
-     */
     public function toArray($request)
     {
         $specialquiz = [
@@ -22,7 +15,11 @@ class SpecialQuiz extends JsonResource
             'subject' => $this->subject,
             'description' => $this->description,
         ];
-        if (Auth::user()->hasPermission('specialquiz_create')) {
+        if (
+            Auth::user()->hasPermission('specialquiz_create') ||
+            Auth::user()->hasPermission('specialquiz_edit') ||
+            Auth::user()->hasPermission('specialquiz_play')
+        ) {
             $specialquiz['questions'] = $this->getQuestions();
         };
         return $specialquiz;
