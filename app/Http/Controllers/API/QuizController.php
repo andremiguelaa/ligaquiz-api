@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Support\Facades\Auth;
 use Request;
 use Validator;
+use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Quiz;
@@ -13,10 +14,47 @@ use App\Http\Resources\Quiz as QuizResource;
 
 class QuizController extends BaseController
 {
-    public function get()
+    public function get(Request $request)
     {
-        if (Auth::user()->hasPermission('quiz_create') || Auth::user()->hasPermission('quiz_play')) {
-            return $this->sendResponse(Quiz::all(), 200);
+        $input = $request::all();
+        if (
+            Auth::user()->hasPermission('quiz_create') ||
+            Auth::user()->hasPermission('quiz_edit') ||
+            Auth::user()->hasPermission('quiz_delete')
+        ) {
+            if (array_key_exists('date', $input)) {
+                $validator = Validator::make($input, [
+                    'date' => 'date_format:Y-m-d',
+                ]);
+                if ($validator->fails()) {
+                    return $this->sendError('validation_error', $validator->errors(), 400);
+                }
+                $quiz = Quiz::where('date', $input['date'])->first();
+                if ($quiz) {
+                    return $this->sendResponse(new QuizResource($quiz), 200);
+                }
+                return $this->sendError('not_found', [], 404);
+            } else {
+                return $this->sendResponse(Quiz::all(), 200);
+            }
+        } elseif (Auth::user()->hasPermission('quiz_play')) {
+            $now = Carbon::now();
+            if (array_key_exists('date', $input)) {
+                $validator = Validator::make($input, [
+                    'date' => 'date_format:Y-m-d',
+                ]);
+                if ($validator->fails()) {
+                    return $this->sendError('validation_error', $validator->errors(), 400);
+                }
+                $quiz = Quiz::where('date', '<=', $now)->where('date', $input['date'])->first();
+                if ($quiz) {
+                    return $this->sendResponse(new QuizResource($quiz), 200);
+                }
+                return $this->sendError('not_found', [], 404);
+            } else {
+                $quizzes = Quiz::where('date', '<=', $now)->get();
+                return $this->sendResponse($quizzes, 200);
+            }
         }
         return $this->sendError('no_permissions', [], 403);
     }
@@ -35,17 +73,21 @@ class QuizController extends BaseController
             if (array_key_exists('questions', $input)) {
                 foreach ($input['questions'] as $question) {
                     $questionValidator = Validator::make($question, [
-                    'text' => 'string',
-                    'answer' => 'string',
-                    'media' => 'string',
-                    'genre_id' => [
-                        Rule::exists('genres', 'id')->where(function ($query) {
-                            $query->whereNotNull('parent_id');
-                        }),
-                    ],
-                ]);
+                        'text' => 'string',
+                        'answer' => 'string',
+                        'media' => 'string',
+                        'genre_id' => [
+                            Rule::exists('genres', 'id')->where(function ($query) {
+                                $query->whereNotNull('parent_id');
+                            }),
+                        ],
+                    ]);
                     if ($questionValidator->fails()) {
-                        return $this->sendError('validation_error', ['questions' => 'validation.format'], 400);
+                        return $this->sendError(
+                            'validation_error',
+                            ['questions' => 'validation.format'],
+                            400
+                        );
                     }
                 }
             }

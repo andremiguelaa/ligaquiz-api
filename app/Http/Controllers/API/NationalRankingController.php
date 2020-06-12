@@ -17,7 +17,7 @@ class NationalRankingController extends BaseController
         if (array_key_exists('month', $input)) {
             $ranking = NationalRanking::where('date', $input['month'].'-01')->first();
             if (!$ranking) {
-                return $this->sendError('not_found', null, 404);
+                return $this->sendError('not_found', [], 404);
             }
             $response = $ranking->getData();
         } else {
