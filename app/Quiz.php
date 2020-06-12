@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Question;
+use App\Http\Resources\Question as QuestionResource;
 
 class Quiz extends Model
 {
@@ -22,6 +23,7 @@ class Quiz extends Model
 
     public function getQuestions()
     {
-        return Question::whereIn('id', $this->question_ids)->get();
+        $questions = Question::whereIn('id', $this->question_ids)->get();
+        return QuestionResource::collection($questions);
     }
 }

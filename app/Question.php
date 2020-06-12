@@ -9,11 +9,21 @@ class Question extends Model
     protected $fillable = [
         'content',
         'answer',
-        'media',
+        'media_id',
         'genre_id',
     ];
 
     protected $hidden = [
         'created_at', 'updated_at'
     ];
+
+    public function media()
+    {
+        return $this->hasOne('App\Media', 'id', 'media_id');
+    }
+
+    public function genre()
+    {
+        return $this->hasOne('App\Genre', 'id', 'genre_id');
+    }
 }

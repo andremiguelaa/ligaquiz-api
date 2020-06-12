@@ -7,8 +7,6 @@ use Laravel\Passport\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Storage;
 use Carbon\Carbon;
-use App\IndividualQuizResult;
-use App\IndividualQuizPlayer;
 
 class User extends Authenticatable
 {

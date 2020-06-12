@@ -17,7 +17,7 @@ class CreateQuizRelatedTables extends Migration
             $table->bigIncrements('id');
             $table->text('content')->nullable();
             $table->string('answer')->nullable();
-            $table->text('media')->nullable();
+            $table->integer('media_id')->nullable();
             $table->integer('genre_id')->nullable();
             $table->timestamps();
         });
