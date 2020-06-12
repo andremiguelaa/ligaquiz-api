@@ -30,7 +30,6 @@ class RolesPermissionsTableSeeder extends Seeder
                     'quiz_create' => true,
                     'quiz_edit' => true,
                     'quiz_delete' => true,
-                    'quiz_correct' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
@@ -41,7 +40,14 @@ class RolesPermissionsTableSeeder extends Seeder
                     'specialquiz_create' => true,
                     'specialquiz_edit' => true,
                     'specialquiz_delete' => true,
-                    'specialquiz_correct' => true,
+                ]),
+                'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+            ],
+            [
+                'role' => 'answer_reviewer',
+                'permissions' => json_encode((object) [
+                    'answer_correct' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
