@@ -12,7 +12,7 @@ class Question extends JsonResource
         
         $question = [
             'id' => $this->id,
-            'text' => $this->text,
+            'content' => $this->content,
             'answer' => $this->answer,
             'media' => $this->media,
             'genre' => $this->genre

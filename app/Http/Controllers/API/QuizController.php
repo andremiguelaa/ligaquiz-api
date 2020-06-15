@@ -73,7 +73,7 @@ class QuizController extends BaseController
             if (array_key_exists('questions', $input)) {
                 foreach ($input['questions'] as $question) {
                     $questionValidator = Validator::make($question, [
-                        'text' => 'string',
+                        'content' => 'string',
                         'answer' => 'string',
                         'media' => 'string',
                         'genre_id' => [
@@ -97,6 +97,54 @@ class QuizController extends BaseController
                 array_push($input['question_ids'], $question->id);
             }
             $quiz = Quiz::create($input);
+            return $this->sendResponse(new QuizResource($quiz), 200);
+        }
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function update(Request $request)
+    {
+        if (Auth::user()->hasPermission('quiz_edit')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'date' => 'required|date_format:Y-m-d|exists:quizzes,date',
+                'questions' => 'required|array|size:8'
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            if (array_key_exists('questions', $input)) {
+                foreach ($input['questions'] as $question) {
+                    $questionValidator = Validator::make($question, [
+                        'id' => 'required|exists:questions,id',
+                        'content' => 'string',
+                        'answer' => 'string',
+                        'media' => 'string',
+                        'genre_id' => [
+                            Rule::exists('genres', 'id')->where(function ($query) {
+                                $query->whereNotNull('parent_id');
+                            }),
+                        ],
+                    ]);
+                    if ($questionValidator->fails()) {
+                        return $this->sendError(
+                            'validation_error',
+                            ['questions' => 'validation.format'],
+                            400
+                        );
+                    }
+                }
+            }
+            $input['question_ids'] = [];
+            foreach ($input['questions'] as $question) {
+                $updatedQuestion = Question::find($question['id']);
+                $updatedQuestion->fill($question);
+                $updatedQuestion->save();
+                array_push($input['question_ids'], $updatedQuestion->id);
+            }
+            $quiz = Quiz::where('date', $input['date'])->first();
+            $quiz->fill($input);
+            $quiz->save();
             return $this->sendResponse(new QuizResource($quiz), 200);
         }
         return $this->sendError('no_permissions', [], 403);
