@@ -62,13 +62,13 @@ Route::group([
         Route::get('quizzes', 'API\QuizController@get');
         Route::post('quizzes', 'API\QuizController@create');
         Route::patch('quizzes', 'API\QuizController@update');
-        // Route::delete('quizzes', 'API\QuizController@delete');
+        Route::delete('quizzes', 'API\QuizController@delete');
         // Route::post('quizzes/submit', 'API\QuizController@submit');
 
         Route::get('special-quizzes', 'API\SpecialQuizController@get');
         Route::post('special-quizzes', 'API\SpecialQuizController@create');
         Route::patch('special-quizzes', 'API\SpecialQuizController@update');
-        // Route::delete('special-quizzes', 'API\SpecialQuizController@delete');
+        Route::delete('special-quizzes', 'API\SpecialQuizController@delete');
         // Route::post('special-quizzes/submit', 'API\SpecialQuizController@submit');
 
         Route::get('media', 'API\MediaController@get');

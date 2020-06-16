@@ -153,4 +153,21 @@ class QuizController extends BaseController
         }
         return $this->sendError('no_permissions', [], 403);
     }
+
+    public function delete(Request $request)
+    {
+        if (Auth::user()->hasPermission('quiz_delete')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'id' => 'required|exists:quizzes,id',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            Quiz::find($input['id'])->delete();
+            return $this->sendResponse();
+        }
+
+        return $this->sendError('no_permissions', [], 403);
+    }
 }
