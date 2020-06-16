@@ -5,7 +5,6 @@ return [
     'whoops' => 'Whoops!',
     'regards' => 'Regards',
     'trouble' => "If you’re having trouble clicking the \":actionText\" button, copy and paste the URL below\n" . 'into your web browser: [:actionURL](:actionURL)',
-
     'reset_password_subject' => 'Password reset request',
     'reset_password_intro' => 'You are receiving this e-mail because we received a password reset request for your account.',
     'reset_password_button' => 'Reset password',
