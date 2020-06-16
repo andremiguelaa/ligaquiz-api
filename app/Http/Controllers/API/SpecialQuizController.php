@@ -170,4 +170,50 @@ class SpecialQuizController extends BaseController
 
         return $this->sendError('no_permissions', [], 403);
     }
+
+    public function submit(Request $request)
+    {
+        if (Auth::user()->hasPermission('specialquiz_play')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'answers' => 'required|array|size:12'
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $now = Carbon::now()->format('Y-m-d');
+            $quiz = SpecialQuiz::where('date', $now)->first();
+            if(!$quiz){
+                return $this->sendError('no_specialquiz_today', null, 400);
+            }
+            foreach ($input['answers'] as $answer) {
+                $answerValidator = Validator::make($answer, [
+                    'question_id' => 'required|exists:questions,id',
+                    'text' => 'string',
+                    'points' => 'integer|min:0|max:1'
+                ]);
+                if ($answerValidator->fails()) {
+                    return $this->sendError(
+                        'validation_error',
+                        ['answers' => 'validation.format'],
+                        400
+                    );
+                }
+            }
+
+            $diffCount = count(
+                array_diff($quiz->question_ids, array_map(function ($item) {
+                    return $item['question_id'];
+                }, $input['answers']))
+            );
+            if ($diffCount) {
+                return $this->sendError('wrong_specialquiz', null, 400);
+            }
+            
+            // to do: save submitted answers
+            return $this->sendError('work_in_progress', null, 501);
+        }
+
+        return $this->sendError('no_permissions', [], 403);
+    }
 }
