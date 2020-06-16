@@ -75,7 +75,7 @@ Route::group([
         Route::post('media', 'API\MediaController@create');
         Route::delete('media', 'API\MediaController@delete');
 
-        // Route::get('answers', 'API\AnswerController@get');
+        Route::get('answers', 'API\AnswerController@get');
         Route::post('answers', 'API\AnswerController@create');
         Route::patch('answers', 'API\AnswerController@update');
     });
