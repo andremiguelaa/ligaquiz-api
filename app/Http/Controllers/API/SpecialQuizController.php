@@ -113,6 +113,7 @@ class SpecialQuizController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
+            $quiz = SpecialQuiz::find($input['id']);
             if (array_key_exists('questions', $input)) {
                 foreach ($input['questions'] as $question) {
                     $questionValidator = Validator::make($question, [
@@ -125,6 +126,14 @@ class SpecialQuizController extends BaseController
                         return $this->sendError('validation_error', ['questions' => 'validation.format'], 400);
                     }
                 }
+                $diffCount = count(
+                    array_diff($quiz->question_ids, array_map(function ($item) {
+                        return $item['id'];
+                    }, $input['questions']))
+                );
+                if ($quiz->hasAnswers() && $diffCount) {
+                    return $this->sendError('has_answers', null, 400);
+                }
             }
             $input['question_ids'] = [];
             foreach ($input['questions'] as $question) {
@@ -133,7 +142,6 @@ class SpecialQuizController extends BaseController
                 $updatedQuestion->save();
                 array_push($input['question_ids'], $updatedQuestion->id);
             }            
-            $quiz = SpecialQuiz::find($input['id']);
             $quiz->fill($input);
             $quiz->save();
             return $this->sendResponse(new SpecialQuizResource($quiz), 200);
