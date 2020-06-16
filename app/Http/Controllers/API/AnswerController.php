@@ -29,6 +29,12 @@ class AnswerController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
+            if (
+                !Auth::user()->hasPermission('quiz_play') && isset($input['quiz']) ||
+                !Auth::user()->hasPermission('specialquiz_play') && isset($input['special_quiz'])
+            ) {
+                return $this->sendError('no_permissions', [], 403);
+            }
             if (!Auth::user()->hasPermission('answer_correct') && isset($input['user_id'])) {
                 return $this->sendError('no_permissions', [], 403);
             }
@@ -68,6 +74,12 @@ class AnswerController extends BaseController
         ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            if (
+                !Auth::user()->hasPermission('quiz_play') && isset($input['quiz']) ||
+                !Auth::user()->hasPermission('specialquiz_play') && isset($input['special_quiz'])
+            ) {
+                return $this->sendError('no_permissions', [], 403);
             }
             $newAnswer = [
             'question_id' => intval($input['question_id']),
