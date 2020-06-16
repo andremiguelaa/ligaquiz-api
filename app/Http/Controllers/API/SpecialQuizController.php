@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Request;
 use Validator;
 use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\SpecialQuiz;
 use App\Question;
@@ -63,7 +64,7 @@ class SpecialQuizController extends BaseController
         if (Auth::user()->hasPermission('specialquiz_create')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'date' => 'required|date_format:Y-m-d|unique:special_quizzes',
+                'date' => 'date_format:Y-m-d|unique:special_quizzes',
                 'user_id' => 'exists:users,id',
                 'subject' => 'string',
                 'description' => 'string',
@@ -75,7 +76,7 @@ class SpecialQuizController extends BaseController
             if (array_key_exists('questions', $input)) {
                 foreach ($input['questions'] as $question) {
                     $questionValidator = Validator::make($question, [
-                    'text' => 'string',
+                    'content' => 'string',
                     'answer' => 'string',
                     'media' => 'string',
                 ]);
@@ -90,6 +91,51 @@ class SpecialQuizController extends BaseController
                 array_push($input['question_ids'], $question->id);
             }
             $quiz = SpecialQuiz::create($input);
+            return $this->sendResponse(new SpecialQuizResource($quiz), 200);
+        }
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function update(Request $request)
+    {
+        if (Auth::user()->hasPermission('specialquiz_edit')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'date' => [
+                    'date_format:Y-m-d',
+                    Rule::unique('special_quizzes')->ignore($input['id']),
+                ],
+                'user_id' => 'exists:users,id',
+                'subject' => 'string',
+                'description' => 'string',
+                'questions' => 'required|array|size:12'
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            if (array_key_exists('questions', $input)) {
+                foreach ($input['questions'] as $question) {
+                    $questionValidator = Validator::make($question, [
+                    'id' => 'required|exists:questions,id',
+                    'content' => 'string',
+                    'answer' => 'string',
+                    'media' => 'string',
+                ]);
+                    if ($questionValidator->fails()) {
+                        return $this->sendError('validation_error', ['questions' => 'validation.format'], 400);
+                    }
+                }
+            }
+            $input['question_ids'] = [];
+            foreach ($input['questions'] as $question) {
+                $updatedQuestion = Question::find($question['id']);
+                $updatedQuestion->fill($question);
+                $updatedQuestion->save();
+                array_push($input['question_ids'], $updatedQuestion->id);
+            }            
+            $quiz = SpecialQuiz::find($input['id']);
+            $quiz->fill($input);
+            $quiz->save();
             return $this->sendResponse(new SpecialQuizResource($quiz), 200);
         }
         return $this->sendError('no_permissions', [], 403);

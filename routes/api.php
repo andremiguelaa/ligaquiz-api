@@ -66,7 +66,7 @@ Route::group([
 
         Route::get('special-quizzes', 'API\SpecialQuizController@get');
         Route::post('special-quizzes', 'API\SpecialQuizController@create');
-        // Route::patch('special-quizzes', 'API\SpecialQuizController@update');
+        Route::patch('special-quizzes', 'API\SpecialQuizController@update');
         // Route::delete('special-quizzes', 'API\SpecialQuizController@delete');
 
         Route::get('media', 'API\MediaController@get');

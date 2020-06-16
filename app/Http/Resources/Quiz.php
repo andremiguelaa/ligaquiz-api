@@ -10,6 +10,7 @@ class Quiz extends JsonResource
     public function toArray($request)
     {
         $quiz = [
+            'id' => $this->id,
             'date' => $this->date
         ];
         if (

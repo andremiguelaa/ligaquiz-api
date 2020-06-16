@@ -23,13 +23,13 @@ class CreateQuizRelatedTables extends Migration
         });
         Schema::create('quizzes', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->date('date');
+            $table->date('date')->nullable();;
             $table->json('question_ids');
             $table->timestamps();
         });
         Schema::create('special_quizzes', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->date('date');
+            $table->date('date')->nullable();;
             $table->json('question_ids');
             $table->integer('user_id')->nullable();
             $table->string('subject')->nullable();

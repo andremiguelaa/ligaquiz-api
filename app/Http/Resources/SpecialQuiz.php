@@ -10,6 +10,7 @@ class SpecialQuiz extends JsonResource
     public function toArray($request)
     {
         $specialquiz = [
+            'id' => $this->id,
             'date' => $this->date,
             'user_id' => $this->user_id,
             'subject' => $this->subject,

@@ -64,7 +64,7 @@ class QuizController extends BaseController
         if (Auth::user()->hasPermission('quiz_create')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'date' => 'required|date_format:Y-m-d|unique:quizzes',
+                'date' => 'date_format:Y-m-d|unique:quizzes',
                 'questions' => 'required|array|size:8'
             ]);
             if ($validator->fails()) {
@@ -107,7 +107,11 @@ class QuizController extends BaseController
         if (Auth::user()->hasPermission('quiz_edit')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'date' => 'required|date_format:Y-m-d|exists:quizzes,date',
+                'id' => 'required|exists:quizzes,id',
+                'date' => [
+                    'date_format:Y-m-d',
+                    Rule::unique('quizzes')->ignore($input['id']),
+                ],
                 'questions' => 'required|array|size:8'
             ]);
             if ($validator->fails()) {
@@ -142,7 +146,7 @@ class QuizController extends BaseController
                 $updatedQuestion->save();
                 array_push($input['question_ids'], $updatedQuestion->id);
             }
-            $quiz = Quiz::where('date', $input['date'])->first();
+            $quiz = Quiz::find($input['id']);
             $quiz->fill($input);
             $quiz->save();
             return $this->sendResponse(new QuizResource($quiz), 200);
