@@ -223,6 +223,7 @@ class QuizController extends BaseController
                 return $this->sendError('wrong_quiz', null, 400);
             }
             
+            // to do: check if already submitted
             // to do: points validation (versus game)
             // to do: save submitted answers
             return $this->sendError('work_in_progress', null, 501);
