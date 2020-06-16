@@ -164,8 +164,13 @@ class QuizController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            Quiz::find($input['id'])->delete();
-            return $this->sendResponse();
+            $quiz = Quiz::find($input['id']);
+            if ($quiz->hasAnswers()) {
+                return $this->sendError('has_answers', null, 400);
+            } else {
+                $quiz->delete();
+                return $this->sendResponse();
+            }
         }
 
         return $this->sendError('no_permissions', [], 403);

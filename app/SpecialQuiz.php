@@ -5,6 +5,7 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use App\Question;
 use App\Http\Resources\Question as QuestionResource;
+use App\Answer;
 
 class SpecialQuiz extends Model
 {
@@ -28,5 +29,10 @@ class SpecialQuiz extends Model
     {
         $questions = Question::whereIn('id', $this->question_ids)->get();
         return QuestionResource::collection($questions);
+    }
+
+    public function hasAnswers()
+    {
+        return boolval(Answer::where('quiz', 'special_quiz_'.$this->id)->first());
     }
 }
