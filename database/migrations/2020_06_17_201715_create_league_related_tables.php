@@ -15,21 +15,29 @@ class CreateLeagueRelatedTables extends Migration
     {
         Schema::create('seasons', function (Blueprint $table) {
             $table->id();
-            $table->integer('season');
+            $table->integer('season')->unique();
             $table->timestamps();
         });
         Schema::create('rounds', function (Blueprint $table) {
             $table->id();
-            $table->integer('season_id');
+            $table->integer('season');
             $table->integer('round');
             $table->date('date');
             $table->timestamps();
         });
         Schema::create('leagues', function (Blueprint $table) {
             $table->id();
-            $table->integer('season_id');
+            $table->integer('season');
             $table->integer('tier');
             $table->json('user_ids');
+            $table->timestamps();
+        });
+        Schema::create('games', function (Blueprint $table) {
+            $table->id();
+            $table->integer('season');
+            $table->integer('round');
+            $table->integer('user_id_1');
+            $table->integer('user_id_2');
             $table->timestamps();
         });
     }
@@ -44,5 +52,6 @@ class CreateLeagueRelatedTables extends Migration
         Schema::dropIfExists('seasons');
         Schema::dropIfExists('rounds');
         Schema::dropIfExists('leagues');
+        Schema::dropIfExists('games');
     }
 }

@@ -78,5 +78,14 @@ Route::group([
         Route::get('answers', 'API\AnswerController@get');
         Route::post('answers', 'API\AnswerController@create');
         Route::patch('answers', 'API\AnswerController@update');
+
+        Route::get('seasons', 'API\SeasonController@get');
+        Route::post('seasons', 'API\SeasonController@create');
+        Route::patch('seasons', 'API\SeasonController@update');
+        Route::delete('seasons', 'API\SeasonController@delete');
+
+        Route::get('leagues', 'API\LeagueController@get');
+
+        Route::get('games', 'API\GameController@get');
     });
 });

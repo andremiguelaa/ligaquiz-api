@@ -70,25 +70,23 @@ class QuizController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            if (array_key_exists('questions', $input)) {
-                foreach ($input['questions'] as $question) {
-                    $questionValidator = Validator::make($question, [
-                        'content' => 'string',
-                        'answer' => 'string',
-                        'media' => 'string',
-                        'genre_id' => [
-                            Rule::exists('genres', 'id')->where(function ($query) {
-                                $query->whereNotNull('parent_id');
-                            }),
-                        ],
-                    ]);
-                    if ($questionValidator->fails()) {
-                        return $this->sendError(
-                            'validation_error',
-                            ['questions' => 'validation.format'],
-                            400
-                        );
-                    }
+            foreach ($input['questions'] as $question) {
+                $questionValidator = Validator::make($question, [
+                    'content' => 'string',
+                    'answer' => 'string',
+                    'media' => 'string',
+                    'genre_id' => [
+                        Rule::exists('genres', 'id')->where(function ($query) {
+                            $query->whereNotNull('parent_id');
+                        }),
+                    ],
+                ]);
+                if ($questionValidator->fails()) {
+                    return $this->sendError(
+                        'validation_error',
+                        ['questions' => 'validation.format'],
+                        400
+                    );
                 }
             }
             $input['question_ids'] = [];
@@ -118,35 +116,33 @@ class QuizController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $quiz = Quiz::find($input['id']);
-            if (array_key_exists('questions', $input)) {
-                foreach ($input['questions'] as $question) {
-                    $questionValidator = Validator::make($question, [
-                        'id' => 'required|exists:questions,id',
-                        'content' => 'string',
-                        'answer' => 'string',
-                        'media' => 'string',
-                        'genre_id' => [
-                            Rule::exists('genres', 'id')->where(function ($query) {
-                                $query->whereNotNull('parent_id');
-                            }),
-                        ],
-                    ]);
-                    if ($questionValidator->fails()) {
-                        return $this->sendError(
-                            'validation_error',
-                            ['questions' => 'validation.format'],
-                            400
-                        );
-                    }
+            foreach ($input['questions'] as $question) {
+                $questionValidator = Validator::make($question, [
+                    'id' => 'required|exists:questions,id',
+                    'content' => 'string',
+                    'answer' => 'string',
+                    'media' => 'string',
+                    'genre_id' => [
+                        Rule::exists('genres', 'id')->where(function ($query) {
+                            $query->whereNotNull('parent_id');
+                        }),
+                    ],
+                ]);
+                if ($questionValidator->fails()) {
+                    return $this->sendError(
+                        'validation_error',
+                        ['questions' => 'validation.format'],
+                        400
+                    );
                 }
-                $diffCount = count(
-                    array_diff($quiz->question_ids, array_map(function ($item) {
-                        return $item['id'];
-                    }, $input['questions']))
-                );
-                if ($quiz->hasAnswers() && $diffCount) {
-                    return $this->sendError('has_answers', null, 400);
-                }
+            }
+            $diffCount = count(
+                array_diff($quiz->question_ids, array_map(function ($item) {
+                    return $item['id'];
+                }, $input['questions']))
+            );
+            if ($quiz->hasAnswers() && $diffCount) {
+                return $this->sendError('has_answers', null, 400);
             }
             $input['question_ids'] = [];
             foreach ($input['questions'] as $question) {
