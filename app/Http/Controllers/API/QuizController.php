@@ -65,29 +65,18 @@ class QuizController extends BaseController
             $input = $request::all();
             $validator = Validator::make($input, [
                 'date' => 'date_format:Y-m-d|unique:quizzes',
-                'questions' => 'required|array|size:8'
+                'questions' => 'required|array|size:8',
+                'questions.*.content' => 'string',
+                'questions.*.answer' => 'string',
+                'questions.*.media' => 'string',
+                'questions.*.genre_id' => [
+                    Rule::exists('genres', 'id')->where(function ($query) {
+                        $query->whereNotNull('parent_id');
+                    }),
+                ],
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
-            }
-            foreach ($input['questions'] as $question) {
-                $questionValidator = Validator::make($question, [
-                    'content' => 'string',
-                    'answer' => 'string',
-                    'media' => 'string',
-                    'genre_id' => [
-                        Rule::exists('genres', 'id')->where(function ($query) {
-                            $query->whereNotNull('parent_id');
-                        }),
-                    ],
-                ]);
-                if ($questionValidator->fails()) {
-                    return $this->sendError(
-                        'validation_error',
-                        ['questions' => 'validation.format'],
-                        400
-                    );
-                }
             }
             $input['question_ids'] = [];
             foreach ($input['questions'] as $question) {
@@ -110,32 +99,21 @@ class QuizController extends BaseController
                     'date_format:Y-m-d',
                     Rule::unique('quizzes')->ignore($input['id']),
                 ],
-                'questions' => 'required|array|size:8'
+                'questions' => 'required|array|size:8',
+                'questions.*.id' => 'required|exists:questions,id',
+                'questions.*.content' => 'string',
+                'questions.*.answer' => 'string',
+                'questions.*.media' => 'string',
+                'questions.*.genre_id' => [
+                    Rule::exists('genres', 'id')->where(function ($query) {
+                        $query->whereNotNull('parent_id');
+                    }),
+                ],
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $quiz = Quiz::find($input['id']);
-            foreach ($input['questions'] as $question) {
-                $questionValidator = Validator::make($question, [
-                    'id' => 'required|exists:questions,id',
-                    'content' => 'string',
-                    'answer' => 'string',
-                    'media' => 'string',
-                    'genre_id' => [
-                        Rule::exists('genres', 'id')->where(function ($query) {
-                            $query->whereNotNull('parent_id');
-                        }),
-                    ],
-                ]);
-                if ($questionValidator->fails()) {
-                    return $this->sendError(
-                        'validation_error',
-                        ['questions' => 'validation.format'],
-                        400
-                    );
-                }
-            }
             $diffCount = count(
                 array_diff($quiz->question_ids, array_map(function ($item) {
                     return $item['id'];
@@ -185,31 +163,19 @@ class QuizController extends BaseController
         if (Auth::user()->hasPermission('quiz_play')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'answers' => 'required|array|size:8'
+                'answers' => 'required|array|size:8',
+                'answers.*.question_id' => 'required|exists:questions,id',
+                'answers.*.text' => 'string',
+                'answers.*.points' => 'integer|min:0|max:3'
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $now = Carbon::now()->format('Y-m-d');
             $quiz = Quiz::where('date', $now)->first();
-            if(!$quiz){
+            if (!$quiz) {
                 return $this->sendError('no_quiz_today', null, 400);
             }
-            foreach ($input['answers'] as $answer) {
-                $answerValidator = Validator::make($answer, [
-                    'question_id' => 'required|exists:questions,id',
-                    'text' => 'string',
-                    'points' => 'integer|min:0|max:3'
-                ]);
-                if ($answerValidator->fails()) {
-                    return $this->sendError(
-                        'validation_error',
-                        ['answers' => 'validation.format'],
-                        400
-                    );
-                }
-            }
-
             $diffCount = count(
                 array_diff($quiz->question_ids, array_map(function ($item) {
                     return $item['question_id'];
