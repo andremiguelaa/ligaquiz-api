@@ -16,13 +16,22 @@ class IndividualQuizController extends BaseController
         $input = $request::all();
         $query = IndividualQuiz::select('id', 'individual_quiz_type', 'date');
 
-        if (array_key_exists('individual_quiz_player_id', $input) && is_array($input['individual_quiz_player_id'])) {
-            $individualQuizPlayerQuizzes = IndividualQuizResult::whereIn('individual_quiz_player_id', $input['individual_quiz_player_id'])
+        if (
+            array_key_exists('individual_quiz_player_id', $input) &&
+            is_array($input['individual_quiz_player_id'])
+        ) {
+            $individualQuizPlayerQuizzes = IndividualQuizResult::whereIn(
+                    'individual_quiz_player_id',
+                    $input['individual_quiz_player_id']
+                )
                 ->get()
                 ->pluck('individual_quiz_id')
                 ->toArray();
             $query->whereIn('id', $individualQuizPlayerQuizzes);
-        } elseif (array_key_exists('individual_quiz_player_id', $input) && !is_array($input['individual_quiz_player_id'])) {
+        } elseif (
+            array_key_exists('individual_quiz_player_id', $input) &&
+            !is_array($input['individual_quiz_player_id'])
+        ) {
             return $this->sendError('filter_parameters_must_be_arrays', 400);
         }
 
@@ -76,7 +85,9 @@ class IndividualQuizController extends BaseController
                     'results' => 'required|array',
                 ]);
                 if ($individualQuizValidator->fails()) {
-                    return $this->sendError('validation_error', ['individual_quizzes' => 'validation.format'], 400);
+                    return $this->sendError('validation_error', [
+                        'individual_quizzes' => 'validation.format'
+                    ], 400);
                 }
                 foreach ($individualQuiz['results'] as $result) {
                     $resultValidator = Validator::make($result, [
@@ -84,7 +95,9 @@ class IndividualQuizController extends BaseController
                         'result' => 'required|integer',
                     ]);
                     if ($resultValidator->fails()) {
-                        return $this->sendError('validation_error', ['individual_quizzes' => 'validation.format'], 400);
+                        return $this->sendError('validation_error', [
+                            'individual_quizzes' => 'validation.format'
+                        ], 400);
                     }
                 }
             }
@@ -98,7 +111,8 @@ class IndividualQuizController extends BaseController
                 }
             }
 
-            $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')->where('date', $input['month'] . '-01')->get();
+            $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')
+                ->where('date', $input['month'] . '-01')->get();
             foreach ($individualQuizzes as $individualQuiz) {
                 $individualQuiz->results = $individualQuiz->results;
                 unset($individualQuiz->id);
@@ -133,7 +147,9 @@ class IndividualQuizController extends BaseController
                     'results' => 'required|array',
                 ]);
                 if ($individualQuizValidator->fails()) {
-                    return $this->sendError('validation_error', ['individual_quizzes' => 'validation.format'], 400);
+                    return $this->sendError('validation_error', [
+                        'individual_quizzes' => 'validation.format'
+                    ], 400);
                 }
                 foreach ($individualQuiz['results'] as $result) {
                     $resultValidator = Validator::make($result, [
@@ -141,7 +157,9 @@ class IndividualQuizController extends BaseController
                         'result' => 'required|integer',
                     ]);
                     if ($resultValidator->fails()) {
-                        return $this->sendError('validation_error', ['individual_quizzes' => 'validation.format'], 400);
+                        return $this->sendError('validation_error', [
+                            'individual_quizzes' => 'validation.format'
+                        ], 400);
                     }
                 }
             }
@@ -160,7 +178,8 @@ class IndividualQuizController extends BaseController
                 }
             }
 
-            $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')->where('date', $input['month'] . '-01')->get();
+            $individualQuizzes = IndividualQuiz::select('id', 'individual_quiz_type', 'date')
+                ->where('date', $input['month'] . '-01')->get();
             foreach ($individualQuizzes as $individualQuiz) {
                 $individualQuiz->results = $individualQuiz->results;
                 unset($individualQuiz->id);
