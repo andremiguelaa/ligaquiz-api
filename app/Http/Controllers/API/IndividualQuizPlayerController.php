@@ -61,20 +61,28 @@ class IndividualQuizPlayerController extends BaseController
     public function update(Request $request)
     {
         if (Auth::user()->hasPermission('individual_quiz_player_edit')) {
-            $errors = [];
             if (!count($request::all()) || !isset($request::all()[0])) {
                 return $this->sendError('validation_error', 'bad_format', 400);
             }
-            foreach ($request::all() as $player) {
-                $user_id_rule = isset($player['id']) ? '|unique:individual_quiz_players,user_id,'.$player['id'] : '';
+            $validator = Validator::make($request::all(), [
+                '*.id' => 'required|exists:individual_quiz_players,id',
+                '*.name' => 'required|string|max:255',
+                '*.surname' => 'required|string|max:255',
+                '*.user_id' => 'exists:users,id'
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $errors = [];
+            foreach ($request::all() as $key => $player) {
                 $validator = Validator::make($player, [
-                    'id' => 'required|exists:individual_quiz_players,id',
-                    'name' => 'required|string|max:255',
-                    'surname' => 'required|string|max:255',
-                    'user_id' => 'exists:users,id'.$user_id_rule,
+                    'user_id' => 'unique:individual_quiz_players,user_id,'.$player['id']
                 ]);
-                if (count($validator->errors()->getMessages())) {
-                    array_push($errors, $validator->errors()->getMessages());
+                if (
+                    count($validator->errors()->getMessages()) &&
+                    isset($validator->errors()->getMessages()['user_id'])
+                ) {
+                    $errors[$key.'.user_id'] = $validator->errors()->getMessages()['user_id'];
                 }
             }
             if (count($errors)) {
@@ -104,8 +112,7 @@ class IndividualQuizPlayerController extends BaseController
             }
             if (!IndividualQuizResult::where('individual_quiz_player_id', $input['id'])->count()) {
                 IndividualQuizPlayer::find($input['id'])->delete();
-            }
-            else {
+            } else {
                 return $this->sendError('player_with_results', [], 400);
             }
             return $this->sendResponse();
