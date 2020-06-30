@@ -68,20 +68,13 @@ class SpecialQuizController extends BaseController
                 'user_id' => 'exists:users,id',
                 'subject' => 'string',
                 'description' => 'string',
-                'questions' => 'required|array|size:12'
+                'questions' => 'required|array|size:12',
+                'questions.*.content' => 'string',
+                'questions.*.answer' => 'string',
+                'questions.*.media' => 'string',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
-            }
-            foreach ($input['questions'] as $question) {
-                $questionValidator = Validator::make($question, [
-                'content' => 'string',
-                'answer' => 'string',
-                'media' => 'string',
-            ]);
-                if ($questionValidator->fails()) {
-                    return $this->sendError('validation_error', ['questions' => 'validation.format'], 400);
-                }
             }
             $input['question_ids'] = [];
             foreach ($input['questions'] as $question) {
@@ -106,23 +99,16 @@ class SpecialQuizController extends BaseController
                 'user_id' => 'exists:users,id',
                 'subject' => 'string',
                 'description' => 'string',
-                'questions' => 'required|array|size:12'
+                'questions' => 'required|array|size:12',
+                'questions.*.id' => 'required|exists:questions,id',
+                'questions.*.content' => 'string',
+                'questions.*.answer' => 'string',
+                'questions.*.media' => 'string',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $quiz = SpecialQuiz::find($input['id']);
-            foreach ($input['questions'] as $question) {
-                $questionValidator = Validator::make($question, [
-                    'id' => 'required|exists:questions,id',
-                    'content' => 'string',
-                    'answer' => 'string',
-                    'media' => 'string',
-                ]);
-                if ($questionValidator->fails()) {
-                    return $this->sendError('validation_error', ['questions' => 'validation.format'], 400);
-                }
-            }
             $diffCount = count(
                 array_diff($quiz->question_ids, array_map(function ($item) {
                     return $item['id'];
@@ -172,7 +158,10 @@ class SpecialQuizController extends BaseController
         if (Auth::user()->hasPermission('specialquiz_play')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'answers' => 'required|array|size:12'
+                'answers' => 'required|array|size:12',
+                'answers.*.question_id' => 'required|exists:questions,id',
+                'answers.*.text' => 'string',
+                'answers.*.points' => 'integer|min:0|max:1'
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -182,21 +171,6 @@ class SpecialQuizController extends BaseController
             if (!$quiz) {
                 return $this->sendError('no_specialquiz_today', null, 400);
             }
-            foreach ($input['answers'] as $answer) {
-                $answerValidator = Validator::make($answer, [
-                    'question_id' => 'required|exists:questions,id',
-                    'text' => 'string',
-                    'points' => 'integer|min:0|max:1'
-                ]);
-                if ($answerValidator->fails()) {
-                    return $this->sendError(
-                        'validation_error',
-                        ['answers' => 'validation.format'],
-                        400
-                    );
-                }
-            }
-
             $diffCount = count(
                 array_diff($quiz->question_ids, array_map(function ($item) {
                     return $item['question_id'];
