@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Validation\Rule;
+use App\Rules\RoleValue;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Http\Controllers\API\BaseController as BaseController;
@@ -186,24 +187,13 @@ class UserController extends BaseController
                 ],
                 'password' => 'string|min:6|max:255',
                 'roles' => 'array',
+                'roles.*' => [new RoleValue],
                 'avatar' => 'base64image|base64max:200',
                 'reminders' => 'array',
             ]);
-            $validRoles = true;
-            if (array_key_exists('roles', $input)) {
-                foreach ($input['roles'] as $role) {
-                    if (!($role === true || strtotime($role))) {
-                        $validRoles = false;
-                    }
-                }
-            }
-            if ($validator->fails() || !$validRoles) {
-                if (!$validRoles) {
-                    $validator->errors()->add('roles', 'validation.roles');
-                }
+            if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-
             $user = User::find($input['id']);
             if (isset($input['password'])) {
                 $input['password'] = bcrypt($input['password']);
