@@ -66,12 +66,12 @@ class AnswerController extends BaseController
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
-            'question_id' => 'exists:questions,id',
-            'text' => 'string',
-            'quiz' => 'required_without:special_quiz|exists:quizzes,id',
-            'special_quiz' => 'required_without:quiz|exists:special_quizzes,id',
-            'points' => 'integer|min:0|max:3',
-        ]);
+                'question_id' => 'exists:questions,id',
+                'text' => 'string',
+                'quiz' => 'required_without:special_quiz|exists:quizzes,id',
+                'special_quiz' => 'required_without:quiz|exists:special_quizzes,id',
+                'points' => 'integer|min:0|max:3',
+            ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
@@ -82,14 +82,14 @@ class AnswerController extends BaseController
                 return $this->sendError('no_permissions', [], 403);
             }
             $newAnswer = [
-            'question_id' => intval($input['question_id']),
-            'user_id' => Auth::id(),
-            'text' => $input['text'],
-            'points' => isset($input['points']) ? $input['points'] : -1,
-            'correct' => 0,
-            'corrected' => 0,
-            'submitted' => 0,
-        ];
+                'question_id' => intval($input['question_id']),
+                'user_id' => Auth::id(),
+                'text' => $input['text'],
+                'points' => isset($input['points']) ? $input['points'] : -1,
+                'correct' => 0,
+                'corrected' => 0,
+                'submitted' => 0,
+            ];
             if (isset($input['quiz'])) {
                 $newAnswer['quiz'] = 'quiz_'.$input['quiz'];
             } elseif (isset($input['special_quiz'])) {

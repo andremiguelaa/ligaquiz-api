@@ -38,22 +38,16 @@ class IndividualQuizPlayerController extends BaseController
     public function create(Request $request)
     {
         if (Auth::user()->hasPermission('individual_quiz_player_create')) {
-            $errors = [];
             if (!count($request::all()) || !isset($request::all()[0])) {
                 return $this->sendError('validation_error', 'bad_format', 400);
             }
-            foreach ($request::all() as $player) {
-                $validator = Validator::make($player, [
-                    'name' => 'required|string|max:255',
-                    'surname' => 'required|string|max:255',
-                    'user_id' => 'exists:users,id|unique:individual_quiz_players',
-                ]);
-                if (count($validator->errors()->getMessages())) {
-                    array_push($errors, $validator->errors()->getMessages());
-                }
-            }
-            if (count($errors)) {
-                return $this->sendError('validation_error', $errors, 400);
+            $validator = Validator::make($request::all(), [
+                '*.name' => 'required|string|max:255',
+                '*.surname' => 'required|string|max:255',
+                '*.user_id' => 'exists:users,id|unique:individual_quiz_players',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
             }
             foreach ($request::all() as $player) {
                 IndividualQuizPlayer::create($player);

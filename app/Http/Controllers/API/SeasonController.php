@@ -25,32 +25,19 @@ class SeasonController extends BaseController
 
     public function create(Request $request)
     {
-        return $this->sendError('work_in_progress', null, 501);
-        /*
         if (Auth::user()->hasPermission('league_create')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'date' => 'required|array|size:20',
+                'dates' => 'required|array|size:20',
+                "dates.*"  => "date_format:Y-m-d|distinct",
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            foreach ($input['date'] as $date) {
-                $dateValidator = Validator::make(['date' => $date], [
-                    'date' => 'date_format:Y-m-d',
-                ]);
-                if ($dateValidator->fails()) {
-                    return $this->sendError(
-                        'validation_error',
-                        ['date' => 'validation.format'],
-                        400
-                    );
-                }
-            }
-            return $this->sendResponse(Season::all(), 200);
+            return $this->sendError('work_in_progress', null, 501);
+            // return $this->sendResponse(Season::all(), 200);
         }
         return $this->sendError('no_permissions', [], 403);
-        */
     }
 
     public function update(Request $request)
