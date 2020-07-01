@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Rules\Even;
 use Illuminate\Support\Facades\Auth;
 use Request;
 use Validator;
@@ -29,7 +30,11 @@ class SeasonController extends BaseController
             $input = $request::all();
             $validator = Validator::make($input, [
                 'dates' => 'required|array|size:20',
-                "dates.*"  => "date_format:Y-m-d|distinct",
+                'dates.*'  => 'date_format:Y-m-d|distinct|unique:rounds,date',
+                'leagues' => 'required|array',
+                'leagues.*.tier' => 'required|integer',
+                'leagues.*.user_ids' => ['required', 'array', 'max:10', new Even],
+                'leagues.*.user_ids.*' => 'exists:users,id|distinct',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);

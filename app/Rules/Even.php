@@ -4,7 +4,7 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
-class RoleValue implements Rule
+class Even implements Rule
 {
     /**
      * Create a new rule instance.
@@ -25,12 +25,7 @@ class RoleValue implements Rule
      */
     public function passes($attribute, $value)
     {
-        if ($value === true) {
-            return true;
-        }
-        if ($value === date_format(date_create($value), "Y-m-d")) {
-            return true;
-        }
+        return count($value) % 2 === 0;
     }
 
     /**
@@ -40,6 +35,6 @@ class RoleValue implements Rule
      */
     public function message()
     {
-        return 'invalid_role_value';
+        return 'odd_number_of_items';
     }
 }
