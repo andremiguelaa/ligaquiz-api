@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Round extends Model
 {
     protected $fillable = [
-        'round', 'season_id', 'date'
+        'round', 'season', 'date'
     ];
 
     protected $hidden = [
