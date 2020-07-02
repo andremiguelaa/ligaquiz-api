@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Validation\Rule;
 use App\Rules\Even;
 use Illuminate\Support\Facades\Auth;
 use Request;
@@ -33,7 +34,7 @@ class SeasonController extends BaseController
             $input = $request::all();
             $validator = Validator::make($input, [
                 'dates' => 'required|array|size:20',
-                'dates.*'  => 'date_format:Y-m-d|distinct|unique:rounds,date',
+                'dates.*'  => 'date_format:Y-m-d|after:today|distinct|unique:rounds,date',
                 'leagues' => 'required|array',
                 'leagues.*.tier' => 'required|integer|distinct',
                 'leagues.*.user_ids' => ['required', 'array', 'max:10', new Even],
@@ -58,46 +59,7 @@ class SeasonController extends BaseController
                 ]);
             }
             Season::create(['season' => $newSeason]);
-            foreach ($input['leagues'] as $key => $league) {
-                League::create([
-                    'season' => $newSeason,
-                    'tier' => $league['tier'],
-                    'user_ids' => $league['user_ids'],
-                ]);
-                $numberOfPlayers = count($league['user_ids']);
-                foreach ($input['dates'] as $key => $date) {
-                    if ($key === 9 || $key === 19) {
-                        for ($game = 1; $game <= $numberOfPlayers; $game++) {
-                            Game::create([
-                                'season' => $newSeason,
-                                'round' => $key + 1,
-                                'user_id_1' => $league['user_ids'][$game - 1],
-                                'user_id_2' => $league['user_ids'][$game - 1]
-                            ]);
-                        }
-                    } else {
-                        for ($game = 1; $game <= $numberOfPlayers / 2; $game++) {
-                            $pos1 = $game - 1;
-                            $pos2 = $numberOfPlayers - ($game-1) - 1;
-                            Game::create([
-                                'season' => $newSeason,
-                                'round' => $key + 1,
-                                'user_id_1' => $league['user_ids'][$pos1],
-                                'user_id_2' => $league['user_ids'][$pos2]
-                            ]);
-                        }
-                        // rotate players array
-                        $playersTemp = $league['user_ids'];
-                        $top = array_shift($playersTemp);
-                        $last = array_pop($playersTemp);
-                        $league['user_ids'] = [$last];
-                        foreach ($playersTemp as $value) {
-                            $league['user_ids'][] = $value;
-                        }
-                        array_unshift($league['user_ids'], $top);
-                    }
-                }
-            }
+            $this->createSeasonLeaguesAndGames($newSeason, $input['leagues']);
             return $this->sendResponse(null, 201);
         }
         return $this->sendError('no_permissions', [], 403);
@@ -105,11 +67,96 @@ class SeasonController extends BaseController
 
     public function update(Request $request)
     {
-        return $this->sendError('work_in_progress', null, 501);
+        if (Auth::user()->hasPermission('league_edit')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'season' => 'required|exists:seasons,season',
+                'dates' => 'array|size:20',
+                'dates.*'  => [
+                    'date_format:Y-m-d',
+                    'after:today',
+                    'distinct',
+                    Rule::unique('rounds', 'date')->ignore($input['season'], 'season'),
+                ],
+                'leagues' => 'array',
+                'leagues.*.tier' => 'required|integer|distinct',
+                'leagues.*.user_ids' => ['required', 'array', 'max:10', new Even],
+                'leagues.*.user_ids.*' => 'exists:users,id|distinct',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+
+            if (isset($input['dates'])) {
+                Round::where('season', $input['season'])->delete();
+                sort($input['dates']);
+                foreach ($input['dates'] as $key => $date) {
+                    Round::create([
+                        'season' => $input['season'],
+                        'round' => $key + 1,
+                        'date' => $date,
+                    ]);
+                }
+            }
+            if (isset($input['leagues'])) {
+                League::where('season', $input['season'])->delete();
+                Game::where('season', $input['season'])->delete();
+                $this->createSeasonLeaguesAndGames($input['season'], $input['leagues']);
+            }
+            return $this->sendResponse(null, 201);
+        }
+        return $this->sendError('no_permissions', [], 403);
     }
 
     public function delete(Request $request)
     {
-        return $this->sendError('work_in_progress', null, 501);
+        if (Auth::user()->hasPermission('league_delete')) {
+            return $this->sendError('work_in_progress', null, 501);
+        }
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    private function createSeasonLeaguesAndGames($season, $leagues)
+    {
+        foreach ($leagues as $key => $league) {
+            League::create([
+                'season' => $season,
+                'tier' => $league['tier'],
+                'user_ids' => $league['user_ids'],
+            ]);
+            $numberOfPlayers = count($league['user_ids']);
+            for ($i=1; $i <= 20 ; $i++) {
+                if ($i === 10 || $i === 19) {
+                    for ($game = 1; $game <= $numberOfPlayers; $game++) {
+                        Game::create([
+                            'season' => $season,
+                            'round' => $key + 1,
+                            'user_id_1' => $league['user_ids'][$game - 1],
+                            'user_id_2' => $league['user_ids'][$game - 1]
+                        ]);
+                    }
+                } else {
+                    for ($game = 1; $game <= $numberOfPlayers / 2; $game++) {
+                        $pos1 = $game - 1;
+                        $pos2 = $numberOfPlayers - ($game-1) - 1;
+                        Game::create([
+                            'season' => $season,
+                            'round' => $key + 1,
+                            'user_id_1' => $league['user_ids'][$pos1],
+                            'user_id_2' => $league['user_ids'][$pos2]
+                        ]);
+                    }
+                    // rotate players array
+                    $playersTemp = $league['user_ids'];
+                    $top = array_shift($playersTemp);
+                    $last = array_pop($playersTemp);
+                    $league['user_ids'] = [$last];
+                    foreach ($playersTemp as $value) {
+                        $league['user_ids'][] = $value;
+                    }
+                    array_unshift($league['user_ids'], $top);
+                }
+            }
+        }
     }
 }
