@@ -7,6 +7,7 @@ use App\Rules\Even;
 use Illuminate\Support\Facades\Auth;
 use Request;
 use Validator;
+use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Season;
 use App\League;
@@ -111,7 +112,25 @@ class SeasonController extends BaseController
     public function delete(Request $request)
     {
         if (Auth::user()->hasPermission('league_delete')) {
-            return $this->sendError('work_in_progress', null, 501);
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'season' => 'required|exists:seasons,season',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $firstRound = Round::where('season', $input['season'])->orderBy('date', 'asc')->first();
+            $now = Carbon::now()->format('Y-m-d');
+            if($firstRound->date > $now){
+                Season::where('season', $input['season'])->delete();
+                Round::where('season', $input['season'])->delete();
+                League::where('season', $input['season'])->delete();
+                Game::where('season', $input['season'])->delete();
+            }
+            else {
+                return $this->sendError('past_season', [], 400);
+            }
+            return $this->sendResponse();
         }
         return $this->sendError('no_permissions', [], 403);
     }
