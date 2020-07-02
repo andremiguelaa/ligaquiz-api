@@ -16,7 +16,7 @@ use App\Game;
 
 class SeasonController extends BaseController
 {
-    public function get()
+    public function get(Request $request)
     {
         if (
             Auth::user()->hasPermission('quiz_play') ||
@@ -24,7 +24,26 @@ class SeasonController extends BaseController
             Auth::user()->hasPermission('league_edit') ||
             Auth::user()->hasPermission('league_delete')
         ) {
-            return $this->sendResponse(Season::all(), 200);
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'season' => 'exists:seasons,season',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            if (isset($input['season'])) {
+                $season = Season::with('leagues')
+                    ->with('rounds')
+                    ->with('games')
+                    ->where('season', $input['season'])
+                    ->first();
+                $season->leagues->makeHidden('season');
+                $season->rounds->makeHidden('season');
+                $season->games->makeHidden('season');
+                return $this->sendResponse($season, 200);
+            } else {
+                return $this->sendResponse(Season::all(), 200);
+            }
         }
         return $this->sendError('no_permissions', [], 403);
     }
@@ -121,13 +140,12 @@ class SeasonController extends BaseController
             }
             $firstRound = Round::where('season', $input['season'])->orderBy('date', 'asc')->first();
             $now = Carbon::now()->format('Y-m-d');
-            if($firstRound->date > $now){
+            if ($firstRound->date > $now) {
                 Season::where('season', $input['season'])->delete();
                 Round::where('season', $input['season'])->delete();
                 League::where('season', $input['season'])->delete();
                 Game::where('season', $input['season'])->delete();
-            }
-            else {
+            } else {
                 return $this->sendError('past_season', [], 400);
             }
             return $this->sendResponse();
