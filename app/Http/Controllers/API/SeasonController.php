@@ -33,13 +33,10 @@ class SeasonController extends BaseController
             }
             if (isset($input['season'])) {
                 $season = Season::with('leagues')
-                    ->with('rounds')
-                    ->with('games')
                     ->where('season', $input['season'])
                     ->first();
                 $season->leagues->makeHidden('season');
-                $season->rounds->makeHidden('season');
-                $season->games->makeHidden('season');
+                $season->leagues->makeHidden('user_ids');
                 return $this->sendResponse($season, 200);
             } else {
                 return $this->sendResponse(Season::all(), 200);
