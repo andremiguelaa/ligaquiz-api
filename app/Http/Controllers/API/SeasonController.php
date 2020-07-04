@@ -161,12 +161,12 @@ class SeasonController extends BaseController
                 'user_ids' => $league['user_ids'],
             ]);
             $numberOfPlayers = count($league['user_ids']);
-            for ($i=1; $i <= 20 ; $i++) {
-                if ($i === 10 || $i === 19) {
+            for ($round=1; $round <= 20 ; $round++) {
+                if ($round === 10 || $round === 20) {
                     for ($game = 1; $game <= $numberOfPlayers; $game++) {
                         Game::create([
                             'season' => $season,
-                            'round' => $key + 1,
+                            'round' => $round,
                             'user_id_1' => $league['user_ids'][$game - 1],
                             'user_id_2' => $league['user_ids'][$game - 1]
                         ]);
@@ -177,7 +177,7 @@ class SeasonController extends BaseController
                         $pos2 = $numberOfPlayers - ($game-1) - 1;
                         Game::create([
                             'season' => $season,
-                            'round' => $key + 1,
+                            'round' => $round,
                             'user_id_1' => $league['user_ids'][$pos1],
                             'user_id_2' => $league['user_ids'][$pos2]
                         ]);
