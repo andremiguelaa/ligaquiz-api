@@ -19,7 +19,7 @@ class Quiz extends Model
     ];
 
     protected $hidden = [
-        'question_ids', 'created_at', 'updated_at'
+        'id', 'question_ids', 'created_at', 'updated_at', 'laravel_through_key'
     ];
 
     public function getQuestions()
