@@ -13,4 +13,16 @@ class Game extends Model
     protected $hidden = [
         'created_at', 'updated_at'
     ];
+
+    public function quiz()
+    {
+        return $this->hasOneThrough(
+            'App\Quiz',
+            'App\Round',
+            'round',
+            'date',
+            'round',
+            'date'
+        );
+    }
 }

@@ -7,6 +7,8 @@ use Request;
 use Validator;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Game;
+use App\Question;
+use App\Answer;
 
 class GameController extends BaseController
 {
@@ -24,7 +26,7 @@ class GameController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $query = (new Game)->newQuery();
+            $query = Game::with('quiz');
             foreach ($input as $key => $value) {
                 if (in_array($key, array_keys($rules))) {
                     if ($key === 'user') {
@@ -36,7 +38,25 @@ class GameController extends BaseController
                     }
                 }
             }
-            return $this->sendResponse($query->get(), 200);
+            $games = $query->get();
+            $quizzes = $games->unique('quiz.id')->pluck('quiz')->filter();
+            $quizzesIds = [];
+            $questionIds = [];
+            foreach ($quizzes as $quiz) {
+                array_push($quizzesIds, 'quiz_'.$quiz->id);
+                $questionIds = array_merge($questionIds, array_values($quiz->question_ids));
+            }
+            $questions = Question::whereIn('id', $questionIds)->get();
+            $answers = Answer::whereIn('question_id', $questionIds)
+                ->where('submitted', 1)
+                ->whereIn('quiz', $quizzesIds)
+                ->select('question_id', 'user_id', 'quiz', 'points', 'correct', 'corrected')
+                ->get();
+            return $this->sendResponse([
+                'games' => $games,
+                'questions' => $questions,
+                'answers' => $answers
+            ], 200);
         }
         
         return $this->sendError('no_permissions', [], 403);
