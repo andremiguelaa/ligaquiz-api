@@ -48,7 +48,7 @@ class AnswerController extends BaseController
             if (isset($input['submitted'])) {
                 $answers = $answers->where('submitted', $input['submitted']);
             }
-            return $this->sendResponse($answers, 200);
+            return $this->sendResponse(array_values($answers->toArray()), 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
