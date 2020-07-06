@@ -33,10 +33,11 @@ class SpecialQuizController extends BaseController
                     ->where('date', $input['date'])
                     ->first();
                 if ($quiz) {
+                    $questions = $quiz->questions->toArray();
+                    unset($quiz->questions);
                     $quiz->questions = array_map(function ($question) {
                         return $question['question'];
-                    }, $quiz->questions->toArray());
-                    unset($quiz->questions);
+                    }, $questions);
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
@@ -56,10 +57,11 @@ class SpecialQuizController extends BaseController
                     ->where('date', '<=', $now)->where('date', $input['date'])
                     ->first();
                 if ($quiz) {
+                    $questions = $quiz->questions->toArray();
+                    unset($quiz->questions);
                     $quiz->questions = array_map(function ($question) {
                         return $question['question'];
-                    }, $quiz->questions->toArray());
-                    unset($quiz->questions);
+                    }, $questions);
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
@@ -96,6 +98,13 @@ class SpecialQuizController extends BaseController
                     'question_id' => $createdQuestion->id
                 ]);
             }
+
+            $quiz = SpecialQuiz::with('questions.question')->find($quiz->id);
+            $questions = $quiz->questions->toArray();
+            unset($quiz->questions);
+            $quiz->questions = array_map(function ($question) {
+                return $question['question'];
+            }, $questions);
             return $this->sendResponse($quiz, 200);
         }
         return $this->sendError('no_permissions', [], 403);
@@ -139,6 +148,13 @@ class SpecialQuizController extends BaseController
             }
             $quiz->fill($input);
             $quiz->save();
+
+            $quiz = SpecialQuiz::with('questions.question')->find($quiz->id);
+            $questions = $quiz->questions->toArray();
+            unset($quiz->questions);
+            $quiz->questions = array_map(function ($question) {
+                return $question['question'];
+            }, $questions);
             return $this->sendResponse($quiz, 200);
         }
         return $this->sendError('no_permissions', [], 403);

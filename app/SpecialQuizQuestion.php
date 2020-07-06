@@ -10,4 +10,13 @@ class SpecialQuizQuestion extends Model
         'special_quiz_id',
         'question_id'
     ];
+
+    protected $hidden = [
+        'id', 'quiz_id', 'question_id', 'created_at', 'updated_at'
+    ];
+
+    public function question()
+    {
+        return $this->hasOne('App\Question', 'id', 'question_id');
+    }
 }
