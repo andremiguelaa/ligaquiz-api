@@ -9,8 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Quiz;
-use App\Question;
 use App\QuizQuestion;
+use App\Question;
 
 class QuizController extends BaseController
 {
@@ -32,11 +32,11 @@ class QuizController extends BaseController
                 $quiz = Quiz::with('questions.question')
                     ->where('date', $input['date'])
                     ->first();
-                $quiz->questions = array_map(function ($question) {
-                    return $question['question'];
-                }, $quiz->questions->toArray());
-                unset($quiz->questions);
                 if ($quiz) {
+                    $quiz->questions = array_map(function ($question) {
+                        return $question['question'];
+                    }, $quiz->questions->toArray());
+                    unset($quiz->questions);
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);

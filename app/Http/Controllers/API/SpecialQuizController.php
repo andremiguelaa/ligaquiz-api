@@ -9,8 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\SpecialQuiz;
+use App\SpecialQuizQuestion;
 use App\Question;
-use App\Http\Resources\SpecialQuiz as SpecialQuizResource;
 
 class SpecialQuizController extends BaseController
 {
@@ -29,9 +29,15 @@ class SpecialQuizController extends BaseController
                 if ($validator->fails()) {
                     return $this->sendError('validation_error', $validator->errors(), 400);
                 }
-                $quiz = SpecialQuiz::where('date', $input['date'])->first();
+                $quiz = SpecialQuiz::with('questions.question')
+                    ->where('date', $input['date'])
+                    ->first();
                 if ($quiz) {
-                    return $this->sendResponse(new SpecialQuizResource($quiz), 200);
+                    $quiz->questions = array_map(function ($question) {
+                        return $question['question'];
+                    }, $quiz->questions->toArray());
+                    unset($quiz->questions);
+                    return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
@@ -46,9 +52,15 @@ class SpecialQuizController extends BaseController
                 if ($validator->fails()) {
                     return $this->sendError('validation_error', $validator->errors(), 400);
                 }
-                $quiz = SpecialQuiz::where('date', '<=', $now)->where('date', $input['date'])->first();
+                $quiz = SpecialQuiz::with('questions.question')
+                    ->where('date', '<=', $now)->where('date', $input['date'])
+                    ->first();
                 if ($quiz) {
-                    return $this->sendResponse(new SpecialQuizResource($quiz), 200);
+                    $quiz->questions = array_map(function ($question) {
+                        return $question['question'];
+                    }, $quiz->questions->toArray());
+                    unset($quiz->questions);
+                    return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
@@ -76,13 +88,15 @@ class SpecialQuizController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $input['question_ids'] = [];
-            foreach ($input['questions'] as $question) {
-                $question = Question::create($question);
-                array_push($input['question_ids'], $question->id);
-            }
             $quiz = SpecialQuiz::create($input);
-            return $this->sendResponse(new SpecialQuizResource($quiz), 200);
+            foreach ($input['questions'] as $question) {
+                $createdQuestion = Question::create($question);
+                SpecialQuizQuestion::create([
+                    'special_quiz_id' => $quiz->id,
+                    'question_id' => $createdQuestion->id
+                ]);
+            }
+            return $this->sendResponse($quiz, 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
@@ -91,7 +105,9 @@ class SpecialQuizController extends BaseController
     {
         if (Auth::user()->hasPermission('specialquiz_edit')) {
             $input = $request::all();
+            $id = array_key_exists('id', $input) ? $input['id'] : 0;
             $validator = Validator::make($input, [
+                'id' => 'required|exists:special_quizzes,id',
                 'date' => [
                     'date_format:Y-m-d',
                     Rule::unique('special_quizzes')->ignore($input['id']),
@@ -100,7 +116,14 @@ class SpecialQuizController extends BaseController
                 'subject' => 'string',
                 'description' => 'string',
                 'questions' => 'required|array|size:12',
-                'questions.*.id' => 'required|exists:questions,id',
+                'questions.*.id' => [
+                    'required',
+                    'exists:questions,id',
+                    Rule::exists('special_quiz_questions', 'question_id')
+                        ->where(function ($query) use ($id) {
+                            $query->where('special_quiz_id', $id);
+                        }),
+                ],
                 'questions.*.content' => 'string',
                 'questions.*.answer' => 'string',
                 'questions.*.media' => 'string',
@@ -109,24 +132,14 @@ class SpecialQuizController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $quiz = SpecialQuiz::find($input['id']);
-            $diffCount = count(
-                array_diff($quiz->question_ids, array_map(function ($item) {
-                    return $item['id'];
-                }, $input['questions']))
-            );
-            if ($quiz->hasAnswers() && $diffCount) {
-                return $this->sendError('has_answers', null, 400);
-            }
-            $input['question_ids'] = [];
             foreach ($input['questions'] as $question) {
                 $updatedQuestion = Question::find($question['id']);
                 $updatedQuestion->fill($question);
                 $updatedQuestion->save();
-                array_push($input['question_ids'], $updatedQuestion->id);
             }
             $quiz->fill($input);
             $quiz->save();
-            return $this->sendResponse(new SpecialQuizResource($quiz), 200);
+            return $this->sendResponse($quiz, 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
@@ -141,10 +154,15 @@ class SpecialQuizController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $quiz = SpecialQuiz::find($input['id']);
-            if ($quiz->hasAnswers()) {
+            $quiz = SpecialQuiz::with('questions', 'questions.question')->find($input['id']);
+            if (count($quiz->answers())) {
                 return $this->sendError('has_answers', null, 400);
             } else {
+                Question::whereIn('id', $quiz->questions->pluck('id')->toArray())->delete();
+                SpecialQuizQuestion::whereIn(
+                    'question_id',
+                    $quiz->questions->pluck('id')->toArray()
+                )->delete();
                 $quiz->delete();
                 return $this->sendResponse();
             }
