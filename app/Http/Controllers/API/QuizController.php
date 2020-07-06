@@ -29,13 +29,13 @@ class QuizController extends BaseController
                 if ($validator->fails()) {
                     return $this->sendError('validation_error', $validator->errors(), 400);
                 }
-                $quiz = Quiz::with('quizQuestions.question')
+                $quiz = Quiz::with('questions.question')
                     ->where('date', $input['date'])
                     ->first();
                 $quiz->questions = array_map(function ($question) {
                     return $question['question'];
-                }, $quiz->quizQuestions->toArray());
-                unset($quiz->quizQuestions);
+                }, $quiz->questions->toArray());
+                unset($quiz->questions);
                 if ($quiz) {
                     return $this->sendResponse($quiz, 200);
                 }
@@ -52,14 +52,14 @@ class QuizController extends BaseController
                 if ($validator->fails()) {
                     return $this->sendError('validation_error', $validator->errors(), 400);
                 }
-                $quiz = Quiz::with('quizQuestions.question')
+                $quiz = Quiz::with('questions.question')
                     ->where('date', '<=', $now)->where('date', $input['date'])
                     ->first();
                 if ($quiz) {
                     $quiz->questions = array_map(function ($question) {
                         return $question['question'];
-                    }, $quiz->quizQuestions->toArray());
-                    unset($quiz->quizQuestions);
+                    }, $quiz->questions->toArray());
+                    unset($quiz->questions);
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
@@ -119,7 +119,7 @@ class QuizController extends BaseController
                     'required',
                     'exists:questions,id',
                     Rule::exists('quiz_questions', 'question_id')
-                        ->where(function ($query) use($id) {
+                        ->where(function ($query) use ($id) {
                             $query->where('quiz_id', $id);
                         }),
                 ],
@@ -158,12 +158,12 @@ class QuizController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $quiz = Quiz::with('quizQuestions.question')->find($input['id']);
-            if ($quiz->hasAnswers()) {
+            $quiz = Quiz::with('questions', 'questions.question')->find($input['id']);
+            if (count($quiz->answers())) {
                 return $this->sendError('has_answers', null, 400);
             } else {
-                Question::whereIn('id', $quiz->quizQuestions->pluck('id')->toArray())->delete();
-                QuizQuestion::whereIn('question_id', $quiz->quizQuestions->pluck('id')->toArray())->delete();
+                Question::whereIn('id', $quiz->questions->pluck('id')->toArray())->delete();
+                QuizQuestion::whereIn('question_id', $quiz->questions->pluck('id')->toArray())->delete();
                 $quiz->delete();
                 return $this->sendResponse();
             }
@@ -191,17 +191,23 @@ class QuizController extends BaseController
                 return $this->sendError('no_quiz_today', null, 400);
             }
             $diffCount = count(
-                array_diff($quiz->question_ids, array_map(function ($item) {
-                    return $item['question_id'];
-                }, $input['answers']))
+                array_diff(
+                    $quiz->questions->pluck('question_id')->toArray(),
+                    array_map(
+                        function ($item) {
+                            return $item['question_id'];
+                        },
+                        $input['answers']
+                    )
+                )
             );
             if ($diffCount) {
                 return $this->sendError('wrong_quiz', null, 400);
             }
             
-            // to do: check if already submitted
-            // to do: points validation (versus game)
-            // to do: save submitted answers
+            // todo: check if already submitted
+            // todo: points validation (versus game)
+            // todo: save submitted answers
             return $this->sendError('work_in_progress', null, 501);
         }
 

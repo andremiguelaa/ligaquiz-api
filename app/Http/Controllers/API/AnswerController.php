@@ -8,6 +8,8 @@ use Validator;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\API\BaseController as BaseController;
+use App\Quiz;
+use App\SpecialQuiz;
 use App\Answer;
 
 class AnswerController extends BaseController
@@ -21,7 +23,6 @@ class AnswerController extends BaseController
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'user_id' => 'exists:users,id',
                 'quiz' => 'required_without:special_quiz|exists:quizzes,id',
                 'special_quiz' => 'required_without:quiz|exists:special_quizzes,id',
                 'submitted' => 'boolean'
@@ -30,29 +31,23 @@ class AnswerController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             if (
+                !Auth::user()->hasPermission('answer_correct') &&
                 !Auth::user()->hasPermission('quiz_play') && isset($input['quiz']) ||
                 !Auth::user()->hasPermission('specialquiz_play') && isset($input['special_quiz'])
             ) {
                 return $this->sendError('no_permissions', [], 403);
             }
-            if (!Auth::user()->hasPermission('answer_correct') && isset($input['user_id'])) {
-                return $this->sendError('no_permissions', [], 403);
-            }
             if (isset($input['quiz'])) {
-                $query = Answer::where('quiz', 'quiz_'.$input['quiz']);
+                $answers = Quiz::with('questions')->find($input['quiz'])->answers();
             } elseif (isset($input['special_quiz'])) {
-                $query = Answer::where('quiz', 'special_quiz_'.$input['special_quiz']);
-            }
-            if (isset($input['user_id'])) {
-                $query = $query->where('user_id', $input['user_id']);
-            }
-            if (isset($input['submitted'])) {
-                $query = $query->where('submitted', $input['submitted']);
+                $answers = SpecialQuiz::with('questions')->find($input['special_quiz'])->answers();
             }
             if (!Auth::user()->hasPermission('answer_correct')) {
-                $query = $query->where('user_id', Auth::user()->id);
+                $answers = $answers->where('user_id', Auth::user()->id);
             }
-            $answers = $query->get();
+            if (isset($input['submitted'])) {
+                $answers = $answers->where('submitted', $input['submitted']);
+            }
             return $this->sendResponse($answers, 200);
         }
         return $this->sendError('no_permissions', [], 403);
@@ -64,22 +59,42 @@ class AnswerController extends BaseController
             Auth::user()->hasPermission('quiz_play') ||
             Auth::user()->hasPermission('specialquiz_play')
         ) {
+            $quiz = null;
+            $specialQuiz = null;
+            $questionIds = [];
+            $now = Carbon::now()->format('Y-m-d');
+            if (Auth::user()->hasPermission('quiz_play')){
+                $quiz = Quiz::with('questions')->where('date', $now)->first();
+                if($quiz){
+                    $questionIds = array_merge(
+                        $questionIds,
+                        $quiz->questions->pluck('question_id')->toArray()
+                    );
+                }
+            }
+            if (Auth::user()->hasPermission('specialquiz_play')){
+                $specialQuiz = SpecialQuiz::with('questions')->where('date', $now)->first();
+                if($specialQuiz){
+                    $questionIds = array_merge(
+                        $questionIds,
+                        $specialQuiz->questions->pluck('question_id')->toArray()
+                    );
+                }
+            }
+            if (!$quiz && !$specialQuiz) {
+                return $this->sendError('no_quiz_today', null, 400);
+            }
             $input = $request::all();
             $validator = Validator::make($input, [
-                'question_id' => 'exists:questions,id',
+                'question_id' => [
+                    'exists:questions,id',
+                    Rule::in($questionIds)
+                ],
                 'text' => 'string',
-                'quiz' => 'required_without:special_quiz|exists:quizzes,id',
-                'special_quiz' => 'required_without:quiz|exists:special_quizzes,id',
                 'points' => 'integer|min:0|max:3',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
-            }
-            if (
-                !Auth::user()->hasPermission('quiz_play') && isset($input['quiz']) ||
-                !Auth::user()->hasPermission('specialquiz_play') && isset($input['special_quiz'])
-            ) {
-                return $this->sendError('no_permissions', [], 403);
             }
             $newAnswer = [
                 'question_id' => intval($input['question_id']),
