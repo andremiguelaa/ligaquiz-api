@@ -90,11 +90,6 @@ class AnswerController extends BaseController
                 'corrected' => 0,
                 'submitted' => 0,
             ];
-            if (isset($input['quiz'])) {
-                $newAnswer['quiz'] = 'quiz_'.$input['quiz'];
-            } elseif (isset($input['special_quiz'])) {
-                $newAnswer['quiz'] = 'special_quiz_'.$input['special_quiz'];
-            }
             $answer = Answer::create($newAnswer);
             return $this->sendResponse($input, 201);
         }

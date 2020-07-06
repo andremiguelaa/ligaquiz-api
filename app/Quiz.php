@@ -22,10 +22,9 @@ class Quiz extends Model
         'created_at', 'updated_at', 'laravel_through_key'
     ];
 
-    public function getQuestions()
+    public function quizQuestions()
     {
-        $questions = Question::whereIn('id', $this->question_ids)->get();
-        return QuestionResource::collection($questions);
+        return $this->hasMany('App\QuizQuestion');
     }
 
     public function hasAnswers()

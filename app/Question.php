@@ -14,7 +14,7 @@ class Question extends Model
     ];
 
     protected $hidden = [
-        'created_at', 'updated_at'
+        'created_at', 'updated_at', 'laravel_through_key'
     ];
 
     public function media()
