@@ -4,14 +4,12 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Question;
-use App\Http\Resources\Question as QuestionResource;
 use App\Answer;
 
 class SpecialQuiz extends Model
 {
     protected $fillable = [
         'date',
-        'question_ids',
         'user_id',
         'subject',
         'description',
@@ -22,17 +20,19 @@ class SpecialQuiz extends Model
     ];
 
     protected $hidden = [
-        'created_at', 'updated_at'
+        'created_at', 'updated_at', 'laravel_through_key'
     ];
 
-    public function getQuestions()
+    public function questions()
     {
-        $questions = Question::whereIn('id', $this->question_ids)->get();
-        return QuestionResource::collection($questions);
+        return $this->hasMany('App\SpecialQuizQuestion');
     }
 
-    public function hasAnswers()
+    public function answers()
     {
-        return boolval(Answer::where('quiz', 'special_quiz_'.$this->id)->first());
+        return Answer::whereIn(
+            'question_id',
+            $this->questions->pluck('question_id')->toArray()
+        )->get();
     }
 }
