@@ -8,6 +8,7 @@ use Validator;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Game;
 use App\Question;
+use App\QuizQuestion;
 use App\Answer;
 
 class GameController extends BaseController
@@ -26,7 +27,7 @@ class GameController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $query = Game::with('quiz');
+            $query = Game::with('quiz', 'quiz.questions', 'quiz.questions.question');
             foreach ($input as $key => $value) {
                 if (in_array($key, array_keys($rules))) {
                     if ($key === 'user') {
@@ -39,22 +40,32 @@ class GameController extends BaseController
                 }
             }
             $games = $query->get();
-            $quizzes = $games->unique('quiz.id')->pluck('quiz')->filter();
-            $quizzesIds = [];
+            $gamesQuizzes = $games->unique('quiz.questions')
+                ->pluck('quiz.questions')
+                ->filter()
+                ->toArray();
+            
+            $games = array_map(function ($game) {
+                unset($game['quiz']['questions']);
+                return $game;
+            }, $games->toArray());
+            
             $questionIds = [];
-            foreach ($quizzes as $quiz) {
-                array_push($quizzesIds, 'quiz_'.$quiz->id);
-                $questionIds = array_merge($questionIds, array_values($quiz->question_ids));
-            }
-            $questions = Question::whereIn('id', $questionIds)->get();
+            $quizzes = array_map(function ($quiz) use(&$questionIds) {
+                return array_map(function ($question) use(&$questionIds) {
+                    array_push($questionIds, $question['question']['id']);
+                    return $question['question'];
+                }, $quiz);
+            }, $gamesQuizzes);
+
             $answers = Answer::whereIn('question_id', $questionIds)
                 ->where('submitted', 1)
-                ->whereIn('quiz', $quizzesIds)
-                ->select('question_id', 'user_id', 'quiz', 'points', 'correct', 'corrected')
+                ->select('question_id', 'user_id', 'points', 'correct', 'corrected')
                 ->get();
+
             return $this->sendResponse([
                 'games' => $games,
-                'questions' => $questions,
+                'quizzes' => $quizzes,
                 'answers' => $answers
             ], 200);
         }
