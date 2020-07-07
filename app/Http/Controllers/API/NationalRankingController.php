@@ -21,9 +21,9 @@ class NationalRankingController extends BaseController
             }
             $response = $ranking->getData();
         } else {
-            $response = array_map(function ($ranking) {
+            $response = NationalRanking::orderBy('date', 'desc')->get()->map(function ($ranking) {
                 return substr($ranking['date'], 0, -3);
-            }, NationalRanking::orderBy('date', 'desc')->get()->toArray());
+            });
         }
         return $this->sendResponse($response, 200);
     }

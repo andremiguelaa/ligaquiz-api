@@ -9,10 +9,9 @@ class IndividualQuizTypeController extends BaseController
 {
     public function get()
     {
-        $individualQuizTypes = array_map(function ($value) {
-            return $value['slug'];
-        }, IndividualQuizType::all()->toArray());
-
+        $individualQuizTypes = IndividualQuizType::all()->map(function ($type) {
+            return $type['slug'];
+        });
         return $this->sendResponse($individualQuizTypes, 200);
     }
 }

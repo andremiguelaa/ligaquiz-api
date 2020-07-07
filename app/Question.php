@@ -26,4 +26,9 @@ class Question extends Model
     {
         return $this->hasOne('App\Genre', 'id', 'genre_id');
     }
+
+    public function submitted_answers()
+    {
+        return $this->hasMany('App\Answer', 'question_id', 'id')->where('submitted', 1);
+    }
 }

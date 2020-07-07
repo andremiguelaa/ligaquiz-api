@@ -33,11 +33,11 @@ class QuizController extends BaseController
                     ->where('date', $input['date'])
                     ->first();
                 if ($quiz) {
-                    $questions = $quiz->questions->toArray();
+                    $questions = $quiz->questions->map(function ($question) {
+                        return $question->question;
+                    });
                     unset($quiz->questions);
-                    $quiz->questions = array_map(function ($question) {
-                        return $question['question'];
-                    }, $questions);
+                    $quiz->questions = $questions;
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
@@ -46,22 +46,29 @@ class QuizController extends BaseController
             }
         } elseif (Auth::user()->hasPermission('quiz_play')) {
             $now = Carbon::now();
-            if (array_key_exists('date', $input)) {
+            if (array_key_exists('date', $input) || array_key_exists('today', $input)) {
                 $validator = Validator::make($input, [
                     'date' => 'date_format:Y-m-d',
                 ]);
                 if ($validator->fails()) {
                     return $this->sendError('validation_error', $validator->errors(), 400);
                 }
-                $quiz = Quiz::with('questions.question')
-                    ->where('date', '<=', $now)->where('date', $input['date'])
-                    ->first();
+                if (array_key_exists('today', $input)){
+                    $quiz = Quiz::with('questions.question')
+                        ->where('date', '=', Carbon::now()->format('Y-m-d'))
+                        ->first();
+                }
+                else {
+                    $quiz = Quiz::with('questions.question')
+                        ->where('date', '<=', $now)->where('date', $input['date'])
+                        ->first();
+                }
                 if ($quiz) {
-                    $questions = $quiz->questions->toArray();
+                    $questions = $quiz->questions->map(function ($question) {
+                        return $question->question;
+                    });
                     unset($quiz->questions);
-                    $quiz->questions = array_map(function ($question) {
-                        return $question['question'];
-                    }, $questions);
+                    $quiz->questions = $questions;
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);

@@ -11,10 +11,9 @@ class PermissionController extends BaseController
     public function get()
     {
         if (Auth::user()->isAdmin()) {
-            $permissions = array_map(function ($value) {
-                return $value['slug'];
-            }, Permission::all()->toArray());
-
+            $permissions = Permission::all()->map(function ($permission) {
+                return $permission['slug'];
+            });
             return $this->sendResponse($permissions, 200);
         }
 
