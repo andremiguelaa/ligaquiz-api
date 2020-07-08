@@ -69,7 +69,6 @@ class GameController extends BaseController
                 $now = Carbon::now()->format('Y-m-d');
                 if ($game->quiz && $now > $game->quiz->date) {
                     // todo: calculate game result
-                    // dd($game->result());
                 }
                 if ($game->quiz) {
                     $game->quiz->makeHidden('questions');
@@ -79,7 +78,7 @@ class GameController extends BaseController
 
             return $this->sendResponse([
                 'games' => $games,
-                'quizzes' => $quizzes,
+                'quizzes' => array_values($quizzes->toArray()),
                 'answers' => $answers
             ], 200);
         }
