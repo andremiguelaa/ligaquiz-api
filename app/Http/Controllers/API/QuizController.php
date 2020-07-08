@@ -107,13 +107,12 @@ class QuizController extends BaseController
                     'question_id' => $createdQuestion->id
                 ]);
             }
-            
             $quiz = Quiz::with('questions.question')->find($quiz->id);
-            $questions = $quiz->questions->toArray();
+            $questions = $quiz->questions->map(function ($question) {
+                return $question->question;
+            });
             unset($quiz->questions);
-            $quiz->questions = array_map(function ($question) {
-                return $question['question'];
-            }, $questions);
+            $quiz->questions = $questions;
             return $this->sendResponse($quiz, 200);
         }
         return $this->sendError('no_permissions', [], 403);
@@ -161,11 +160,11 @@ class QuizController extends BaseController
             $quiz->save();
 
             $quiz = Quiz::with('questions.question')->find($quiz->id);
-            $questions = $quiz->questions->toArray();
+            $questions = $quiz->questions->map(function ($question) {
+                return $question->question;
+            });
             unset($quiz->questions);
-            $quiz->questions = array_map(function ($question) {
-                return $question['question'];
-            }, $questions);
+            $quiz->questions = $questions;
             return $this->sendResponse($quiz, 200);
         }
         return $this->sendError('no_permissions', [], 403);

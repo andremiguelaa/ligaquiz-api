@@ -25,14 +25,14 @@ class IndividualQuizPlayerController extends BaseController
         $individualUsersIds = $individualUsers->pluck('user_id');
         $users = User::whereIn('id', $individualUsersIds)->get();
 
-        return $this->sendResponse(array_map(function ($individualUser) use ($users) {
-            $user = $users->find($individualUser['user_id']);
+        return $this->sendResponse($individualUsers->map(function ($individualUser) use ($users) {
+            $user = $users->find($individualUser->user_id);
             if ($user) {
-                $individualUser['info'] = new UserResource($user);
+                $individualUser->info = new UserResource($user);
             }
-            unset($individualUser['user_id']);
+            unset($individualUser->user_id);
             return $individualUser;
-        }, $individualUsers->toArray()), 200);
+        }), 200);
     }
 
     public function create(Request $request)

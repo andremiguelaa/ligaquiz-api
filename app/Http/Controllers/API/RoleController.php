@@ -11,10 +11,9 @@ class RoleController extends BaseController
     public function get()
     {
         if (Auth::user()->isAdmin()) {
-            $roles = array_map(function ($value) {
-                return $value['slug'];
-            }, Role::all()->toArray());
-
+            $roles = Role::all()->map(function ($role) {
+                return $role['slug'];
+            });
             return $this->sendResponse($roles, 200);
         }
 
