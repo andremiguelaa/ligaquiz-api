@@ -11,6 +11,8 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use App\Quiz;
 use App\QuizQuestion;
 use App\Question;
+use App\Answer;
+use App\Round;
 
 class QuizController extends BaseController
 {
@@ -196,11 +198,12 @@ class QuizController extends BaseController
             $now = Carbon::now()->format('Y-m-d');
             $quiz = Quiz::where('date', $now)->first();
             if (!$quiz) {
-                return $this->sendError('no_quiz_today', null, 400);
+                return $this->sendError('validation_error', ['no_quiz_today'], 400);
             }
+            $questionIds = $quiz->questions->pluck('question_id')->toArray();
             $diffCount = count(
                 array_diff(
-                    $quiz->questions->pluck('question_id')->toArray(),
+                    $questionIds,
                     array_map(
                         function ($item) {
                             return $item['question_id'];
@@ -210,13 +213,70 @@ class QuizController extends BaseController
                 )
             );
             if ($diffCount) {
-                return $this->sendError('wrong_quiz', null, 400);
+                return $this->sendError('validation_error', ['wrong_quiz'], 400);
             }
-            // todo: check if already submitted
-            // todo: points validation (versus game)
-            // todo: save submitted answers
-            return $this->sendError('work_in_progress', null, 501);
+            $answers = Answer::whereIn('question_id', $questionIds)
+                ->where('user_id', Auth::id())
+                ->where('submitted', 1)
+                ->get();
+            if ($answers->count() === 8) {
+                return $this->sendError('validation_error', ['already_submitted'], 409);
+            }
+            $round = Round::where('date', $now)->first()->round;
+            $submittedAnswers = [];
+            if ($round !== 10 && $round !== 20) {
+                $points = [
+                    0 => 0,
+                    1 => 0,
+                    2 => 0,
+                    3 => 0
+                ];
+                foreach ($input['answers'] as $answer) {
+                    $points[$answer['points']]++;
+                }
+                if ($points !== [0=>1, 1=>3, 2=>3, 3=>1]) {
+                    return $this->sendError(
+                        'validation_error',
+                        ["answers" => 'invalid_points'],
+                        400
+                    );
+                }
+                foreach ($input['answers'] as $answer) {
+                    $submittedAnswer = $this->saveAnswer([
+                        'question_id' => $answer['question_id'],
+                        'text' => $answer['text'],
+                        'points' => $answer['points']
+                    ]);
+                    array_push($submittedAnswers, $submittedAnswer);
+                }
+            } else {
+                foreach ($input['answers'] as $answer) {
+                    $submittedAnswer = $this->saveAnswer([
+                        'question_id' => $answer['question_id'],
+                        'text' => $answer['text'],
+                        'points' => 0
+                    ]);
+                    array_push($submittedAnswers, $submittedAnswer);
+                }
+            }
+            return $this->sendResponse($submittedAnswers, 201);
         }
         return $this->sendError('no_permissions', [], 403);
+    }
+
+    private function saveAnswer($answer) {
+        $submittedAnswer = Answer::create([
+            'question_id' => $answer['question_id'],
+            'text' => $answer['text'],
+            'points' => $answer['points'],
+            'user_id' => Auth::id(),
+            'correct' => 0,
+            'corrected' => 0,
+            'submitted' => 1,
+        ]);
+        unset($submittedAnswer->id);
+        unset($submittedAnswer->user_id);
+        unset($submittedAnswer->submitted);
+        return $submittedAnswer;
     }
 }
