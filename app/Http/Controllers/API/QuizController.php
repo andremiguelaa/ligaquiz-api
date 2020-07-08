@@ -20,49 +20,29 @@ class QuizController extends BaseController
         if (
             Auth::user()->hasPermission('quiz_create') ||
             Auth::user()->hasPermission('quiz_edit') ||
-            Auth::user()->hasPermission('quiz_delete')
+            Auth::user()->hasPermission('quiz_delete') ||
+            Auth::user()->hasPermission('quiz_play')
         ) {
-            if (array_key_exists('date', $input)) {
-                $validator = Validator::make($input, [
-                    'date' => 'date_format:Y-m-d',
-                ]);
-                if ($validator->fails()) {
-                    return $this->sendError('validation_error', $validator->errors(), 400);
-                }
-                $quiz = Quiz::with('questions.question')
-                    ->where('date', $input['date'])
-                    ->first();
-                if ($quiz) {
-                    $questions = $quiz->questions->map(function ($question) {
-                        return $question->question;
-                    });
-                    unset($quiz->questions);
-                    $quiz->questions = $questions;
-                    return $this->sendResponse($quiz, 200);
-                }
-                return $this->sendError('not_found', [], 404);
-            } else {
-                return $this->sendResponse(Quiz::all(), 200);
-            }
-        } elseif (Auth::user()->hasPermission('quiz_play')) {
             $now = Carbon::now();
             if (array_key_exists('date', $input) || array_key_exists('today', $input)) {
-                $validator = Validator::make($input, [
-                    'date' => 'date_format:Y-m-d',
-                ]);
+                $rules = ['date' => ['date_format:Y-m-d']];
+                if (
+                    !Auth::user()->hasPermission('quiz_create') &&
+                    !Auth::user()->hasPermission('quiz_edit') &&
+                    !Auth::user()->hasPermission('quiz_delete')
+                ) {
+                    array_push($rules['date'], 'before_or_equal:'.$now->format('Y-m-d'));
+                }
+                $validator = Validator::make($input, $rules);
                 if ($validator->fails()) {
                     return $this->sendError('validation_error', $validator->errors(), 400);
                 }
-                if (array_key_exists('today', $input)){
-                    $quiz = Quiz::with('questions.question')
-                        ->where('date', '=', Carbon::now()->format('Y-m-d'))
-                        ->first();
+                if (array_key_exists('today', $input)) {
+                    $date = $now->format('Y-m-d');
+                } else {
+                    $date = $input['date'];
                 }
-                else {
-                    $quiz = Quiz::with('questions.question')
-                        ->where('date', '<=', $now)->where('date', $input['date'])
-                        ->first();
-                }
+                $quiz = Quiz::with('questions.question')->where('date', $date)->first();
                 if ($quiz) {
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
@@ -73,7 +53,11 @@ class QuizController extends BaseController
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
-                $quizzes = Quiz::where('date', '<=', $now)->get();
+                if (Auth::user()->hasPermission('quiz_play')) {
+                    $quizzes = Quiz::where('date', '<=', $now)->get();
+                } else {
+                    $quizzes = Quiz::all();
+                }
                 return $this->sendResponse($quizzes, 200);
             }
         }
@@ -158,7 +142,6 @@ class QuizController extends BaseController
             }
             $quiz->fill($input);
             $quiz->save();
-
             $quiz = Quiz::with('questions.question')->find($quiz->id);
             $questions = $quiz->questions->map(function ($question) {
                 return $question->question;
@@ -190,7 +173,6 @@ class QuizController extends BaseController
                 return $this->sendResponse();
             }
         }
-
         return $this->sendError('no_permissions', [], 403);
     }
 
@@ -226,13 +208,11 @@ class QuizController extends BaseController
             if ($diffCount) {
                 return $this->sendError('wrong_quiz', null, 400);
             }
-            
             // todo: check if already submitted
             // todo: points validation (versus game)
             // todo: save submitted answers
             return $this->sendError('work_in_progress', null, 501);
         }
-
         return $this->sendError('no_permissions', [], 403);
     }
 }
