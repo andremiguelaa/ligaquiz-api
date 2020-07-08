@@ -221,8 +221,8 @@ class SpecialQuizController extends BaseController
                 return $this->sendError('wrong_specialquiz', null, 400);
             }
             
-            // to do: check if already submitted
-            // to do: save submitted answers
+            // todo: check if already submitted
+            // todo: save submitted answers
             return $this->sendError('work_in_progress', null, 501);
         }
 
