@@ -53,7 +53,11 @@ class QuizController extends BaseController
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
-                if (Auth::user()->hasPermission('quiz_play')) {
+                if (
+                    !Auth::user()->hasPermission('quiz_create') &&
+                    !Auth::user()->hasPermission('quiz_edit') &&
+                    !Auth::user()->hasPermission('quiz_delete')
+                ) {
                     $quizzes = Quiz::where('date', '<=', $now)->get();
                 } else {
                     $quizzes = Quiz::all();
