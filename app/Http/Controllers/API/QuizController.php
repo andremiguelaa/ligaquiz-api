@@ -233,7 +233,7 @@ class QuizController extends BaseController
             if ($answers) {
                 return $this->sendError('validation_error', ['already_submitted'], 409);
             }
-            $submittedAnswers = [];
+            $answersToSubmit = [];
             if (!$solo) {
                 $points = [
                     0 => 0,
@@ -252,43 +252,46 @@ class QuizController extends BaseController
                     );
                 }
                 foreach ($input['answers'] as $answer) {
-                    $submittedAnswer = $this->saveAnswer([
+                    array_push($answersToSubmit, $this->generateAnswerToSubmit([
                         'question_id' => $answer['question_id'],
-                        'text' => $answer['text'],
+                        'text' => isset($answer['text']) ? $answer['text'] : '',
                         'points' => $answer['points']
-                    ]);
-                    array_push($submittedAnswers, $submittedAnswer);
+                    ]));
                 }
             } else {
                 foreach ($input['answers'] as $answer) {
-                    $submittedAnswer = $this->saveAnswer([
+                    array_push($answersToSubmit, $this->generateAnswerToSubmit([
                         'question_id' => $answer['question_id'],
-                        'text' => $answer['text'],
+                        'text' => isset($answer['text']) ? $answer['text'] : '',
                         'points' => 0
-                    ]);
-                    array_push($submittedAnswers, $submittedAnswer);
+                    ]));
                 }
             }
+            Answer::insert($answersToSubmit);
+            $submittedAnswers = Answer::whereIn('question_id', $questionIds)
+                ->where('user_id', Auth::id())
+                ->where('submitted', 1)
+                ->get();
+            $submittedAnswers->makeHidden('id');
+            $submittedAnswers->makeHidden('user_id');
+            $submittedAnswers->makeHidden('submitted');
             return $this->sendResponse($submittedAnswers, 201);
         }
         return $this->sendError('no_permissions', [], 403);
     }
 
-    private function saveAnswer($answer)
+    private function generateAnswerToSubmit($answer)
     {
-        $submittedAnswer = Answer::create([
+        $answerToSubmit = [
             'question_id' => $answer['question_id'],
-            'text' => isset($answer['text']) ? $answer['text'] : '',
+            'text' => $answer['text'],
             'points' => $answer['points'],
             'user_id' => Auth::id(),
             'correct' => 0,
             'corrected' => 0,
             // todo: autocorrect
             'submitted' => 1,
-        ]);
-        unset($submittedAnswer->id);
-        unset($submittedAnswer->user_id);
-        unset($submittedAnswer->submitted);
-        return $submittedAnswer;
+        ];
+        return $answerToSubmit;
     }
 }
