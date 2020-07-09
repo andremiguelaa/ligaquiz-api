@@ -234,9 +234,9 @@ class SpecialQuizController extends BaseController
                     400
                 );
             }
-            $submittedAnswers = [];
+            $answersToSubmit = [];
             foreach ($input['answers'] as $answer) {
-                $submittedAnswer = Answer::create([
+                array_push($answersToSubmit, [
                     'question_id' => $answer['question_id'],
                     'text' => isset($answer['text']) ? $answer['text'] : '',
                     'points' => isset($answer['points']) ? $answer['points'] : 0,
@@ -246,11 +246,15 @@ class SpecialQuizController extends BaseController
                     // todo: autocorrect
                     'submitted' => 1,
                 ]);
-                unset($submittedAnswer->id);
-                unset($submittedAnswer->user_id);
-                unset($submittedAnswer->submitted);
-                array_push($submittedAnswers, $submittedAnswer);
             }
+            Answer::insert($answersToSubmit);
+            $submittedAnswers = Answer::whereIn('question_id', $questionIds)
+                ->where('user_id', Auth::id())
+                ->where('submitted', 1)
+                ->get();
+            $submittedAnswers->makeHidden('id');
+            $submittedAnswers->makeHidden('user_id');
+            $submittedAnswers->makeHidden('submitted');
             return $this->sendResponse($submittedAnswers, 201);
         }
         return $this->sendError('no_permissions', [], 403);

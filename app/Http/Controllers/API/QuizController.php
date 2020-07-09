@@ -188,17 +188,25 @@ class QuizController extends BaseController
     {
         if (Auth::user()->hasPermission('quiz_play')) {
             $input = $request::all();
-            $validator = Validator::make($input, [
+            $now = Carbon::now()->format('Y-m-d');
+            $round = Round::where('date', $now)->first();
+            $solo = true;
+            if ($round && $round->round !== 10 && $round->round !== 20) {
+                $solo = false;
+            }
+            $rules = [
                 'answers' => 'required|array|size:8',
                 'answers.*.question_id' => 'required|exists:questions,id',
                 'answers.*.text' => 'string',
-                'answers.*.points' => 'integer|min:0|max:3'
-                // todo: points required if not solo game and unacceptable when solo game
-            ]);
+                'answers.*.points' => ['integer', 'min:0', 'max:3']
+            ];
+            if (!$solo) {
+                array_push($rules['answers.*.points'], 'required');
+            }
+            $validator = Validator::make($input, $rules);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $now = Carbon::now()->format('Y-m-d');
             $quiz = Quiz::where('date', $now)->first();
             if (!$quiz) {
                 return $this->sendError('validation_error', ['no_quiz_today'], 400);
@@ -225,9 +233,8 @@ class QuizController extends BaseController
             if ($answers) {
                 return $this->sendError('validation_error', ['already_submitted'], 409);
             }
-            $round = Round::where('date', $now)->first()->round;
             $submittedAnswers = [];
-            if ($round !== 10 && $round !== 20) {
+            if (!$solo) {
                 $points = [
                     0 => 0,
                     1 => 0,
@@ -267,7 +274,8 @@ class QuizController extends BaseController
         return $this->sendError('no_permissions', [], 403);
     }
 
-    private function saveAnswer($answer) {
+    private function saveAnswer($answer)
+    {
         $submittedAnswer = Answer::create([
             'question_id' => $answer['question_id'],
             'text' => isset($answer['text']) ? $answer['text'] : '',
