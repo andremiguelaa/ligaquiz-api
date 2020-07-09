@@ -174,7 +174,9 @@ class QuizController extends BaseController
                 return $this->sendError('has_answers', null, 400);
             } else {
                 Question::whereIn('id', $quiz->questions->pluck('id')->toArray())->delete();
-                QuizQuestion::whereIn('question_id', $quiz->questions->pluck('id')->toArray())->delete();
+                QuizQuestion::whereIn('question_id', $quiz->questions->pluck('id')
+                    ->toArray())
+                    ->delete();
                 $quiz->delete();
                 return $this->sendResponse();
             }
@@ -191,6 +193,7 @@ class QuizController extends BaseController
                 'answers.*.question_id' => 'required|exists:questions,id',
                 'answers.*.text' => 'string',
                 'answers.*.points' => 'integer|min:0|max:3'
+                // todo: points required if not solo game and unacceptable when solo game
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -218,8 +221,8 @@ class QuizController extends BaseController
             $answers = Answer::whereIn('question_id', $questionIds)
                 ->where('user_id', Auth::id())
                 ->where('submitted', 1)
-                ->get();
-            if ($answers->count() === 8) {
+                ->first();
+            if ($answers) {
                 return $this->sendError('validation_error', ['already_submitted'], 409);
             }
             $round = Round::where('date', $now)->first()->round;
@@ -267,11 +270,12 @@ class QuizController extends BaseController
     private function saveAnswer($answer) {
         $submittedAnswer = Answer::create([
             'question_id' => $answer['question_id'],
-            'text' => $answer['text'],
+            'text' => isset($answer['text']) ? $answer['text'] : '',
             'points' => $answer['points'],
             'user_id' => Auth::id(),
             'correct' => 0,
             'corrected' => 0,
+            // todo: autocorrect
             'submitted' => 1,
         ]);
         unset($submittedAnswer->id);

@@ -11,6 +11,7 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use App\SpecialQuiz;
 use App\SpecialQuizQuestion;
 use App\Question;
+use App\Answer;
 
 class SpecialQuizController extends BaseController
 {
@@ -196,20 +197,61 @@ class SpecialQuizController extends BaseController
             $now = Carbon::now()->format('Y-m-d');
             $quiz = SpecialQuiz::where('date', $now)->first();
             if (!$quiz) {
-                return $this->sendError('no_specialquiz_today', null, 400);
+                return $this->sendError('validation_error', ['no_specialquiz_today'], 400);
             }
+            $questionIds = $quiz->questions->pluck('question_id')->toArray();
             $diffCount = count(
-                array_diff($quiz->question_ids, array_map(function ($item) {
-                    return $item['question_id'];
-                }, $input['answers']))
+                array_diff(
+                    $questionIds,
+                    array_map(
+                        function ($item) {
+                            return $item['question_id'];
+                        },
+                        $input['answers']
+                    )
+                )
             );
             if ($diffCount) {
-                return $this->sendError('wrong_specialquiz', null, 400);
+                return $this->sendError('validation_error', ['wrong_specialquiz'], 400);
             }
-            
-            // todo: check if already submitted
-            // todo: save submitted answers
-            return $this->sendError('work_in_progress', null, 501);
+            $answers = Answer::whereIn('question_id', $questionIds)
+            ->where('user_id', Auth::id())
+            ->where('submitted', 1)
+            ->first();
+            if ($answers) {
+                return $this->sendError('validation_error', ['already_submitted'], 409);
+            }
+            $jokers = 0;
+            foreach ($input['answers'] as $answer) {
+                if (isset($answer['points']) && $answer['points'] > 0) {
+                    $jokers++;
+                }
+            }
+            if ($jokers > 5) {
+                return $this->sendError(
+                    'validation_error',
+                    ["answers" => 'too_much_jokers'],
+                    400
+                );
+            }
+            $submittedAnswers = [];
+            foreach ($input['answers'] as $answer) {
+                $submittedAnswer = Answer::create([
+                    'question_id' => $answer['question_id'],
+                    'text' => isset($answer['text']) ? $answer['text'] : '',
+                    'points' => isset($answer['points']) ? $answer['points'] : 0,
+                    'user_id' => Auth::id(),
+                    'correct' => 0,
+                    'corrected' => 0,
+                    // todo: autocorrect
+                    'submitted' => 1,
+                ]);
+                unset($submittedAnswer->id);
+                unset($submittedAnswer->user_id);
+                unset($submittedAnswer->submitted);
+                array_push($submittedAnswers, $submittedAnswer);
+            }
+            return $this->sendResponse($submittedAnswers, 201);
         }
         return $this->sendError('no_permissions', [], 403);
     }
