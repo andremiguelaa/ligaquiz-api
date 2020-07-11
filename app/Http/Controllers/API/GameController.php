@@ -103,7 +103,8 @@ class GameController extends BaseController
                         $game->user_id_1_correct_answers = $gameAnswers[$game->user_id_1]
                             ->where('correct', 1)->count();
                         if ($game->solo) {
-                            $game->user_id_1_game_points = 1 + 0.5 * $game->user_id_1_correct_answers;
+                            $game->user_id_1_game_points =
+                                1 + 0.5 * $game->user_id_1_correct_answers;
                         }
                     }
 
@@ -119,78 +120,34 @@ class GameController extends BaseController
                             $game->user_id_2_correct_answers = $gameAnswers[$game->user_id_2]
                                 ->where('correct', 1)->count();
                         }
-                    }
 
-                    
-
-                    /*
-                    if (
-                        $game->answers[$game->user_id_1]->where('corrected', 0) ||
-                        $game->answers[$game->user_id_2]->where('corrected', 0)
-                    ) {
-                        $game->user_id_1_game_points = 'P';
-                        if (!$game->solo) {
-                            $game->user_id_2_game_points = 'P';
+                        $forfeitScore = [
+                            '0' => 0,
+                            '1' => 2,
+                            '2' => 3,
+                            '3' => 5,
+                            '4' => 6,
+                            '5' => 8,
+                            '6' => 9,
+                            '7' => 10,
+                            '8' => 12
+                        ];
+                        if (
+                            isset($gameAnswers[$game->user_id_1]) &&
+                            !isset($gameAnswers[$game->user_id_2])
+                        ) {
+                            $game->user_id_1_game_points =
+                                $forfeitScore[$game->user_id_1_correct_answers];
+                        } elseif (
+                            !isset($gameAnswers[$game->user_id_1]) &&
+                            isset($gameAnswers[$game->user_id_2])
+                        ) {
+                            $game->user_id_2_game_points =
+                                $forfeitScore[$game->user_id_2_correct_answers];
                         }
                     }
-                    */
 
                     // todo: calculate game result
-                    /*
-                    if (count($dayAnswers->where('corrected', 0))) {
-                        $players[0]['points'] = 'P';
-                        $players[1]['points'] = 'P';
-                        $players[0]['corrects'] = 'P';
-                        $players[1]['corrects'] = 'P';
-                        return $players;
-                    }
-                    $player1 = [];
-                    $player2 = [];
-                    foreach ($questionsIds as $questionId) {
-                        $player1[$questionId] = $dayAnswers->where('user_id', $this->user_1_id)->where('question_id', $questionId)->first();
-                        $player2[$questionId] = $dayAnswers->where('user_id', $this->user_2_id)->where('question_id', $questionId)->first();
-                        if ($player1[$questionId] && $player2[$questionId]) {
-                            $player1[$questionId]['pointsAttr'] = $player2[$questionId]->points;
-                            $player2[$questionId]['pointsAttr'] = $player1[$questionId]->points;
-                            $player1[$questionId]['pointsWon'] = $player1[$questionId]->correct * $player2[$questionId]->points;
-                            $player2[$questionId]['pointsWon'] = $player2[$questionId]->correct * $player1[$questionId]->points;
-                            $players[0]['points'] += $player1[$questionId]['pointsWon'];
-                            $players[1]['points'] += $player2[$questionId]['pointsWon'];
-                            $players[0]['corrects'] += $player1[$questionId]->correct;
-                            $players[1]['corrects'] += $player2[$questionId]->correct;
-                        } elseif (!$player1[$questionId] && !$player2[$questionId]) {
-                            $players[0]['points'] = 'F';
-                            $players[1]['points'] = 'F';
-                        } else {
-                            if ($player1[$questionId]) {
-                                $winner = 0;
-                                $loser = 1;
-                                $players[$winner]['corrects'] += $player1[$questionId]['correct'];
-                            } else {
-                                $winner = 1;
-                                $loser = 0;
-                                $players[$winner]['corrects'] += $player2[$questionId]['correct'];
-                            }
-                            $players[$loser]['corrects'] = 'F';
-                            $players[$loser]['points'] = 'F';
-                            $score = ['0' => 0, '1' => 2, '2' => 3, '3' => 5, '4' => 6, '5' => 8, '6' => 9, '7' => 10, '8' => 12];
-                            $players[$winner]['points'] = $score[$players[$winner]['corrects']];
-                        }
-                    }
-                    */
-
-                    /*
-                    $game->answers = $answers->groupBy(['user_id', 'question_id'])
-                        ->map(function ($user) {
-                            return $user->map(function ($question) {
-                                return $question->map(function ($answer) {
-                                    unset($answer['question_id']);
-                                    unset($answer['user_id']);
-                                    return $answer;
-                                });
-                            });
-                        });
-                    */
                 }
                 if ($game->quiz) {
                     $game->quiz->makeHidden('questions');
