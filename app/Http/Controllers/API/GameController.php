@@ -67,6 +67,7 @@ class GameController extends BaseController
             $quizzes = $gamesQuizzes->map(function ($quiz) use (&$answers) {
                 return $quiz->map(function ($question) use (&$answers) {
                     $answers = $answers->merge($question['question']->submitted_answers);
+                    $question['question']->makeHidden('submitted_answers');
                     return $question['question'];
                 });
             });
@@ -81,6 +82,7 @@ class GameController extends BaseController
                     $gameAnswers = $answers
                         ->whereIn('user_id', [$game->user_id_1, $game->user_id_2])
                         ->whereIn('question_id', $questionIds)
+                        ->sortBy('question_id')
                         ->groupBy('user_id')->map(function ($user) {
                             return $user->map(function ($answer) {
                                 unset($answer['user_id']);
@@ -154,7 +156,16 @@ class GameController extends BaseController
                                 $game->user_id_2_game_points = 'P';
                             }
                             else {
-                                // todo: calculate game result
+                                foreach ($gameAnswers[$game->user_id_1] as $key => $value) {
+                                    $game->user_id_1_game_points +=
+                                        $value['correct'] *
+                                        $gameAnswers[$game->user_id_2][$key]['points'];
+                                }
+                                foreach ($gameAnswers[$game->user_id_2] as $key => $value) {
+                                    $game->user_id_2_game_points +=
+                                        $value['correct'] *
+                                        $gameAnswers[$game->user_id_1][$key]['points'];
+                                }
                             }
                         }
                     }
@@ -167,7 +178,7 @@ class GameController extends BaseController
 
             return $this->sendResponse([
                 'games' => $games,
-                // 'quizzes' => array_values($quizzes->toArray()),
+                'quizzes' => array_values($quizzes->toArray()),
             ], 200);
         }
         
