@@ -88,8 +88,6 @@ class GameController extends BaseController
                             });
                         });
                     
-                    
-
                     $game->solo = $game->user_id_1 === $game->user_id_2;
                     $game->user_id_1_correct_answers = 0;
                     $game->user_id_1_game_points = 0;
@@ -144,10 +142,22 @@ class GameController extends BaseController
                         ) {
                             $game->user_id_2_game_points =
                                 $forfeitScore[$game->user_id_2_correct_answers];
+                        } elseif (
+                            isset($gameAnswers[$game->user_id_1]) &&
+                            isset($gameAnswers[$game->user_id_2])
+                        ) {
+                            if (
+                                $game->user_id_1_game_points === 'P' ||
+                                $game->user_id_2_game_points === 'P'
+                            ) {
+                                $game->user_id_1_game_points = 'P';
+                                $game->user_id_2_game_points = 'P';
+                            }
+                            else {
+                                // todo: calculate game result
+                            }
                         }
                     }
-
-                    // todo: calculate game result
                 }
                 if ($game->quiz) {
                     $game->quiz->makeHidden('questions');
