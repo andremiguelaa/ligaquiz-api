@@ -17,6 +17,8 @@ class Question extends Model
         'created_at', 'updated_at', 'laravel_through_key'
     ];
 
+    protected $appends = ['percentage'];
+
     public function media()
     {
         return $this->hasOne('App\Media', 'id', 'media_id');
@@ -30,5 +32,15 @@ class Question extends Model
     public function submitted_answers()
     {
         return $this->hasMany('App\Answer', 'question_id', 'id')->where('submitted', 1);
+    }
+
+    public function getPercentageAttribute()
+    {
+        if ($this->submitted_answers->count()) {
+            return $this->submitted_answers->where('correct', 1)->count() /
+                $this->submitted_answers->count()
+                * 100;
+        }
+        return 0;
     }
 }
