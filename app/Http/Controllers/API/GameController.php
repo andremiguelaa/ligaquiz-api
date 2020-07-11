@@ -60,11 +60,10 @@ class GameController extends BaseController
             }
             $games = $query->get();
             $gamesQuizzes = $games->unique('quiz.questions')
-                ->pluck('quiz.questions')
+                ->pluck('quiz.questions', 'quiz.id')
                 ->filter();
             
             $answers = collect([]);
-            // todo: return quiz id;
             $quizzes = $gamesQuizzes->map(function ($quiz) use (&$answers) {
                 return $quiz->map(function ($question) use (&$answers) {
                     $answers = $answers->merge($question['question']->submitted_answers);
@@ -179,7 +178,7 @@ class GameController extends BaseController
 
             return $this->sendResponse([
                 'games' => $games,
-                'quizzes' => array_values($quizzes->toArray()),
+                'quizzes' => $quizzes,
             ], 200);
         }
         
