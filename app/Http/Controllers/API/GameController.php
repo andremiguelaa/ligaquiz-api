@@ -64,6 +64,7 @@ class GameController extends BaseController
                 ->filter();
             
             $answers = collect([]);
+            // todo: return quiz id;
             $quizzes = $gamesQuizzes->map(function ($quiz) use (&$answers) {
                 return $quiz->map(function ($question) use (&$answers) {
                     $answers = $answers->merge($question['question']->submitted_answers);
