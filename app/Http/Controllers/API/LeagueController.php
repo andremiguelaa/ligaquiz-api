@@ -36,23 +36,93 @@ class LeagueController extends BaseController
                 ->where('tier', $input['tier'])
                 ->first()
                 ->user_ids;
-            $players = array_map(function ($id) {
-                return [
-                    'id' => $id,
-                    'league_points' => 0,
+            $players = [];
+            foreach ($playersIds as $id) {
+                $players[$id] = [
                     'game_points' => 0,
                     'game_points_against' => 0,
                     'wins' => 0,
                     'draws' => 0,
                     'losses' => 0,
                     'forfeits' => 0,
-                    'correct_answers' => 0
-
+                    'correct_answers' => 0,
+                    'league_points' => 0
                 ];
-            }, $playersIds);
-            // $roundResults = $this->getGameResults($input, $rules);
-            return $this->sendError('work_in_progress', null, 501);
-            //return $this->sendResponse($players, 200);
+            }
+            $rounds = $this->getGameResults($input, $rules);
+            foreach ($rounds as $key => $round) {
+                foreach ($round as $game) {
+                    if ($game->done) {
+                        if (is_int($game->user_id_1_game_points)) {
+                            $players[$game->user_id_1]['game_points'] +=
+                                $game->user_id_1_game_points;
+                        } elseif ($game->user_id_1_game_points === 'F') {
+                            $players[$game->user_id_1]['forfeits']++;
+                        }
+                        $players[$game->user_id_1]['correct_answers'] +=
+                                $game->user_id_1_correct_answers;
+                        
+
+                        if (!$game->solo) {
+                            if (is_int($game->user_id_2_game_points)) {
+                                $players[$game->user_id_2]['game_points'] +=
+                                    $game->user_id_2_game_points;
+                                $players[$game->user_id_1]['game_points_against'] +=
+                                    $game->user_id_2_game_points;
+                            } elseif ($game->user_id_2_game_points === 'F') {
+                                $players[$game->user_id_2]['forfeits']++;
+                            }
+                            if (is_int($game->user_id_1_game_points)) {
+                                $players[$game->user_id_2]['game_points_against'] +=
+                                    $game->user_id_1_game_points;
+                            }
+                            if (
+                                is_int($game->user_id_1_game_points) &&
+                                is_int($game->user_id_2_game_points)
+                            ) {
+                                if ($game->user_id_1_game_points > $game->user_id_2_game_points) {
+                                    $players[$game->user_id_1]['wins']++;
+                                    $players[$game->user_id_2]['losses']++;
+                                    $players[$game->user_id_1]['league_points'] += 3;
+                                    $players[$game->user_id_2]['league_points'] += 1;
+                                } elseif (
+                                    $game->user_id_1_game_points <
+                                    $game->user_id_2_game_points
+                                ) {
+                                    $players[$game->user_id_1]['losses']++;
+                                    $players[$game->user_id_2]['wins']++;
+                                    $players[$game->user_id_1]['league_points'] += 1;
+                                    $players[$game->user_id_2]['league_points'] += 3;
+                                } else {
+                                    $players[$game->user_id_1]['draws']++;
+                                    $players[$game->user_id_2]['draws']++;
+                                    $players[$game->user_id_1]['league_points'] += 2;
+                                    $players[$game->user_id_2]['league_points'] += 2;
+                                }
+                            } elseif (
+                                is_int($game->user_id_1_game_points) &&
+                                $game->user_id_2_game_points !== 'P'
+                            ) {
+                                $players[$game->user_id_1]['wins']++;
+                                $players[$game->user_id_1]['league_points'] += 3;
+                            } elseif (
+                                is_int($game->user_id_2_game_points) &&
+                                $game->user_id_1_game_points !== 'P'
+                            ) {
+                                $players[$game->user_id_2]['wins']++;
+                                $players[$game->user_id_2]['league_points'] += 3;
+                            }
+                            $players[$game->user_id_2]['correct_answers'] +=
+                                $game->user_id_2_correct_answers;
+                        } else {
+                            $players[$game->user_id_1]['league_points'] +=
+                                $game->user_id_1_game_points;
+                        }
+                    }
+                }
+            }
+            // return $this->sendError('work_in_progress', null, 501);
+            return $this->sendResponse($players, 200);
         }
         
         return $this->sendError('no_permissions', [], 403);

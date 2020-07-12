@@ -50,6 +50,7 @@ trait GameResults
 
         $games = $games->map(function ($game) use ($input, $answers) {
             $now = Carbon::now()->format('Y-m-d');
+            $game->done = $game->quiz && $now > $game->quiz->date;
             if ($game->quiz && $now > $game->quiz->date) {
                 $questionIds = $game->quiz->questions->pluck('question_id')->toArray();
                 $gameAnswers = $answers
