@@ -87,5 +87,8 @@ Route::group([
         Route::get('leagues', 'API\LeagueController@get');
 
         Route::get('games', 'API\GameController@get');
+
+        Route::get('logs', 'API\LogController@get');
+        Route::post('logs', 'API\LogController@create');
     });
 });
