@@ -75,7 +75,7 @@ class GameController extends BaseController
                 return $answer->only(['question_id', 'user_id', 'points', 'correct', 'corrected']);
             });
 
-            $games = $games->map(function ($game) use ($answers) {
+            $games = $games->map(function ($game) use ($input, $answers) {
                 $now = Carbon::now()->format('Y-m-d');
                 if ($game->quiz && $now > $game->quiz->date) {
                     $questionIds = $game->quiz->questions->pluck('question_id')->toArray();
@@ -154,8 +154,7 @@ class GameController extends BaseController
                             ) {
                                 $game->user_id_1_game_points = 'P';
                                 $game->user_id_2_game_points = 'P';
-                            }
-                            else {
+                            } else {
                                 foreach ($gameAnswers[$game->user_id_1] as $key => $value) {
                                     $game->user_id_1_game_points +=
                                         $value['correct'] *
@@ -169,17 +168,49 @@ class GameController extends BaseController
                             }
                         }
                     }
+                    if (isset($input['id'])) {
+                        $game->answers = $answers
+                            ->whereIn('user_id', [$game->user_id_1, $game->user_id_2])
+                            ->whereIn('question_id', $questionIds)
+                            ->sortBy('question_id')
+                            ->groupBy(['user_id', 'question_id'])->map(function ($user) {
+                                return $user->map(function ($question) {
+                                    return $question->map(function ($answer) {
+                                        unset($answer['user_id']);
+                                        unset($answer['question_id']);
+                                        return $answer;
+                                    });
+                                });
+                            });
+                    }
                 }
                 if ($game->quiz) {
-                    $game->quiz->makeHidden('questions');
+                    if (!isset($input['id'])) {
+                        $game->quiz->makeHidden('questions');
+                    }
+                    if (isset($input['season'])) {
+                        $game->makeHidden('quiz');
+                    }
                 }
                 return $game;
             });
 
-            return $this->sendResponse([
-                'games' => $games,
-                'quizzes' => $quizzes,
-            ], 200);
+            if (isset($input['id'])) {
+                $response = $games->first();
+            }
+            else if (isset($input['season'])) {
+                $response = $games->groupBy('round')->map(function($round){
+                    return $round->map(function($game){
+                        unset($game->season);
+                        unset($game->round);
+                        return $game;
+                    });
+                });
+            }
+            else {
+                $response = $games;
+            }
+            return $this->sendResponse($response, 200);
         }
         
         return $this->sendError('no_permissions', [], 403);
