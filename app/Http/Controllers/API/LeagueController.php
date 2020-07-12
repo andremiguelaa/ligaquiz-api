@@ -39,6 +39,7 @@ class LeagueController extends BaseController
             $players = [];
             foreach ($playersIds as $id) {
                 $players[$id] = [
+                    'id' => $id,
                     'game_points' => 0,
                     'game_points_against' => 0,
                     'wins' => 0,
@@ -121,10 +122,34 @@ class LeagueController extends BaseController
                     }
                 }
             }
-            // return $this->sendError('work_in_progress', null, 501);
+            usort($players, function ($a, $b) {
+                return $this->getTiebreakValue($b) < $this->getTiebreakValue($a);
+            });
+            foreach ($players as $key => $player) {
+                $players[$key]['tiebreak'] = $this->getTiebreakValue($player);
+                if ($key > 0 && $players[$key]['tiebreak'] === $players[$key - 1]['tiebreak']) {
+                    $players[$key]['rank'] = $players[$key - 1]['rank'];
+                } else {
+                    $players[$key]['rank'] = $key + 1;
+                }
+            }
             return $this->sendResponse($players, 200);
         }
         
         return $this->sendError('no_permissions', [], 403);
+    }
+
+    private function getTiebreakValue($player)
+    {
+        $leaguePoints = sprintf('%02d', $player['league_points'] * 10);
+        $gamePointsDifference = sprintf(
+            '%03d',
+            ($player['game_points'] - $player['game_points_against'] + 500) * 10
+        );
+        $gamePoints = sprintf('%04d', $player['game_points'] * 10);
+        $wins = sprintf('%02d', $player['wins']);
+        $correctAnswers = sprintf('%03d', $player['correct_answers']);
+        $tiebreak = $leaguePoints . $gamePointsDifference . $gamePoints . $wins . $correctAnswers;
+        return 1 / (1 + $tiebreak);
     }
 }
