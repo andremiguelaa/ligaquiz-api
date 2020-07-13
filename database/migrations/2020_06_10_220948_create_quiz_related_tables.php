@@ -40,7 +40,7 @@ class CreateQuizRelatedTables extends Migration
             $table->bigIncrements('id');
             $table->integer('question_id');
             $table->integer('user_id');
-            $table->string('text')->nullable();
+            $table->text('text')->nullable();
             $table->integer('points');
             $table->boolean('correct');
             $table->boolean('corrected');
