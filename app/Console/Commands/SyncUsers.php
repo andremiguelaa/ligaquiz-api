@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use App\User;
+use Storage;
+use Image;
 
 class SyncUsers extends Command
 {
@@ -62,8 +64,16 @@ class SyncUsers extends Command
             if ($user->role !== 2) {
                 $roles['regular_player'] = $user->subscription;
             }
-            $avatar = $user->avatar ? 'avatar'.$user->id.'.jpg' : null;
-            // todo: get and store image
+            if ($user->avatar) {
+                $url = 'https://ligaquiz.pt/files/user_'.$user->id.'.jpg';
+                $image = file_get_contents($url);
+                $avatar = 'avatar'.$user->id.'.jpg';
+                Image::make($image)->fit(200, 200, function ($constraint) {
+                    $constraint->upsize();
+                })->save(storage_path('app/public/avatars/' . $avatar));
+            } else {
+                $avatar = null;
+            }
             $reminders = [
                 'quiz' => [
                     'daily' => boolval($user->daily_reminder),
@@ -75,19 +85,21 @@ class SyncUsers extends Command
                 ],
             ];
             User::updateOrCreate(
-                ['id' => $user->id],
                 [
-                'id' => $user->id,
-                'email' => trim($user->email),
-                'name' => trim($user->name),
-                'surname' => trim($user->surname),
-                'password' => $user->password,
-                'roles' => $roles,
-                'avatar' => $avatar,
-                'reminders' => $reminders,
-                'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at
-            ]
+                    'id' => $user->id
+                ],
+                [
+                    'id' => $user->id,
+                    'email' => trim($user->email),
+                    'name' => trim($user->name),
+                    'surname' => trim($user->surname),
+                    'password' => $user->password,
+                    'roles' => $roles,
+                    'avatar' => $avatar,
+                    'reminders' => $reminders,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
+                ]
             );
             $this->line(
                 '<fg=green>Synced:</> <fg=yellow>'.$user->id.'</> <fg=red>=></> '
