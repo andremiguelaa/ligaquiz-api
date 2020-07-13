@@ -56,7 +56,6 @@ class SyncUsers extends Command
             }
             if ($user->role === 1) {
                 $roles['special_quiz_editor'] = true;
-                $roles['answer_reviewer'] = true;
             }
             if (!$user->active) {
                 $roles['blocked'] = true;
