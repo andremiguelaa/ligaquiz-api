@@ -8,21 +8,21 @@ use App\User;
 use Storage;
 use Image;
 
-class SyncUsers extends Command
+class ImportUsers extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'sync:users';
+    protected $signature = 'import:users';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Sync users from old app';
+    protected $description = 'Import users from old app';
 
     /**
      * Create a new command instance.
@@ -41,7 +41,9 @@ class SyncUsers extends Command
      */
     public function handle()
     {
+        $startTime = microtime(true);
         $oldUsers = DB::connection('mysql_old')->table('users')->get();
+        User::query()->truncate();
         foreach ($oldUsers as $user) {
             $roles = [];
             if ($user->role === 2) {
@@ -83,30 +85,31 @@ class SyncUsers extends Command
                     'deadline' => boolval($user->deadline_reminder)
                 ],
             ];
-            User::updateOrCreate(
-                [
-                    'id' => $user->id
-                ],
-                [
-                    'id' => $user->id,
-                    'email' => trim($user->email),
-                    'name' => trim($user->name),
-                    'surname' => trim($user->surname),
-                    'password' => $user->password,
-                    'roles' => $roles,
-                    'avatar' => $avatar,
-                    'reminders' => $reminders,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at
-                ]
-            );
+            User::create([
+                'id' => $user->id,
+                'email' => trim($user->email),
+                'name' => trim($user->name),
+                'surname' => trim($user->surname),
+                'password' => $user->password,
+                'roles' => $roles,
+                'avatar' => $avatar,
+                'reminders' => $reminders,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at
+            ]);
             $this->line(
-                '<fg=green>Synced:</> <fg=yellow>'.$user->id.'</> <fg=red>=></> '
+                '<fg=green>Imported:</> <fg=yellow>'.$user->id.'</> <fg=red>=></> '
                     .trim($user->name).' '.trim($user->surname).' ('.trim($user->email).')'
             );
         }
+        $endTime = microtime(true);
+        $timeDiff = $endTime - $startTime;
         $this->line('');
-        $this->line('<fg=green>Success:</> <fg=yellow>'.$oldUsers->count().' users synced</>');
+        $this->line(
+            '<fg=green>Success:</> <fg=yellow>'
+            .$oldUsers->count().' users imported ('.abs(round($timeDiff*100))/100
+            .'s)</>'
+        );
         $this->line('');
     }
 }
