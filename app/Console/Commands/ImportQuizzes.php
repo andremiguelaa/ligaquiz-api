@@ -117,11 +117,13 @@ class ImportQuizzes extends Command
                 $quizId = $quiz->id;
             }
             // todo: get and store question media
+            $genreId = isset($genreMap[$oldQuestion->subgenre_id]) ?
+                $genreMap[$oldQuestion->subgenre_id] : null;
             $question = Question::create([
                 'content' => $oldQuestion->question,
                 'answer' => $oldQuestion->answer,
                 'media_id' => null,
-                'genre_id' => $genreMap[$oldQuestion->subgenre_id],
+                'genre_id' => $genreId,
             ]);
             QuizQuestion::create([
                 'quiz_id' => $quizId,
