@@ -53,6 +53,8 @@ class SpecialQuizController extends BaseController
                     });
                     unset($quiz->questions);
                     $quiz->questions = $questions;
+                    // todo: hide percentage and submitted answers if user only has
+                    // special quiz play permission and it's today
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
