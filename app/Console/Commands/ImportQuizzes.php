@@ -89,6 +89,14 @@ class ImportQuizzes extends Command
             43 => 46,
             44 => 47
         ];
+        $mimeTypeMap = [
+            'mp4' => 'video',
+            'mp3' => 'audio',
+            'jpg' => 'image',
+            'jpeg' => 'image',
+            'gif' => 'image',
+            'png' => 'image'
+        ];
         $oldQuestions = DB::connection('mysql_old')
             ->table('questions')
             ->orderBy('year')
@@ -104,6 +112,7 @@ class ImportQuizzes extends Command
         Question::query()->truncate();
         QuizQuestion::query()->truncate();
         Answer::query()->truncate();
+        Media::query()->truncate();
         $insertedQuizzes = [];
         foreach ($oldQuestions as $oldQuestion) {
             $year = $oldQuestion->year;
@@ -116,13 +125,26 @@ class ImportQuizzes extends Command
                 $insertedQuizzes[$year.'-'.$month.'-'.$day] = $quiz->id;
                 $quizId = $quiz->id;
             }
-            // todo: get and store question media
+            if ($oldQuestion->filename) {
+                $url = 'https://ligaquiz.pt/files/'.$oldQuestion->filename;
+                $file = file_get_contents($url);
+                $extension = strtolower(pathinfo($oldQuestion->filename, PATHINFO_EXTENSION));
+                $filename = 'media/'.pathinfo($oldQuestion->filename, PATHINFO_FILENAME)
+                    .'_'.round(microtime(true) * 1000)
+                    .'.'.$extension;
+                $mimeType = $mimeTypeMap[$extension];
+                $storedFile = Storage::put($filename, $file);
+                $media = Media::create([
+                    'filename' => $filename,
+                    'type' => $mimeType
+                ]);
+            }
             $genreId = isset($genreMap[$oldQuestion->subgenre_id]) ?
                 $genreMap[$oldQuestion->subgenre_id] : null;
             $question = Question::create([
                 'content' => $oldQuestion->question,
                 'answer' => $oldQuestion->answer,
-                'media_id' => null,
+                'media_id' => $oldQuestion->filename ? $media->id : null,
                 'genre_id' => $genreId,
             ]);
             QuizQuestion::create([
