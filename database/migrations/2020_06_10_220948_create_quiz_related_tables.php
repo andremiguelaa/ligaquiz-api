@@ -16,7 +16,7 @@ class CreateQuizRelatedTables extends Migration
         Schema::create('questions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->text('content')->nullable();
-            $table->string('answer')->nullable();
+            $table->text('answer')->nullable();
             $table->integer('media_id')->nullable();
             $table->integer('genre_id')->nullable();
             $table->timestamps();

@@ -9,6 +9,8 @@ use App\Question;
 use App\QuizQuestion;
 use App\Answer;
 use App\Media;
+use App\SpecialQuiz;
+use App\SpecialQuizQuestion;
 use Storage;
 use Image;
 
@@ -97,6 +99,13 @@ class ImportQuizzes extends Command
             'gif' => 'image',
             'png' => 'image'
         ];
+        Question::query()->truncate();
+        Answer::query()->truncate();
+        Media::query()->truncate();
+        Quiz::query()->truncate();
+        QuizQuestion::query()->truncate();
+        SpecialQuiz::query()->truncate();
+        SpecialQuizQuestion::query()->truncate();
         $oldQuestions = DB::connection('mysql_old')
             ->table('questions')
             ->orderBy('year')
@@ -108,11 +117,6 @@ class ImportQuizzes extends Command
             ->where('submitted', 1)
             ->get()
             ->groupBy('question_id');
-        Quiz::query()->truncate();
-        Question::query()->truncate();
-        QuizQuestion::query()->truncate();
-        Answer::query()->truncate();
-        Media::query()->truncate();
         $insertedQuizzes = [];
         foreach ($oldQuestions as $oldQuestion) {
             $year = $oldQuestion->year;
@@ -173,14 +177,92 @@ class ImportQuizzes extends Command
                 '<fg=green>Imported:</> <fg=yellow>'.$question->id.'</> <fg=red>=></> '.$quiz->date
             );
         }
-        $endTime = microtime(true);
-        $timeDiff = $endTime - $startTime;
+        $oldSpecialQuizzes = DB::connection('mysql_old')
+            ->table('specialquizzes')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->orderBy('day')
+            ->get();
+        $oldSpecialQuestions = DB::connection('mysql_old')
+            ->table('specialquestions')
+            ->get()
+            ->groupBy('quiz_id');
+        $oldSpecialAnswers = DB::connection('mysql_old')
+            ->table('specialanswers')
+            ->where('submitted', 1)
+            ->get()
+            ->groupBy('question_id');
+        foreach ($oldSpecialQuizzes as $oldSpecialQuiz) {
+            $year = $oldSpecialQuiz->year;
+            $month = str_pad($oldSpecialQuiz->month, 2, '0', STR_PAD_LEFT);
+            $day = str_pad($oldSpecialQuiz->day, 2, '0', STR_PAD_LEFT);
+            $specialQuiz = SpecialQuiz::create([
+                'subject' => $oldSpecialQuiz->subject,
+                'description' => $oldSpecialQuiz->description,
+                'user_id' => $oldSpecialQuiz->user_id,
+                'date' => $year.'-'.$month.'-'.$day
+            ]);
+            foreach ($oldSpecialQuestions[$oldSpecialQuiz->id] as $oldSpecialQuestion) {
+                if ($oldSpecialQuestion->filename) {
+                    $url = 'https://ligaquiz.pt/files/'.$oldSpecialQuestion->filename;
+                    $file = file_get_contents($url);
+                    $extension = strtolower(
+                        pathinfo($oldSpecialQuestion->filename, PATHINFO_EXTENSION)
+                    );
+                    $filename = 'media/'.pathinfo($oldSpecialQuestion->filename, PATHINFO_FILENAME)
+                        .'_'.round(microtime(true) * 1000)
+                        .'.'.$extension;
+                    $mimeType = $mimeTypeMap[$extension];
+                    $storedFile = Storage::put($filename, $file);
+                    $media = Media::create([
+                        'filename' => $filename,
+                        'type' => $mimeType
+                    ]);
+                }
+                $question = Question::create([
+                    'content' => $oldSpecialQuestion->question,
+                    'answer' => $oldSpecialQuestion->answer,
+                    'media_id' => $oldSpecialQuestion->filename ? $media->id : null,
+                    'genre_id' => null,
+                ]);
+                SpecialQuizQuestion::create([
+                    'special_quiz_id' => $specialQuiz->id,
+                    'question_id' => $question->id
+                ]);
+                if (isset($oldSpecialAnswers[$oldSpecialQuestion->id])) {
+                    $oldSpecialQuestionAnswers = $oldSpecialAnswers[$oldSpecialQuestion->id]
+                        ->map(
+                            function ($item) use ($question) {
+                                return [
+                                    'question_id' => $question->id,
+                                    'user_id' => $item->user_id,
+                                    'text' => $item->answer,
+                                    'correct' => $item->correct,
+                                    'corrected' => $item->corrected,
+                                    'points' => $item->banker,
+                                    'submitted' => 1
+                                ];
+                            }
+                        )
+                        ->toArray();
+                    Answer::insert($oldSpecialQuestionAnswers);
+                }
+                $this->line(
+                    '<fg=green>Imported:</> <fg=yellow>'
+                        .$question->id.'</> <fg=red>=></> '
+                        .$specialQuiz->date
+                );
+            }
+        }
+        $elapsedTime = microtime(true) - $startTime;
         $this->line('');
         $this->line(
             '<fg=green>Success:</> <fg=yellow>'
                 .$oldQuestions->count()/8
-                .' regular quizzes imported ('
-                .abs(round($timeDiff*100))/100
+                .' regular quizzes and '
+                .$oldSpecialQuizzes->count()
+                .' special quizzes imported ('
+                .abs(round($elapsedTime*100))/100
                 .'s)</>'
         );
         $this->line('');
