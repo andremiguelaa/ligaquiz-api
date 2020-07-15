@@ -19,7 +19,7 @@ class GameController extends BaseController
             $input = $request::all();
             $rules = [
                 'id' => 'exists:games,id|required_without_all:season,user',
-                'season' => 'required_with:tier|exists:seasons,season|required_without_all:id,user',
+                'season_id' => 'required_with:tier|exists:seasons,id|required_without_all:id,user',
                 'tier' => [
                     'required_with:season',
                     'integer',

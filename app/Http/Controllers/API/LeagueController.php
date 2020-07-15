@@ -19,12 +19,15 @@ class LeagueController extends BaseController
         if (Auth::user()->hasPermission('quiz_play')) {
             $input = $request::all();
             $rules = [
-                'season' => 'required|exists:seasons,season',
+                'season_id' => 'required|exists:seasons,id',
                 'tier' => [
                     'required',
                     'integer',
                     Rule::exists('leagues', 'tier')->where(function ($query) use ($input) {
-                        $query->where('season', isset($input['season']) ? $input['season'] : 0);
+                        $query->where(
+                            'season',
+                            isset($input['season_id']) ? $input['season_id'] : 0
+                        );
                     })
                 ]
             ];
@@ -32,7 +35,7 @@ class LeagueController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $playersIds = League::where('season', $input['season'])
+            $playersIds = League::where('season', $input['season_id'])
                 ->where('tier', $input['tier'])
                 ->first()
                 ->user_ids;

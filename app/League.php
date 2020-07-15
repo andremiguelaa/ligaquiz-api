@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class League extends Model
 {
     protected $fillable = [
-        'season', 'tier', 'user_ids'
+        'season_id', 'tier', 'user_ids'
     ];
 
     protected $hidden = [

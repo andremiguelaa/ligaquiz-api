@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Game extends Model
 {
     protected $fillable = [
-        'season', 'round', 'user_id_1', 'user_id_2'
+        'round_id', 'user_id_1', 'user_id_2'
     ];
 
     protected $hidden = [
