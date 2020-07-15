@@ -18,16 +18,19 @@ class GameController extends BaseController
         if (Auth::user()->hasPermission('quiz_play')) {
             $input = $request::all();
             $rules = [
-                'id' => 'exists:games,id|required_without_all:season,user',
+                'id' => 'exists:games,id|required_without_all:season_id,user',
                 'season_id' => 'required_with:tier|exists:seasons,id|required_without_all:id,user',
                 'tier' => [
-                    'required_with:season',
+                    'required_with:season_id',
                     'integer',
                     Rule::exists('leagues', 'tier')->where(function ($query) use ($input) {
-                        $query->where('season', isset($input['season']) ? $input['season'] : 0);
+                        $query->where(
+                            'season_id',
+                            isset($input['season_id']) ? $input['season_id'] : 0
+                        );
                     })
                 ],
-                'user' => 'exists:users,id|required_without_all:id,season|required_with:opponent',
+                'user' => 'exists:users,id|required_without_all:id,season_id|required_with:opponent',
                 'opponent' => 'exists:users,id'
             ];
             $validator = Validator::make($input, $rules);
