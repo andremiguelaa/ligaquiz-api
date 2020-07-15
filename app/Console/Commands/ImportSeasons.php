@@ -89,14 +89,15 @@ class ImportSeasons extends Command
 
             $tier = 1;
             foreach ($oldSeason as $oldLeague) {
+                $players = json_decode($oldLeague->players);
                 League::create([
                     'season' => $season,
                     'tier' => $tier,
-                    'user_ids' => json_decode($oldLeague->players),
+                    'user_ids' => $players,
                 ]);
-                $oldLeagueGames = []; 
+                $newLeagueGames = [];
                 foreach ($oldGames[$oldLeague->id] as $oldGame) {
-                    array_push($oldLeagueGames, [
+                    array_push($newLeagueGames, [
                         'season' => $season,
                         'round' => $oldGame->round,
                         'user_id_1' => $oldGame->user_1_id,
@@ -105,7 +106,28 @@ class ImportSeasons extends Command
                         'updated_at' => Carbon::now()
                     ]);
                 }
-                Game::insert($oldLeagueGames);
+                foreach ($players as $player) {
+                    array_push($newLeagueGames, [
+                        'season' => $season,
+                        'round' => 10,
+                        'user_id_1' => $player,
+                        'user_id_2' => $player,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()
+                    ]);
+                    array_push($newLeagueGames, [
+                        'season' => $season,
+                        'round' => 20,
+                        'user_id_1' => $player,
+                        'user_id_2' => $player,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()
+                    ]);
+                }
+                usort($newLeagueGames, function($a, $b){
+                    return $a['round'] - $b['round'];
+                });
+                Game::insert($newLeagueGames);
                 $tier++;
             }
 
