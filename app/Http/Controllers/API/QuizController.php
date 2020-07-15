@@ -44,18 +44,14 @@ class QuizController extends BaseController
                 } else {
                     $date = $input['date'];
                 }
-                $quiz = Quiz::with(
-                    'questions.question',
-                    'questions.question.submittedAnswers'
-                )->where('date', $date)->first();
+                $quiz = Quiz::with('questions.question')->where('date', $date)->first();
                 if ($quiz) {
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
                     });
                     unset($quiz->questions);
                     $quiz->questions = $questions;
-                    // todo: hide percentage and submitted answers if user only has
-                    // quiz play permission and it's today
+                    // todo: show percentage for past quizzes
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
