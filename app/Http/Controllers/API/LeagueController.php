@@ -25,7 +25,7 @@ class LeagueController extends BaseController
                     'integer',
                     Rule::exists('leagues', 'tier')->where(function ($query) use ($input) {
                         $query->where(
-                            'season',
+                            'season_id',
                             isset($input['season_id']) ? $input['season_id'] : 0
                         );
                     })
@@ -35,7 +35,7 @@ class LeagueController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $playersIds = League::where('season', $input['season_id'])
+            $playersIds = League::where('season_id', $input['season_id'])
                 ->where('tier', $input['tier'])
                 ->first()
                 ->user_ids;
