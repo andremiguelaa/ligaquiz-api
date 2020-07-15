@@ -59,7 +59,7 @@ class ImportSeasons extends Command
             ->orderBy('league_id')
             ->orderBy('round')
             ->get()
-            ->groupBy('league_id', 'round');
+            ->groupBy('league_id');
         $season = 1;
         foreach ($oldSeasons as $oldSeason) {
             $month = substr($oldSeason->first()->date, 0, 7);
@@ -75,7 +75,9 @@ class ImportSeasons extends Command
                 array_push($rounds, [
                     'season' => $season,
                     'round' => $round,
-                    'date' => $roundDate
+                    'date' => $roundDate,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()
                 ]);
                 if ($round % 5 === 0) {
                     $offset += 3;
@@ -86,13 +88,24 @@ class ImportSeasons extends Command
             Round::insert($rounds);
 
             $tier = 1;
-            foreach ($oldSeason as $league) {
+            foreach ($oldSeason as $oldLeague) {
                 League::create([
                     'season' => $season,
                     'tier' => $tier,
-                    'user_ids' => json_decode($league->players),
+                    'user_ids' => json_decode($oldLeague->players),
                 ]);
-                // todo: import games
+                $oldLeagueGames = []; 
+                foreach ($oldGames[$oldLeague->id] as $oldGame) {
+                    array_push($oldLeagueGames, [
+                        'season' => $season,
+                        'round' => $oldGame->round,
+                        'user_id_1' => $oldGame->user_1_id,
+                        'user_id_2' => $oldGame->user_2_id,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()
+                    ]);
+                }
+                Game::insert($oldLeagueGames);
                 $tier++;
             }
 

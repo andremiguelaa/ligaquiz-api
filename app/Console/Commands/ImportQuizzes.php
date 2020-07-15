@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use App\Quiz;
 use App\Question;
 use App\QuizQuestion;
@@ -166,7 +167,9 @@ class ImportQuizzes extends Command
                                 'correct' => $item->correct,
                                 'corrected' => $item->corrected,
                                 'points' => $item->points,
-                                'submitted' => 1
+                                'submitted' => 1,
+                                'created_at' => Carbon::now(),
+                                'updated_at' => Carbon::now()
                             ];
                         }
                     )
@@ -240,7 +243,9 @@ class ImportQuizzes extends Command
                                     'correct' => $item->correct,
                                     'corrected' => $item->corrected,
                                     'points' => $item->banker,
-                                    'submitted' => 1
+                                    'submitted' => 1,
+                                    'created_at' => Carbon::now(),
+                                    'updated_at' => Carbon::now()
                                 ];
                             }
                         )
