@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use App\Season;
 use App\League;
 use App\Round;
@@ -61,7 +62,29 @@ class ImportSeasons extends Command
             ->groupBy('league_id', 'round');
         $season = 1;
         foreach ($oldSeasons as $oldSeason) {
+            $month = substr($oldSeason->first()->date, 0, 7);
             Season::create(['season' => $season]);
+
+            $rounds = [];
+            $offset = 0;
+            for ($round = 1; $round <= 20; $round++) {
+                $roundDate = Carbon::createFromFormat(
+                    'Y-m-d',
+                    $month.'-'.date('j', strtotime('first monday of ' . $month))
+                )->addDays($offset)->format('Y-m-d');
+                array_push($rounds, [
+                    'season' => $season,
+                    'round' => $round,
+                    'date' => $roundDate
+                ]);
+                if ($round % 5 === 0) {
+                    $offset += 3;
+                } else {
+                    $offset++;
+                }
+            }
+            Round::insert($rounds);
+
             $tier = 1;
             foreach ($oldSeason as $league) {
                 League::create([
@@ -69,14 +92,11 @@ class ImportSeasons extends Command
                     'tier' => $tier,
                     'user_ids' => json_decode($league->players),
                 ]);
-                // todo: import rounds and games
+                // todo: import games
                 $tier++;
             }
-            $this->line(
-                '<fg=green>Imported:</> <fg=yellow>'
-                    .$season.'</> <fg=red>=></> '
-                    .substr($oldSeason->first()->date, 0, 7)
-            );
+
+            $this->line('<fg=green>Imported:</> <fg=yellow>'.$season.'</> <fg=red>=></> '.$month);
             $season++;
         }
         $elapsedTime = microtime(true) - $startTime;
