@@ -63,8 +63,7 @@ class ImportSeasons extends Command
         $season = 1;
         foreach ($oldSeasons as $oldSeason) {
             $month = substr($oldSeason->first()->date, 0, 7);
-            Season::create(['season' => $season]);
-
+            $createdSeason = Season::create(['season' => $season]);
             $rounds = [];
             $offset = 0;
             for ($round = 1; $round <= 20; $round++) {
@@ -73,7 +72,7 @@ class ImportSeasons extends Command
                     $month.'-'.date('j', strtotime('first monday of ' . $month))
                 )->addDays($offset)->format('Y-m-d');
                 array_push($rounds, [
-                    'season' => $season,
+                    'season_id' => $createdSeason->id,
                     'round' => $round,
                     'date' => $roundDate,
                     'created_at' => Carbon::now(),
@@ -86,20 +85,19 @@ class ImportSeasons extends Command
                 }
             }
             Round::insert($rounds);
-
+            $createdRounds = Round::where('season_id', $createdSeason->id)->get();
             $tier = 1;
             foreach ($oldSeason as $oldLeague) {
                 $players = json_decode($oldLeague->players);
                 League::create([
-                    'season' => $season,
+                    'season_id' => $createdSeason->id,
                     'tier' => $tier,
                     'user_ids' => $players,
                 ]);
                 $newLeagueGames = [];
                 foreach ($oldGames[$oldLeague->id] as $oldGame) {
                     array_push($newLeagueGames, [
-                        'season' => $season,
-                        'round' => $oldGame->round,
+                        'round_id' => $createdRounds->where('round', $oldGame->round)->first()->id,
                         'user_id_1' => $oldGame->user_1_id,
                         'user_id_2' => $oldGame->user_2_id,
                         'created_at' => Carbon::now(),
@@ -108,16 +106,14 @@ class ImportSeasons extends Command
                 }
                 foreach ($players as $player) {
                     array_push($newLeagueGames, [
-                        'season' => $season,
-                        'round' => 10,
+                        'round_id' => $createdRounds->where('round', 10)->first()->id,
                         'user_id_1' => $player,
                         'user_id_2' => $player,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now()
                     ]);
                     array_push($newLeagueGames, [
-                        'season' => $season,
-                        'round' => 20,
+                        'round_id' => $createdRounds->where('round', 20)->first()->id,
                         'user_id_1' => $player,
                         'user_id_2' => $player,
                         'created_at' => Carbon::now(),
@@ -125,7 +121,7 @@ class ImportSeasons extends Command
                     ]);
                 }
                 usort($newLeagueGames, function($a, $b){
-                    return $a['round'] - $b['round'];
+                    return $a['round_id'] - $b['round_id'];
                 });
                 Game::insert($newLeagueGames);
                 $tier++;
