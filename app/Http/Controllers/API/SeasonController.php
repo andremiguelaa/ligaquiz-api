@@ -26,18 +26,17 @@ class SeasonController extends BaseController
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'season' => 'exists:seasons,season',
+                'season_id' => 'exists:seasons,id',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            if (isset($input['season'])) {
+            if (isset($input['season_id'])) {
                 $season = Season::with('leagues')
                     ->with('rounds')
-                    ->where('season', $input['season'])
-                    ->first();
-                $season->rounds->makeHidden('season');
-                $season->leagues->makeHidden('season');
+                    ->find($input['season_id']);
+                $season->rounds->makeHidden('season_id');
+                $season->leagues->makeHidden('season_id');
                 $season->leagues->makeHidden('user_ids');
                 return $this->sendResponse($season, 200);
             } else {
@@ -69,16 +68,18 @@ class SeasonController extends BaseController
             } else {
                 $newSeason = 1;
             }
+            $createdSeason = Season::create(['season' => $newSeason]);
             sort($input['dates']);
+            $rounds = [];
             foreach ($input['dates'] as $key => $date) {
-                Round::create([
-                    'season' => $newSeason,
+                $createdRound = Round::create([
+                    'season_id' => $createdSeason->id,
                     'round' => $key + 1,
                     'date' => $date,
                 ]);
+                array_push($rounds, $createdRound);
             }
-            Season::create(['season' => $newSeason]);
-            $this->createSeasonLeaguesAndGames($newSeason, $input['leagues']);
+            $this->createSeasonLeaguesAndGames($createdSeason->id, $input['leagues'], $rounds);
             return $this->sendResponse(null, 201);
         }
         return $this->sendError('no_permissions', [], 403);
@@ -89,13 +90,13 @@ class SeasonController extends BaseController
         if (Auth::user()->hasPermission('league_edit')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'season' => 'required|exists:seasons,season',
+                'season_id' => 'required|exists:seasons,id',
                 'dates' => 'array|size:20',
                 'dates.*'  => [
                     'date_format:Y-m-d',
                     'after:today',
                     'distinct',
-                    Rule::unique('rounds', 'date')->ignore($input['season'], 'season'),
+                    Rule::unique('rounds', 'date')->ignore($input['season_id'], 'season_id'),
                 ],
                 'leagues' => 'array',
                 'leagues.*.tier' => 'required|integer|distinct',
@@ -107,20 +108,26 @@ class SeasonController extends BaseController
             }
 
             if (isset($input['dates'])) {
-                Round::where('season', $input['season'])->delete();
+                $oldRoundsIds = Round::where('season_id', $input['season_id'])
+                    ->get()
+                    ->pluck('id')
+                    ->toArray();
+                Round::where('season_id', $input['season_id'])->delete();
                 sort($input['dates']);
+                $rounds = [];
                 foreach ($input['dates'] as $key => $date) {
-                    Round::create([
-                        'season' => $input['season'],
+                    $createdRound = Round::create([
+                        'season_id' => $input['season_id'],
                         'round' => $key + 1,
                         'date' => $date,
                     ]);
+                    array_push($rounds, $createdRound);
                 }
             }
             if (isset($input['leagues'])) {
-                League::where('season', $input['season'])->delete();
-                Game::where('season', $input['season'])->delete();
-                $this->createSeasonLeaguesAndGames($input['season'], $input['leagues']);
+                League::where('season_id', $input['season_id'])->delete();
+                Game::whereIn('round_id', $oldRoundsIds)->delete();
+                $this->createSeasonLeaguesAndGames($input['season_id'], $input['leagues'], $rounds);
             }
             return $this->sendResponse(null, 201);
         }
@@ -132,18 +139,23 @@ class SeasonController extends BaseController
         if (Auth::user()->hasPermission('league_delete')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'season' => 'required|exists:seasons,season',
+                'season_id' => 'required|exists:seasons,id',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $firstRound = Round::where('season', $input['season'])->orderBy('date', 'asc')->first();
+            $firstRound = Round::where('season_id', $input['season_id'])
+                ->orderBy('date', 'asc')->first();
             $now = Carbon::now()->format('Y-m-d');
             if ($firstRound->date > $now) {
-                Season::where('season', $input['season'])->delete();
-                Round::where('season', $input['season'])->delete();
-                League::where('season', $input['season'])->delete();
-                Game::where('season', $input['season'])->delete();
+                Season::where('id', $input['season_id'])->delete();
+                $oldRoundsIds = Round::where('season_id', $input['season_id'])
+                    ->get()
+                    ->pluck('id')
+                    ->toArray();
+                Round::where('season_id', $input['season_id'])->delete();
+                League::where('season_id', $input['season_id'])->delete();
+                Game::whereIn('round_id', $oldRoundsIds)->delete();
             } else {
                 return $this->sendError('past_season', [], 400);
             }
@@ -152,21 +164,20 @@ class SeasonController extends BaseController
         return $this->sendError('no_permissions', [], 403);
     }
 
-    private function createSeasonLeaguesAndGames($season, $leagues)
+    private function createSeasonLeaguesAndGames($seasonId, $leagues, $rounds)
     {
         foreach ($leagues as $key => $league) {
             League::create([
-                'season' => $season,
+                'season_id' => $seasonId,
                 'tier' => $league['tier'],
                 'user_ids' => $league['user_ids'],
             ]);
             $numberOfPlayers = count($league['user_ids']);
-            for ($round=1; $round <= 20 ; $round++) {
-                if ($round === 10 || $round === 20) {
+            foreach ($rounds as $round) {
+                if ($round->round === 10 || $round->round === 20) {
                     for ($game = 1; $game <= $numberOfPlayers; $game++) {
                         Game::create([
-                            'season' => $season,
-                            'round' => $round,
+                            'round_id' => $round->id,
                             'user_id_1' => $league['user_ids'][$game - 1],
                             'user_id_2' => $league['user_ids'][$game - 1]
                         ]);
@@ -176,8 +187,7 @@ class SeasonController extends BaseController
                         $pos1 = $game - 1;
                         $pos2 = $numberOfPlayers - ($game-1) - 1;
                         Game::create([
-                            'season' => $season,
-                            'round' => $round,
+                            'round_id' => $round->id,
                             'user_id_1' => $league['user_ids'][$pos1],
                             'user_id_2' => $league['user_ids'][$pos2]
                         ]);
