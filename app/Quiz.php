@@ -22,7 +22,15 @@ class Quiz extends Model
 
     public function questions()
     {
-        return $this->hasMany('App\QuizQuestion');
+        return $this->hasMany('App\QuizQuestion')->select('quiz_id', 'question_id');
+    }
+
+    public function hasAnswers()
+    {
+        return Answer::whereIn(
+            'question_id',
+            $this->questions->pluck('question_id')->toArray()
+        )->count();
     }
 
     public function answers()
@@ -31,5 +39,15 @@ class Quiz extends Model
             'question_id',
             $this->questions->pluck('question_id')->toArray()
         )->get();
+    }
+
+    public function submittedAnswers()
+    {
+        return Answer::whereIn(
+            'question_id',
+            $this->questions->pluck('question_id')->toArray()
+        )->where('submitted', 1)
+        ->select('id', 'question_id', 'user_id', 'points', 'corrected', 'correct')
+        ->get();
     }
 }

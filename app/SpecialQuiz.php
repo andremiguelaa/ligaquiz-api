@@ -15,10 +15,6 @@ class SpecialQuiz extends Model
         'description',
     ];
 
-    protected $casts = [
-        'question_ids' => 'array',
-    ];
-
     protected $hidden = [
         'created_at', 'updated_at', 'laravel_through_key'
     ];

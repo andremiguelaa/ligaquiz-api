@@ -42,7 +42,7 @@ class AnswerController extends BaseController
             } elseif (isset($input['special_quiz'])) {
                 $answers = SpecialQuiz::with('questions')->find($input['special_quiz'])->answers();
             }
-            if (!Auth::user()->hasPermission('answer_correct')) {
+            if (!Auth::user()->hasPermission('answer_correct') || isset($input['mine'])) {
                 $answers = $answers->where('user_id', Auth::id());
             }
             if (isset($input['submitted'])) {

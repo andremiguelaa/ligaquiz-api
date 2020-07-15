@@ -45,7 +45,7 @@ class SpecialQuizController extends BaseController
                 }
                 $quiz = SpecialQuiz::with(
                     'questions.question',
-                    'questions.question.submitted_answers'
+                    'questions.question.submittedAnswers'
                 )->where('date', $date)->first();
                 if ($quiz) {
                     $questions = $quiz->questions->map(function ($question) {
@@ -171,7 +171,7 @@ class SpecialQuizController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $quiz = SpecialQuiz::with('questions', 'questions.question')->find($input['id']);
-            if (count($quiz->answers())) {
+            if ($quiz->hasAnswers()) {
                 return $this->sendError('has_answers', null, 400);
             } else {
                 Question::whereIn('id', $quiz->questions->pluck('id')->toArray())->delete();
