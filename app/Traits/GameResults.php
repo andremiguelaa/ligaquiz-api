@@ -13,8 +13,7 @@ trait GameResults
 {
     public function getGameResults($input, $rules)
     {
-        $startTime = microtime(true);
-        $query = Game::with('round');
+        $query = Game::with('quiz');
         foreach ($input as $key => $value) {
             if (in_array($key, array_keys($rules))) {
                 if ($key === 'user' || $key === 'opponent') {
@@ -36,7 +35,7 @@ trait GameResults
             }
         }
         $games = $query->get();
-        $dates = $games->pluck('round.date')->unique()->toArray();
+        $dates = $games->pluck('quiz.date')->unique()->toArray();
         if (isset($input['id'])) {
             $quizzes = Quiz::with('questions.question')->whereIn('date', $dates)->get();
         } else {
@@ -57,12 +56,11 @@ trait GameResults
         $answers = Answer::whereIn('question_id', $questionIds)
             ->whereIn('user_id', array_unique($playerIds))
             ->where('submitted', 1)
-            ->select('question_id', 'points', 'correct', 'corrected')
+            ->select('user_id', 'question_id', 'points', 'correct', 'corrected')
             ->get();
-        // dd(microtime(true)-$startTime);
         $games = $games->map(function ($game) use ($input, $answers) {
             $now = Carbon::now()->format('Y-m-d');
-            $game->done = $game->round->date && $now > $game->round->date;
+            $game->done = $game->quiz->date && $now > $game->quiz->date;
             if ($game->quiz && $now > $game->round->date) {
                 $questionIds = $game->quiz->questions->pluck('question_id')->toArray();
                 $gameAnswers = $answers
@@ -75,7 +73,6 @@ trait GameResults
                             return $answer;
                         });
                     });
-                
                 $game->solo = $game->user_id_1 === $game->user_id_2;
                 $game->user_id_1_correct_answers = 0;
                 $game->user_id_1_game_points = 0;
@@ -155,26 +152,14 @@ trait GameResults
                     }
                 }
                 if (isset($input['id'])) {
-                    $game->answers = $answers
-                        ->whereIn('user_id', [$game->user_id_1, $game->user_id_2])
-                        ->whereIn('question_id', $questionIds)
-                        ->sortBy('question_id')
-                        ->groupBy(['user_id', 'question_id'])->map(function ($user) {
-                            return $user->map(function ($question) {
-                                return $question->map(function ($answer) {
-                                    unset($answer['user_id']);
-                                    unset($answer['question_id']);
-                                    return $answer;
-                                });
-                            });
-                        });
+                    $game->answers = $gameAnswers;
                 }
             }
             if ($game->quiz) {
                 if (!isset($input['id'])) {
                     $game->quiz->makeHidden('questions');
                 }
-                if (isset($input['season'])) {
+                if (isset($input['season_id'])) {
                     $game->makeHidden('quiz');
                 }
             }
@@ -183,9 +168,15 @@ trait GameResults
         });
 
         if (isset($input['id'])) {
-            $response = $games->first();
-        } elseif (isset($input['season'])) {
-            $response = $games->groupBy('round')->map(function ($round) {
+            $game = $games->first();
+            unset($game->quiz->questions);
+            $game->quiz->questions = Quiz::with('questions.question')->find($game->id)->questions;
+            unset($game->round);
+            $response = $game;
+        } elseif (isset($input['season_id'])) {
+            $response = $games->groupBy(function ($game) {
+                return $game->round->round;
+            })->map(function ($round) {
                 return $round->map(function ($game) {
                     unset($game->season);
                     unset($game->round);

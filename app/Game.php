@@ -18,4 +18,16 @@ class Game extends Model
     {
         return $this->hasOne('App\Round', 'id', 'round_id');
     }
+
+    public function quiz()
+    {
+        return $this->hasOneThrough(
+            'App\Quiz',
+            'App\Round',
+            'id',
+            'date',
+            'round_id',
+            'date'
+        );
+    }
 }
