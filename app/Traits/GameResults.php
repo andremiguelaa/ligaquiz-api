@@ -5,17 +5,16 @@ namespace App\Traits;
 use Carbon\Carbon;
 use App\Game;
 use App\League;
+use App\Round;
+use App\Quiz;
+use App\Answer;
 
 trait GameResults
 {
     public function getGameResults($input, $rules)
     {
-        $query = Game::with(
-            'quiz',
-            'quiz.questions',
-            'quiz.questions.question',
-            'quiz.questions.question.submitted_answers'
-        );
+        $startTime = microtime(true);
+        $query = Game::with('round');
         foreach ($input as $key => $value) {
             if (in_array($key, array_keys($rules))) {
                 if ($key === 'user' || $key === 'opponent') {
@@ -23,35 +22,48 @@ trait GameResults
                         $userQuery->where('user_id_1', $value)->orWhere('user_id_2', $value);
                     });
                 } elseif ($key === 'tier') {
-                    $users = League::where('season', $input['season'])
-                        ->where('tier', $input['tier'])->first()->user_ids;
-                    $query->whereIn('user_id_1', $users)->orWhereIn('user_id_2', $users);
+                    $users = League::where('season_id', $input['season_id'])
+                        ->where('tier', $input['tier'])
+                        ->first()
+                        ->user_ids;
+                    $query->whereIn('user_id_1', $users)->whereIn('user_id_2', $users);
+                } elseif ($key === 'season_id') {
+                    $roundIds = Round::where('season_id', $value)->get()->pluck('id')->toArray();
+                    $query->whereIn('round_id', $roundIds);
                 } else {
                     $query->where($key, $value);
                 }
             }
         }
         $games = $query->get();
-        $gamesQuizzes = $games->unique('quiz.questions')
-            ->pluck('quiz.questions', 'quiz.id')
-            ->filter();
-        
-        $answers = collect([]);
-        $quizzes = $gamesQuizzes->map(function ($quiz) use (&$answers) {
-            return $quiz->map(function ($question) use (&$answers) {
-                $answers = $answers->merge($question['question']->submitted_answers);
-                $question['question']->makeHidden('submitted_answers');
-                return $question['question'];
-            });
-        });
-        $answers = $answers->map(function ($answer) {
-            return $answer->only(['question_id', 'user_id', 'points', 'correct', 'corrected']);
-        });
-
+        $dates = $games->pluck('round.date')->unique()->toArray();
+        if (isset($input['id'])) {
+            $quizzes = Quiz::with('questions.question')->whereIn('date', $dates)->get();
+        } else {
+            $quizzes = Quiz::with('questions')->whereIn('date', $dates)->get();
+        }
+        $questionIds = [];
+        foreach ($quizzes as $quiz) {
+            $questionIds = array_merge(
+                $questionIds,
+                $quiz->questions->pluck('question_id')->toArray()
+            );
+        }
+        $playerIds = [];
+        foreach ($games as $game) {
+            array_push($playerIds, $game->user_id_1);
+            array_push($playerIds, $game->user_id_2);
+        }
+        $answers = Answer::whereIn('question_id', $questionIds)
+            ->whereIn('user_id', array_unique($playerIds))
+            ->where('submitted', 1)
+            ->select('question_id', 'points', 'correct', 'corrected')
+            ->get();
+        // dd(microtime(true)-$startTime);
         $games = $games->map(function ($game) use ($input, $answers) {
             $now = Carbon::now()->format('Y-m-d');
-            $game->done = $game->quiz && $now > $game->quiz->date;
-            if ($game->quiz && $now > $game->quiz->date) {
+            $game->done = $game->round->date && $now > $game->round->date;
+            if ($game->quiz && $now > $game->round->date) {
                 $questionIds = $game->quiz->questions->pluck('question_id')->toArray();
                 $gameAnswers = $answers
                     ->whereIn('user_id', [$game->user_id_1, $game->user_id_2])
@@ -166,6 +178,7 @@ trait GameResults
                     $game->makeHidden('quiz');
                 }
             }
+            $game->makeHidden('round_id');
             return $game;
         });
 
@@ -182,6 +195,7 @@ trait GameResults
         } else {
             $response = $games;
         }
+
         return $response;
     }
 }

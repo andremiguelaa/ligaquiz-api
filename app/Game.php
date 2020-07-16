@@ -13,4 +13,9 @@ class Game extends Model
     protected $hidden = [
         'created_at', 'updated_at'
     ];
+
+    public function round()
+    {
+        return $this->hasOne('App\Round', 'id', 'round_id');
+    }
 }

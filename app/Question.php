@@ -27,12 +27,17 @@ class Question extends Model
         return $this->hasOne('App\Genre', 'id', 'genre_id');
     }
 
+    public function submittedAnswers()
+    {
+        return $this->hasMany('App\Answer')->where('submitted', 1);
+    }
+
     /*
     public function percentage()
     {
-        if ($this->submitted_answers->count()) {
-            return $this->submitted_answers->where('correct', 1)->count() /
-                $this->submitted_answers->count()
+        if ($this->submittedAnswers->count()) {
+            return $this->submittedAnswers->where('correct', 1)->count() /
+                $this->submittedAnswers->count()
                 * 100;
         }
         return 0;
