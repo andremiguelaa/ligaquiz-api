@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use Carbon\Carbon;
-use App\Game;
 use App\League;
 use App\Round;
 use App\Quiz;
@@ -11,32 +10,10 @@ use App\Answer;
 
 trait GameResults
 {
-    public function getGameResults($input, $rules)
+    public function getGameResults($games, $tier)
     {
-        $query = Game::with('quiz');
-        foreach ($input as $key => $value) {
-            if (in_array($key, array_keys($rules))) {
-                if ($key === 'user' || $key === 'opponent') {
-                    $query->where(function ($userQuery) use ($value) {
-                        $userQuery->where('user_id_1', $value)->orWhere('user_id_2', $value);
-                    });
-                } elseif ($key === 'tier') {
-                    $users = League::where('season_id', $input['season_id'])
-                        ->where('tier', $input['tier'])
-                        ->first()
-                        ->user_ids;
-                    $query->whereIn('user_id_1', $users)->whereIn('user_id_2', $users);
-                } elseif ($key === 'season_id') {
-                    $roundIds = Round::where('season_id', $value)->get()->pluck('id')->toArray();
-                    $query->whereIn('round_id', $roundIds);
-                } else {
-                    $query->where($key, $value);
-                }
-            }
-        }
-        $games = $query->get();
         $dates = $games->pluck('quiz.date')->unique()->toArray();
-        if (isset($input['id'])) {
+        if ($games->count() === 1) {
             $quizzes = Quiz::with('questions.question')->whereIn('date', $dates)->get();
         } else {
             $quizzes = Quiz::with('questions')->whereIn('date', $dates)->get();
@@ -58,7 +35,7 @@ trait GameResults
             ->where('submitted', 1)
             ->select('user_id', 'question_id', 'points', 'correct', 'corrected')
             ->get();
-        $games = $games->map(function ($game) use ($input, $answers) {
+        $games = $games->map(function ($game) use ($games, $answers) {
             $now = Carbon::now()->format('Y-m-d');
             $game->done = $game->round->date && $now > $game->round->date;
             if ($game->quiz && $now > $game->round->date) {
@@ -151,15 +128,13 @@ trait GameResults
                         }
                     }
                 }
-                if (isset($input['id'])) {
+                if ($games->count() === 1) {
                     $game->answers = $gameAnswers;
                 }
             }
             if ($game->quiz) {
-                if (!isset($input['id'])) {
+                if ($games->count() > 1) {
                     $game->quiz->makeHidden('questions');
-                }
-                if (isset($input['season_id'])) {
                     $game->makeHidden('quiz');
                 }
             }
@@ -167,13 +142,13 @@ trait GameResults
             return $game;
         });
 
-        if (isset($input['id'])) {
+        if ($games->count() === 1) {
             $game = $games->first();
             unset($game->quiz->questions);
             $game->quiz->questions = Quiz::with('questions.question')->find($game->id)->questions;
             unset($game->round);
             $response = $game;
-        } elseif (isset($input['season_id'])) {
+        } elseif ($tier) {
             $response = $games->groupBy(function ($game) {
                 return $game->round->round;
             })->map(function ($round) {
