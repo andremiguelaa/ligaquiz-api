@@ -8,6 +8,8 @@ use Validator;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Traits\GameResults;
+use App\Game;
+use App\Round;
 use App\League;
 
 class LeagueController extends BaseController
@@ -35,6 +37,18 @@ class LeagueController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
+
+            $query = Game::with('quiz');
+            $roundIds = Round::where('season_id', $input['season_id'])->get()->pluck('id')->toArray();
+            $query->whereIn('round_id', $roundIds);
+            $users = League::where('season_id', $input['season_id'])
+                ->where('tier', $input['tier'])
+                ->first()
+                ->user_ids;
+            $query->whereIn('user_id_1', $users)->whereIn('user_id_2', $users);
+            $games = $query->get();
+            $rounds = $this->getGameResults($games, true);
+
             $playersIds = League::where('season_id', $input['season_id'])
                 ->where('tier', $input['tier'])
                 ->first()
@@ -53,11 +67,11 @@ class LeagueController extends BaseController
                     'league_points' => 0
                 ];
             }
-            $rounds = $this->getGameResults($input, $rules);
+            
             foreach ($rounds as $key => $round) {
                 foreach ($round as $game) {
                     if ($game->done) {
-                        if (is_int($game->user_id_1_game_points)) {
+                        if (is_numeric($game->user_id_1_game_points)) {
                             $players[$game->user_id_1]['game_points'] +=
                                 $game->user_id_1_game_points;
                         } elseif ($game->user_id_1_game_points === 'F') {
@@ -65,10 +79,9 @@ class LeagueController extends BaseController
                         }
                         $players[$game->user_id_1]['correct_answers'] +=
                                 $game->user_id_1_correct_answers;
-                        
 
                         if (!$game->solo) {
-                            if (is_int($game->user_id_2_game_points)) {
+                            if (is_numeric($game->user_id_2_game_points)) {
                                 $players[$game->user_id_2]['game_points'] +=
                                     $game->user_id_2_game_points;
                                 $players[$game->user_id_1]['game_points_against'] +=
@@ -76,13 +89,13 @@ class LeagueController extends BaseController
                             } elseif ($game->user_id_2_game_points === 'F') {
                                 $players[$game->user_id_2]['forfeits']++;
                             }
-                            if (is_int($game->user_id_1_game_points)) {
+                            if (is_numeric($game->user_id_1_game_points)) {
                                 $players[$game->user_id_2]['game_points_against'] +=
                                     $game->user_id_1_game_points;
                             }
                             if (
-                                is_int($game->user_id_1_game_points) &&
-                                is_int($game->user_id_2_game_points)
+                                is_numeric($game->user_id_1_game_points) &&
+                                is_numeric($game->user_id_2_game_points)
                             ) {
                                 if ($game->user_id_1_game_points > $game->user_id_2_game_points) {
                                     $players[$game->user_id_1]['wins']++;
@@ -104,13 +117,13 @@ class LeagueController extends BaseController
                                     $players[$game->user_id_2]['league_points'] += 2;
                                 }
                             } elseif (
-                                is_int($game->user_id_1_game_points) &&
+                                is_numeric($game->user_id_1_game_points) &&
                                 $game->user_id_2_game_points !== 'P'
                             ) {
                                 $players[$game->user_id_1]['wins']++;
                                 $players[$game->user_id_1]['league_points'] += 3;
                             } elseif (
-                                is_int($game->user_id_2_game_points) &&
+                                is_numeric($game->user_id_2_game_points) &&
                                 $game->user_id_1_game_points !== 'P'
                             ) {
                                 $players[$game->user_id_2]['wins']++;
@@ -118,7 +131,7 @@ class LeagueController extends BaseController
                             }
                             $players[$game->user_id_2]['correct_answers'] +=
                                 $game->user_id_2_correct_answers;
-                        } else {
+                        } elseif (is_numeric($game->user_id_1_game_points)) {
                             $players[$game->user_id_1]['league_points'] +=
                                 $game->user_id_1_game_points;
                         }

@@ -83,7 +83,7 @@ class GameController extends BaseController
                 !isset($input['tier']) &&
                 !isset($input['id'])
             ) {
-                $paginator = $query->paginate(50);
+                $paginator = $query->paginate(20);
             }
             $games = $query->get();
             $gameResults = $this->getGameResults($games, $tier);
