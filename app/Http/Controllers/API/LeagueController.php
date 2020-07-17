@@ -149,7 +149,10 @@ class LeagueController extends BaseController
                     $players[$key]['rank'] = $key + 1;
                 }
             }
-            return $this->sendResponse($players, 200);
+            return $this->sendResponse([
+                'ranking' => $players,
+                'round' => $rounds
+            ], 200);
         }
         
         return $this->sendError('no_permissions', [], 403);
