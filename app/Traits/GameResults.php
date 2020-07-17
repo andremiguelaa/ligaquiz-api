@@ -13,11 +13,13 @@ trait GameResults
     public function getGameResults($games, $tier)
     {
         $dates = $games->pluck('quiz.date')->unique()->toArray();
+
         if ($games->count() === 1) {
             $quizzes = Quiz::with('questions.question')->whereIn('date', $dates)->get();
         } else {
             $quizzes = Quiz::with('questions')->whereIn('date', $dates)->get();
         }
+
         $questionIds = [];
         foreach ($quizzes as $quiz) {
             $questionIds = array_merge(
@@ -25,43 +27,66 @@ trait GameResults
                 $quiz->questions->pluck('question_id')->toArray()
             );
         }
+
         $playerIds = [];
         foreach ($games as $game) {
             array_push($playerIds, $game->user_id_1);
             array_push($playerIds, $game->user_id_2);
         }
+
         $answers = Answer::whereIn('question_id', $questionIds)
             ->whereIn('user_id', array_unique($playerIds))
             ->where('submitted', 1)
             ->select('user_id', 'question_id', 'points', 'correct', 'corrected')
-            ->get();
+            ->get()
+            ->groupBy(['question_id', 'user_id']);
+
         $games = $games->map(function ($game) use ($games, $answers) {
             $now = Carbon::now()->format('Y-m-d');
             $game->done = $game->round->date && $now > $game->round->date;
             if ($game->quiz && $now > $game->round->date) {
-                $questionIds = $game->quiz->questions->pluck('question_id')->toArray();
-                $gameAnswers = $answers
-                    ->whereIn('user_id', [$game->user_id_1, $game->user_id_2])
-                    ->whereIn('question_id', $questionIds)
-                    ->sortBy('question_id')
-                    ->groupBy('user_id')->map(function ($user) {
-                        return $user->map(function ($answer) {
-                            unset($answer['user_id']);
-                            return $answer;
-                        });
-                    });
                 $game->solo = $game->user_id_1 === $game->user_id_2;
-                $game->user_id_1_correct_answers = 0;
-                $game->user_id_1_game_points = 0;
                 
-                if (!isset($gameAnswers[$game->user_id_1])) {
+                $game->user_id_1_game_points = 0;
+                $game->user_id_1_submitted_answers = 0;
+                $game->user_id_1_corrected_answers = 0;
+                $game->user_id_1_correct_answers = 0;
+
+                if (!$game->solo) {
+                    $game->user_id_2_game_points = 0;
+                    $game->user_id_2_submitted_answers = 0;
+                    $game->user_id_2_corrected_answers = 0;
+                    $game->user_id_2_correct_answers = 0;
+                }
+
+                $questionIds = $game->quiz->questions->pluck('question_id')->toArray();
+                foreach ($questionIds as $questionId) {
+                    if (isset($answers[$questionId][$game->user_id_1])) {
+                        $game->user_id_1_submitted_answers++;
+                        if ($answers[$questionId][$game->user_id_1]->first()->corrected) {
+                            $game->user_id_1_corrected_answers++;
+                        }
+                        if ($answers[$questionId][$game->user_id_1]->first()->correct) {
+                            $game->user_id_1_correct_answers++;
+                        }
+                    }
+                    if (!$game->solo && isset($answers[$questionId][$game->user_id_2])) {
+                        $game->user_id_2_submitted_answers++;
+                        if ($answers[$questionId][$game->user_id_2]->first()->corrected) {
+                            $game->user_id_2_corrected_answers++;
+                        }
+                        if ($answers[$questionId][$game->user_id_2]->first()->correct) {
+                            $game->user_id_2_correct_answers++;
+                        }
+                    }
+                }
+                
+                if (!$game->user_id_1_submitted_answers) {
                     $game->user_id_1_game_points = 'F';
-                } elseif ($gameAnswers[$game->user_id_1]->where('corrected', 0)->count()) {
+                } elseif ($game->user_id_1_corrected_answers < 8) {
                     $game->user_id_1_game_points = 'P';
                     $game->user_id_1_correct_answers = 'P';
                 } else {
-                    $game->user_id_1_correct_answers = $gameAnswers[$game->user_id_1]
-                        ->where('correct', 1)->count();
                     if ($game->solo) {
                         $game->user_id_1_game_points =
                             1 + 0.5 * $game->user_id_1_correct_answers;
@@ -69,16 +94,11 @@ trait GameResults
                 }
 
                 if (!$game->solo) {
-                    $game->user_id_2_correct_answers = 0;
-                    $game->user_id_2_game_points = 0;
-                    if (!isset($gameAnswers[$game->user_id_2])) {
+                    if (!$game->user_id_2_submitted_answers) {
                         $game->user_id_2_game_points = 'F';
-                    } elseif ($gameAnswers[$game->user_id_2]->where('corrected', 0)->count()) {
+                    } elseif ($game->user_id_2_corrected_answers < 8) {
                         $game->user_id_2_game_points = 'P';
                         $game->user_id_2_correct_answers = 'P';
-                    } else {
-                        $game->user_id_2_correct_answers = $gameAnswers[$game->user_id_2]
-                            ->where('correct', 1)->count();
                     }
 
                     $forfeitScore = [
@@ -93,20 +113,20 @@ trait GameResults
                         '8' => 12
                     ];
                     if (
-                        isset($gameAnswers[$game->user_id_1]) &&
-                        !isset($gameAnswers[$game->user_id_2])
+                        $game->user_id_1_submitted_answers &&
+                        !$game->user_id_2_submitted_answers
                     ) {
                         $game->user_id_1_game_points =
                             $forfeitScore[$game->user_id_1_correct_answers];
                     } elseif (
-                        !isset($gameAnswers[$game->user_id_1]) &&
-                        isset($gameAnswers[$game->user_id_2])
+                        !$game->user_id_1_submitted_answers &&
+                        $game->user_id_2_submitted_answers
                     ) {
                         $game->user_id_2_game_points =
                             $forfeitScore[$game->user_id_2_correct_answers];
                     } elseif (
-                        isset($gameAnswers[$game->user_id_1]) &&
-                        isset($gameAnswers[$game->user_id_2])
+                        $game->user_id_1_submitted_answers &&
+                        $game->user_id_2_submitted_answers
                     ) {
                         if (
                             $game->user_id_1_game_points === 'P' ||
@@ -115,21 +135,19 @@ trait GameResults
                             $game->user_id_1_game_points = 'P';
                             $game->user_id_2_game_points = 'P';
                         } else {
-                            foreach ($gameAnswers[$game->user_id_1] as $key => $value) {
+                            foreach ($questionIds as $questionId) {
                                 $game->user_id_1_game_points +=
-                                    $value['correct'] *
-                                    $gameAnswers[$game->user_id_2][$key]['points'];
-                            }
-                            foreach ($gameAnswers[$game->user_id_2] as $key => $value) {
+                                    $answers[$questionId][$game->user_id_1]->first()->correct *
+                                        $answers[$questionId][$game->user_id_2]->first()->points;
                                 $game->user_id_2_game_points +=
-                                    $value['correct'] *
-                                    $gameAnswers[$game->user_id_1][$key]['points'];
+                                    $answers[$questionId][$game->user_id_2]->first()->correct *
+                                        $answers[$questionId][$game->user_id_1]->first()->points;
                             }
                         }
                     }
                 }
                 if ($games->count() === 1) {
-                    $game->answers = $gameAnswers;
+                    $game->answers = $answers;
                 }
             }
             if ($game->quiz) {
