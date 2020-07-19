@@ -156,7 +156,7 @@ class LeagueController extends BaseController
             }
             return $this->sendResponse([
                 'ranking' => $players,
-                'round' => $rounds
+                'rounds' => $rounds
             ], 200);
         }
         
