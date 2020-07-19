@@ -26,15 +26,16 @@ class SeasonController extends BaseController
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'season_id' => 'exists:seasons,id',
+                'season' => 'exists:seasons,season',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            if (isset($input['season_id'])) {
+            if (isset($input['season'])) {
                 $season = Season::with('leagues')
                     ->with('rounds')
-                    ->find($input['season_id']);
+                    ->where('season', $input['season'])
+                    ->first();
                 $season->rounds->makeHidden('season_id');
                 $season->leagues->makeHidden('season_id');
                 $season->leagues->makeHidden('user_ids');
