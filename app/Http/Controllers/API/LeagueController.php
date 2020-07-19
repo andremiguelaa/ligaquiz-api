@@ -11,6 +11,7 @@ use App\Traits\GameResults;
 use App\Game;
 use App\Round;
 use App\League;
+use App\Season;
 
 class LeagueController extends BaseController
 {
@@ -20,15 +21,19 @@ class LeagueController extends BaseController
     {
         if (Auth::user()->hasPermission('quiz_play')) {
             $input = $request::all();
+            $season = null;
+            if (isset($input['season'])) {
+                $season = Season::where('season', $input['season'])->first();
+            }
             $rules = [
-                'season_id' => 'required|exists:seasons,id',
+                'season' => 'required|exists:seasons,season',
                 'tier' => [
                     'required',
                     'integer',
-                    Rule::exists('leagues', 'tier')->where(function ($query) use ($input) {
+                    Rule::exists('leagues', 'tier')->where(function ($query) use ($input, $season) {
                         $query->where(
                             'season_id',
-                            isset($input['season_id']) ? $input['season_id'] : 0
+                            isset($input['season']) && $season ? $season->id : 0
                         );
                     })
                 ]
@@ -39,9 +44,9 @@ class LeagueController extends BaseController
             }
 
             $query = Game::with('quiz');
-            $roundIds = Round::where('season_id', $input['season_id'])->get()->pluck('id')->toArray();
+            $roundIds = Round::where('season_id', $season->id)->get()->pluck('id')->toArray();
             $query->whereIn('round_id', $roundIds);
-            $users = League::where('season_id', $input['season_id'])
+            $users = League::where('season_id', $season->id)
                 ->where('tier', $input['tier'])
                 ->first()
                 ->user_ids;
@@ -49,7 +54,7 @@ class LeagueController extends BaseController
             $games = $query->get();
             $rounds = $this->getGameResults($games, true);
 
-            $playersIds = League::where('season_id', $input['season_id'])
+            $playersIds = League::where('season_id', $season->id)
                 ->where('tier', $input['tier'])
                 ->first()
                 ->user_ids;
