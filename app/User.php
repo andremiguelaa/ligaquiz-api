@@ -64,7 +64,12 @@ class User extends Authenticatable
     {
         if ($this->roles) {
             return array_keys(array_filter($this->roles, function ($roleValue) {
-                if ($roleValue === true || Carbon::now()->lessThanOrEqualTo(Carbon::createFromFormat('Y-m-d', $roleValue))) {
+                if (
+                    $roleValue === true ||
+                    Carbon::now()->lessThanOrEqualTo(
+                        Carbon::createFromFormat('Y-m-d', $roleValue)->endOfDay()
+                    )
+                ) {
                     return true;
                 }
                 return false;
