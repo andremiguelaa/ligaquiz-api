@@ -44,6 +44,7 @@ trait GameResults
         $games = $games->map(function ($game) use ($games, $answers) {
             $now = Carbon::now()->format('Y-m-d');
             $game->done = $game->round->date && $now > $game->round->date;
+            $game->corrected = true;
             if ($game->quiz && $now > $game->round->date) {
                 $game->solo = $game->user_id_1 === $game->user_id_2;
                 
@@ -86,6 +87,7 @@ trait GameResults
                 } elseif ($game->user_id_1_corrected_answers < 8) {
                     $game->user_id_1_game_points = 'P';
                     $game->user_id_1_correct_answers = 'P';
+                    $game->corrected = false;
                 } else {
                     if ($game->solo) {
                         $game->user_id_1_game_points =
@@ -99,6 +101,7 @@ trait GameResults
                     } elseif ($game->user_id_2_corrected_answers < 8) {
                         $game->user_id_2_game_points = 'P';
                         $game->user_id_2_correct_answers = 'P';
+                        $game->corrected = false;
                     }
 
                     $forfeitScore = [

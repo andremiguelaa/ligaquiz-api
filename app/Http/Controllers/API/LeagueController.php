@@ -69,13 +69,14 @@ class LeagueController extends BaseController
                     'losses' => 0,
                     'forfeits' => 0,
                     'correct_answers' => 0,
-                    'league_points' => 0
+                    'league_points' => 0,
+                    'played_games' => 0,
                 ];
             }
             
             foreach ($rounds as $key => $round) {
                 foreach ($round as $game) {
-                    if ($game->done) {
+                    if ($game->done && $game->corrected) {
                         if (is_numeric($game->user_id_1_game_points)) {
                             $players[$game->user_id_1]['game_points'] +=
                                 $game->user_id_1_game_points;
@@ -84,8 +85,10 @@ class LeagueController extends BaseController
                         }
                         $players[$game->user_id_1]['correct_answers'] +=
                                 $game->user_id_1_correct_answers;
+                        $players[$game->user_id_1]['played_games']++;
 
                         if (!$game->solo) {
+                            $players[$game->user_id_2]['played_games']++;
                             if (is_numeric($game->user_id_2_game_points)) {
                                 $players[$game->user_id_2]['game_points'] +=
                                     $game->user_id_2_game_points;
