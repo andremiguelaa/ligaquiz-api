@@ -45,9 +45,8 @@ trait GameResults
             $now = Carbon::now()->format('Y-m-d');
             $game->done = $game->round->date && $now > $game->round->date;
             $game->corrected = true;
+            $game->solo = $game->user_id_1 === $game->user_id_2;
             if ($game->quiz && $now > $game->round->date) {
-                $game->solo = $game->user_id_1 === $game->user_id_2;
-                
                 $game->user_id_1_game_points = 0;
                 $game->user_id_1_submitted_answers = 0;
                 $game->user_id_1_corrected_answers = 0;
