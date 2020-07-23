@@ -156,8 +156,10 @@ trait GameResults
             if ($game->quiz) {
                 if ($games->count() > 1) {
                     $game->quiz->makeHidden('questions');
-                    $game->makeHidden('quiz');
                 }
+            }
+            if ($games->count() > 1) {
+                $game->makeHidden('quiz');
             }
             $game->makeHidden('round_id');
             return $game;
