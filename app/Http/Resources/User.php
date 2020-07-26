@@ -18,6 +18,9 @@ class User extends JsonResource
         if(!$user['avatar']){
             unset($user['avatar']);
         }
+        if(isset($this->statistics)){
+            $user['statistics'] = (object) $this->statistics;
+        }
         if ($request->get('id')) {
             if ($this->individual_quiz_player) {
                 $user['individual_quiz_player_id'] = $this->individual_quiz_player['id'];

@@ -18,6 +18,9 @@ use Avatar;
 use Storage;
 use Melihovv\Base64ImageDecoder\Base64ImageDecoder;
 use Image;
+use App\Question;
+use App\QuizQuestion;
+use App\Answer;
 
 class UserController extends BaseController
 {
@@ -151,18 +154,71 @@ class UserController extends BaseController
 
     public function get(Request $request)
     {
+        $input = $request::all();
+        $validator = Validator::make($input, [
+            'id' => 'array',
+            'id.*' => 'exists:users,id'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError('validation_error', $validator->errors(), 400);
+        }
         $partial = false;
-        if (!$request::get('id')) {
+        if (!isset($input['id'])) {
             $users = User::all();
         } else {
-            $user_ids = explode(',', $request::get('id'));
-            $users = User::with('individual_quiz_player')
-                ->whereIn('id', $user_ids)
-                ->get();
-            if (count($user_ids) !== $users->count()) {
-                return $this->sendError('users_not_found', [], 400);
+            if (count($input['id']) > 2 && isset($input['statistics'])) {
+                return $this->sendError(
+                    'validation_error',
+                    ['id' => ['statistics_max_exceeded']],
+                    400
+                );
             }
             $partial = true;
+            $users = User::with('individual_quiz_player')
+                ->whereIn('id', $input['id'])
+                ->get();
+            if (count($input['id']) <= 2 && isset($input['statistics'])) {
+                $statistics = [];
+                foreach ($input['id'] as $userId) {
+                    $statistics[$userId] = [];
+                }
+                $startOfDay = Carbon::now()->startOfDay();
+                $answers = Answer::whereIn('user_id', $input['id']) // 0.8 seconds
+                    ->where('submitted', 1)
+                    ->where('corrected', 1)
+                    // ->where('created_at', '<', $startOfDay)
+                    ->select('user_id', 'question_id', 'correct')
+                    ->get();
+                $questionIds = $answers->pluck('question_id');  // 0.8 seconds
+                $questions = Question::whereIn('id', $questionIds) // 2.2 seconds
+                    ->whereNotNull('genre_id')
+                    ->select('id', 'genre_id')
+                    ->get()
+                    ->groupBy('id')
+                    ->toArray();
+                foreach ($answers as $answer) {
+                    if (isset($questions[$answer->question_id])) {
+                        $question = $questions[$answer->question_id][0];
+                        $genreId = $question['genre_id'];
+                        if ($genreId) {
+                            if (!isset($statistics[$answer->user_id][$genreId])) {
+                                $statistics[$answer->user_id][$genreId] = [
+                                    'total' => 0,
+                                    'correct' => 0
+                                ];
+                            }
+                            $statistics[$answer->user_id][$genreId]['total']++;
+                            if ($answer->correct) {
+                                $statistics[$answer->user_id][$genreId]['correct']++;
+                            }
+                        }
+                    }
+                }
+                $users = $users->map(function ($user) use($statistics) {
+                    $user->statistics = $statistics[$user->id];
+                    return $user;
+                });
+            }
         }
         return $this->sendResponse(UserResource::collection($users), $partial ? 206 : 200);
     }

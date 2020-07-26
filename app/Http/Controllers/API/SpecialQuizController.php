@@ -50,7 +50,7 @@ class SpecialQuizController extends BaseController
                     });
                     unset($quiz->questions);
                     $quiz->questions = $questions;
-                    // todo: show percentage for past quizzes
+                    // todo: show percentage and classification for past quizzes
                     return $this->sendResponse($quiz, 200);
                 }
                 return $this->sendError('not_found', [], 404);
