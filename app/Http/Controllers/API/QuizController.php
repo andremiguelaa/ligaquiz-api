@@ -51,8 +51,6 @@ class QuizController extends BaseController
                         return $question->question;
                     });
                     $mediaIds = $questions->pluck('media_id')->toArray();
-                    $media = 
-                    
                     $media = array_reduce(
                         Media::whereIn('id', $mediaIds)->get()->toArray(),
                         function ($carry, $item) {
@@ -64,8 +62,26 @@ class QuizController extends BaseController
                         []
                     );
                     unset($quiz->questions);
-                    $quiz->questions = $questions;
-                    // todo: show percentage for past quizzes
+                    if (array_key_exists('date', $input)) {
+                        $answers = Answer::whereIn(
+                            'question_id',
+                            $questions->pluck('id')->toArray()
+                        )
+                            ->where('submitted', 1)
+                            ->get()
+                            ->groupBy('question_id');
+                        $quiz->questions = $questions->map(function ($question) use ($answers) {
+                            if ($answers[$question->id]) {
+                                $question->percentage =
+                                    $answers[$question->id]->where('correct', 1)->count() /
+                                    $answers[$question->id]->count() *
+                                100;
+                            }
+                            return $question;
+                        });
+                    } else {
+                        $quiz->questions = $questions;
+                    }
                     return $this->sendResponse(
                         ['quiz' => $quiz, 'media' => $media],
                         200
