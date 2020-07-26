@@ -71,7 +71,7 @@ class QuizController extends BaseController
                             ->get()
                             ->groupBy('question_id');
                         $quiz->questions = $questions->map(function ($question) use ($answers) {
-                            if ($answers[$question->id]) {
+                            if (isset($answers[$question->id])) {
                                 $question->percentage =
                                     $answers[$question->id]->where('correct', 1)->count() /
                                     $answers[$question->id]->count() *
