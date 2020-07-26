@@ -51,7 +51,18 @@ class QuizController extends BaseController
                         return $question->question;
                     });
                     $mediaIds = $questions->pluck('media_id')->toArray();
-                    $media = Media::whereIn('id', $mediaIds)->get()->toArray();
+                    $media = 
+                    
+                    $media = array_reduce(
+                        Media::whereIn('id', $mediaIds)->get()->toArray(),
+                        function ($carry, $item) {
+                            $mediaFile = $item;
+                            unset($mediaFile['id']);
+                            $carry[$item['id']] = $mediaFile;
+                            return $carry;
+                        },
+                        []
+                    );
                     unset($quiz->questions);
                     $quiz->questions = $questions;
                     // todo: show percentage for past quizzes
