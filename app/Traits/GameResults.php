@@ -193,12 +193,14 @@ trait GameResults
                 $game->quiz->questions = Quiz::with('questions.question')
                     ->find($game->quiz->id)
                     ->questions
-                    ->map(function ($item) use($game) {
+                    ->map(function ($item) use ($game) {
                         $question = $item->question;
-                        $question->percentage =
-                            $game->answers[$item->question_id]->where('correct', 1)->count() /
-                            $game->answers[$item->question_id]->count() *
-                            100;
+                        if ($game->answers->count()) {
+                            $question->percentage =
+                                $game->answers[$item->question_id]->where('correct', 1)->count() /
+                                $game->answers[$item->question_id]->count() *
+                                100;
+                        }
                         return $question;
                     });
             }
