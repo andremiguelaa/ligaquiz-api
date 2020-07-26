@@ -56,9 +56,12 @@ class SpecialQuizController extends BaseController
                 return $this->sendError('not_found', [], 404);
             } else {
                 if (
-                    !Auth::user()->hasPermission('specialquiz_create') &&
-                    !Auth::user()->hasPermission('specialquiz_edit') &&
-                    !Auth::user()->hasPermission('specialquiz_delete')
+                    (
+                        !Auth::user()->hasPermission('specialquiz_create') &&
+                        !Auth::user()->hasPermission('specialquiz_edit') &&
+                        !Auth::user()->hasPermission('specialquiz_delete')
+                    ) ||
+                    array_key_exists('past', $input)
                 ) {
                     $quizzes = SpecialQuiz::where('date', '<=', $now)->get();
                 } else {
