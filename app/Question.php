@@ -31,16 +31,4 @@ class Question extends Model
     {
         return $this->hasMany('App\Answer')->where('submitted', 1);
     }
-
-    /*
-    public function percentage()
-    {
-        if ($this->submittedAnswers->count()) {
-            return $this->submittedAnswers->where('correct', 1)->count() /
-                $this->submittedAnswers->count()
-                * 100;
-        }
-        return 0;
-    }
-    */
 }

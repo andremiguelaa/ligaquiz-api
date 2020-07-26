@@ -36,7 +36,6 @@ trait GameResults
         }
 
         $answers = Answer::whereIn('question_id', $questionIds)
-            ->whereIn('user_id', array_unique($playerIds))
             ->where('submitted', 1)
             ->select('user_id', 'question_id', 'points', 'correct', 'corrected')
             ->get()
@@ -191,9 +190,17 @@ trait GameResults
             $game = $games->first();
             if ($game->quiz) {
                 unset($game->quiz->questions);
-                $game->quiz->questions = array_map(function ($item) {
-                    return $item['question'];
-                }, Quiz::with('questions.question')->find($game->quiz->id)->questions->toArray());
+                $game->quiz->questions = Quiz::with('questions.question')
+                    ->find($game->quiz->id)
+                    ->questions
+                    ->map(function ($item) use($game) {
+                        $question = $item->question;
+                        $question->percentage =
+                            $game->answers[$item->question_id]->where('correct', 1)->count() /
+                            $game->answers[$item->question_id]->count() *
+                            100;
+                        return $question;
+                    });
             }
             unset($game->round);
             $response = $game;
