@@ -13,6 +13,7 @@ use App\QuizQuestion;
 use App\Question;
 use App\Answer;
 use App\Round;
+use App\Media;
 
 class QuizController extends BaseController
 {
@@ -49,10 +50,15 @@ class QuizController extends BaseController
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
                     });
+                    $mediaIds = $questions->pluck('media_id')->toArray();
+                    $media = Media::whereIn('id', $mediaIds)->get()->toArray();
                     unset($quiz->questions);
                     $quiz->questions = $questions;
                     // todo: show percentage for past quizzes
-                    return $this->sendResponse($quiz, 200);
+                    return $this->sendResponse(
+                        ['quiz' => $quiz, 'media' => $media],
+                        200
+                    );
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
