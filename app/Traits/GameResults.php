@@ -189,10 +189,12 @@ trait GameResults
 
         if ($games->count() === 1) {
             $game = $games->first();
-            unset($game->quiz->questions);
-            $game->quiz->questions = array_map(function ($item) {
-                return $item['question'];
-            }, Quiz::with('questions.question')->find($game->quiz->id)->questions->toArray());
+            if ($game->quiz) {
+                unset($game->quiz->questions);
+                $game->quiz->questions = array_map(function ($item) {
+                    return $item['question'];
+                }, Quiz::with('questions.question')->find($game->quiz->id)->questions->toArray());
+            }
             unset($game->round);
             $response = $game;
         } elseif ($tier) {
