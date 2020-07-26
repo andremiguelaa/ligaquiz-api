@@ -94,10 +94,11 @@ class QuizController extends BaseController
                         !Auth::user()->hasPermission('quiz_create') &&
                         !Auth::user()->hasPermission('quiz_edit') &&
                         !Auth::user()->hasPermission('quiz_delete')
-                    ) ||
-                    array_key_exists('past', $input)
+                    )
                 ) {
                     $quizzes = Quiz::where('date', '<=', $now)->get();
+                } elseif (array_key_exists('past', $input)) {
+                    $quizzes = Quiz::where('date', '<', $now)->get();
                 } else {
                     $quizzes = Quiz::all();
                 }

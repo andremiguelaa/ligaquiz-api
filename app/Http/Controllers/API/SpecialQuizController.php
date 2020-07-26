@@ -60,10 +60,11 @@ class SpecialQuizController extends BaseController
                         !Auth::user()->hasPermission('specialquiz_create') &&
                         !Auth::user()->hasPermission('specialquiz_edit') &&
                         !Auth::user()->hasPermission('specialquiz_delete')
-                    ) ||
-                    array_key_exists('past', $input)
+                    )
                 ) {
                     $quizzes = SpecialQuiz::where('date', '<=', $now)->get();
+                } elseif (array_key_exists('past', $input)) {
+                    $quizzes = SpecialQuiz::where('date', '<', $now)->get();
                 } else {
                     $quizzes = SpecialQuiz::all();
                 }
