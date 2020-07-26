@@ -48,7 +48,7 @@ class AnswerController extends BaseController
             if (isset($input['submitted'])) {
                 $answers = $answers->where('submitted', $input['submitted']);
             }
-            return $this->sendResponse(array_values($answers->toArray()), 200);
+            return $this->sendResponse($answers->groupBy('question_id'), 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
@@ -63,18 +63,18 @@ class AnswerController extends BaseController
             $specialQuiz = null;
             $questionIds = [];
             $now = Carbon::now()->format('Y-m-d');
-            if (Auth::user()->hasPermission('quiz_play')){
+            if (Auth::user()->hasPermission('quiz_play')) {
                 $quiz = Quiz::with('questions')->where('date', $now)->first();
-                if($quiz){
+                if ($quiz) {
                     $questionIds = array_merge(
                         $questionIds,
                         $quiz->questions->pluck('question_id')->toArray()
                     );
                 }
             }
-            if (Auth::user()->hasPermission('specialquiz_play')){
+            if (Auth::user()->hasPermission('specialquiz_play')) {
                 $specialQuiz = SpecialQuiz::with('questions')->where('date', $now)->first();
-                if($specialQuiz){
+                if ($specialQuiz) {
                     $questionIds = array_merge(
                         $questionIds,
                         $specialQuiz->questions->pluck('question_id')->toArray()
