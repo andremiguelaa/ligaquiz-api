@@ -7,6 +7,7 @@ use App\League;
 use App\Round;
 use App\Quiz;
 use App\Answer;
+use App\Media;
 
 trait GameResults
 {
@@ -149,12 +150,34 @@ trait GameResults
                     }
                 }
                 if ($games->count() === 1) {
-                    $game->answers = $answers;
+                    $mappedAnswers = $answers->map(function ($question) {
+                        return $question->map(function ($user) {
+                            $mappedUser = $user->first();
+                            unset($mappedUser->user_id);
+                            unset($mappedUser->question_id);
+                            return $mappedUser;
+                        });
+                    });
+                    $game->answers = $mappedAnswers;
                 }
             }
             if ($game->quiz) {
                 if ($games->count() > 1) {
                     $game->quiz->makeHidden('questions');
+                } else {
+                    $mediaIds = $game->quiz->questions->map(function ($question) {
+                        return $question->question->media_id;
+                    })->toArray();
+                    $game->media = array_reduce(
+                        Media::whereIn('id', $mediaIds)->get()->toArray(),
+                        function ($carry, $item) {
+                            $mediaFile = $item;
+                            unset($mediaFile['id']);
+                            $carry[$item['id']] = $mediaFile;
+                            return $carry;
+                        },
+                        []
+                    );
                 }
             }
             if ($games->count() > 1) {
