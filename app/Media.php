@@ -4,6 +4,7 @@ namespace App;
 
 use App\Question;
 use Illuminate\Database\Eloquent\Model;
+use Storage;
 
 class Media extends Model
 {
@@ -13,8 +14,19 @@ class Media extends Model
     ];
 
     protected $hidden = [
-        'created_at', 'updated_at'
+        'filename', 'created_at', 'updated_at'
     ];
+
+    protected $appends = ['url'];
+
+    public function getUrlAttribute()
+    {
+        if ($this->filename) {
+            return Storage::url($this->filename . '?' . strtotime($this->updated_at));
+        }
+
+        return null;
+    }
 
     public function isUsed()
     {
