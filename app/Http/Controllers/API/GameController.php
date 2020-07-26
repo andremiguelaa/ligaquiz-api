@@ -33,9 +33,15 @@ class GameController extends BaseController
                         );
                     })
                 ],
-                'user' => 'exists:users,id|required_without_all:id,season_id|required_with:opponent',
-                'page' => 'required_with:user|integer|min:1',
-                'opponent' => 'exists:users,id'
+                'date' => 'exists:rounds,date',
+                'user' => [
+                    'exists:users,id',
+                    'required_without_all:id,season_id',
+                    'required_with:opponent',
+                    'required_with:date'
+                ],
+                'page' => 'required_without_all:id,date|integer|min:1',
+                'opponent' => 'exists:users,id|required_with:date',
             ];
             $validator = Validator::make($input, $rules);
             if ($validator->fails()) {
@@ -45,9 +51,18 @@ class GameController extends BaseController
             if (isset($input['id'])) {
                 $query->where('id', $input['id']);
             }
+            if (isset($input['date'])) {
+                $round = Round::where('date', $input['date'])->first();
+                $query->where('round_id', $round->id);
+                $query->where('user_id_1', $input['user']);
+                $query->where('user_id_2', $input['opponent']);
+            }
             if (isset($input['season_id']) && isset($input['tier'])) {
                 $tier = true;
-                $roundIds = Round::where('season_id', $input['season_id'])->get()->pluck('id')->toArray();
+                $roundIds = Round::where('season_id', $input['season_id'])
+                    ->get()
+                    ->pluck('id')
+                    ->toArray();
                 $query->whereIn('round_id', $roundIds);
                 $users = League::where('season_id', $input['season_id'])
                     ->where('tier', $input['tier'])
@@ -57,7 +72,7 @@ class GameController extends BaseController
             } else {
                 $tier = false;
             }
-            if (isset($input['user'])) {
+            if (isset($input['user']) && !isset($input['date'])) {
                 if (isset($input['opponent'])) {
                     $query->where(function ($userQuery) use ($input) {
                         $userQuery
@@ -75,7 +90,6 @@ class GameController extends BaseController
                             ->orWhere('user_id_2', $input['user']);
                     });
                 }
-                
             }
             if (
                 isset($input['page']) &&

@@ -167,7 +167,8 @@ trait GameResults
         if ($games->count() === 1) {
             $game = $games->first();
             unset($game->quiz->questions);
-            $game->quiz->questions = Quiz::with('questions.question')->find($game->id)->questions;
+            $game->quiz->questions =
+                Quiz::with('questions.question')->find($game->quiz->id)->questions;
             unset($game->round);
             $response = $game;
         } elseif ($tier) {
