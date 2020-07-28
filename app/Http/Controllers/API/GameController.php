@@ -40,7 +40,7 @@ class GameController extends BaseController
                     'required_with:opponent',
                     'required_with:date'
                 ],
-                'page' => 'required_without_all:id,date|integer|min:1',
+                'page' => 'required_without_all:id,date,opponent|integer|min:1',
                 'opponent' => 'exists:users,id|required_with:date',
             ];
             $validator = Validator::make($input, $rules);
