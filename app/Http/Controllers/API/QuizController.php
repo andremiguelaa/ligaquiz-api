@@ -113,7 +113,7 @@ class QuizController extends BaseController
         if (Auth::user()->hasPermission('quiz_create')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'date' => 'date_format:Y-m-d|unique:quizzes',
+                'date' => 'required|date_format:Y-m-d|unique:quizzes',
                 'questions' => 'required|array|size:8',
                 'questions.*.content' => 'string',
                 'questions.*.answer' => 'string',
@@ -154,6 +154,7 @@ class QuizController extends BaseController
             $validator = Validator::make($input, [
                 'id' => 'required|exists:quizzes,id',
                 'date' => [
+                    'required',
                     'date_format:Y-m-d',
                     Rule::unique('quizzes')->ignore($id),
                 ],
