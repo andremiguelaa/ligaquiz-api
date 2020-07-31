@@ -35,13 +35,14 @@ class SeasonController extends BaseController
                 $season = Season::with('leagues')
                     ->with('rounds')
                     ->where('season', $input['season'])
+                    ->orderBy('season', 'desc')
                     ->first();
                 $season->rounds->makeHidden('season_id');
                 $season->leagues->makeHidden('season_id');
                 $season->leagues->makeHidden('user_ids');
                 return $this->sendResponse($season, 200);
             } else {
-                return $this->sendResponse(Season::all(), 200);
+                return $this->sendResponse(Season::orderBy('season', 'desc')->get(), 200);
             }
         }
         return $this->sendError('no_permissions', [], 403);

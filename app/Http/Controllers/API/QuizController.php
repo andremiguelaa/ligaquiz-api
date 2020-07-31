@@ -96,11 +96,11 @@ class QuizController extends BaseController
                         !Auth::user()->hasPermission('quiz_delete')
                     )
                 ) {
-                    $quizzes = Quiz::where('date', '<=', $now)->get();
+                    $quizzes = Quiz::where('date', '<=', $now)->orderBy('date', 'desc')->get();
                 } elseif (array_key_exists('past', $input)) {
-                    $quizzes = Quiz::where('date', '<', $now)->get();
+                    $quizzes = Quiz::where('date', '<', $now)->orderBy('date', 'desc')->get();
                 } else {
-                    $quizzes = Quiz::all();
+                    $quizzes = Quiz::orderBy('date', 'desc')->get();
                 }
                 return $this->sendResponse($quizzes, 200);
             }
