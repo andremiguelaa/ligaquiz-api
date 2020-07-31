@@ -115,10 +115,11 @@ class QuizController extends BaseController
             $validator = Validator::make($input, [
                 'date' => 'required|date_format:Y-m-d|unique:quizzes',
                 'questions' => 'required|array|size:8',
-                'questions.*.content' => 'string',
-                'questions.*.answer' => 'string',
-                'questions.*.media' => 'string',
+                'questions.*.content' => 'nullable|string',
+                'questions.*.answer' => 'nullable|string',
+                'questions.*.media_id' => 'nullable|exists:media,id',
                 'questions.*.genre_id' => [
+                    'nullable',
                     Rule::exists('genres', 'id')->where(function ($query) {
                         $query->whereNotNull('parent_id');
                     }),
@@ -167,10 +168,11 @@ class QuizController extends BaseController
                             $query->where('quiz_id', $id);
                         }),
                 ],
-                'questions.*.content' => 'string',
-                'questions.*.answer' => 'string',
-                'questions.*.media' => 'string',
+                'questions.*.content' => 'nullable|string',
+                'questions.*.answer' => 'nullable|string',
+                'questions.*.media_id' => 'nullable|exists:media,id',
                 'questions.*.genre_id' => [
+                    'nullable',
                     Rule::exists('genres', 'id')->where(function ($query) {
                         $query->whereNotNull('parent_id');
                     }),
