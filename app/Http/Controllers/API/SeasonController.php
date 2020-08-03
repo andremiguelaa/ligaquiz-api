@@ -13,6 +13,8 @@ use App\Season;
 use App\League;
 use App\Round;
 use App\Game;
+use App\Quiz;
+use App\Question;
 
 class SeasonController extends BaseController
 {
@@ -40,6 +42,22 @@ class SeasonController extends BaseController
                 $season->rounds->makeHidden('season_id');
                 $season->leagues->makeHidden('season_id');
                 $season->leagues->makeHidden('user_ids');
+                $quizzes = Quiz::with('questions')->whereIn('date', $season->rounds->pluck('date')->toArray())->get();
+                $questionIds = [];
+                foreach ($quizzes->pluck('questions.*.question_id')->toArray() as $value) {
+                    $questionIds = array_merge($questionIds, $value);
+                }
+                $questions = Question::whereIn('id', $questionIds)->select('genre_id')->get();
+                $genreStats = $questions->reduce(function ($acc, $question) {
+                    if ($question->genre_id) {
+                        if (!isset($acc[$question->genre_id])) {
+                            $acc[$question->genre_id] = 0;
+                        }
+                        $acc[$question->genre_id]++;
+                    }
+                    return $acc;
+                }, []);
+                $season->genre_stats = (object) $genreStats;
                 return $this->sendResponse($season, 200);
             } else {
                 return $this->sendResponse(Season::orderBy('season', 'desc')->get(), 200);
