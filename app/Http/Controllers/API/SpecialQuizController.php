@@ -96,9 +96,9 @@ class SpecialQuizController extends BaseController
             $input = $request::all();
             $validator = Validator::make($input, [
                 'date' => 'required|date_format:Y-m-d|unique:special_quizzes',
-                'user_id' => 'exists:users,id',
-                'subject' => 'string',
-                'description' => 'string',
+                'user_id' => 'nullable|exists:users,id',
+                'subject' => 'nullable|string',
+                'description' => 'nullable|string',
                 'questions' => 'required|array|size:12',
                 'questions.*.content' => 'nullable|string',
                 'questions.*.answer' => 'nullable|string',
@@ -139,9 +139,9 @@ class SpecialQuizController extends BaseController
                     'date_format:Y-m-d',
                     Rule::unique('special_quizzes')->ignore($input['id']),
                 ],
-                'user_id' => 'exists:users,id',
-                'subject' => 'string',
-                'description' => 'string',
+                'user_id' => 'nullable|exists:users,id',
+                'subject' => 'nullable|string',
+                'description' => 'nullable|string',
                 'questions' => 'required|array|size:12',
                 'questions.*.id' => [
                     'required',
