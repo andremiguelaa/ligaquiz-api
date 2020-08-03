@@ -134,6 +134,10 @@ class SpecialQuizController extends BaseController
             $id = array_key_exists('id', $input) ? $input['id'] : 0;
             $validator = Validator::make($input, [
                 'id' => 'required|exists:special_quizzes,id',
+                'date' => [
+                    'date_format:Y-m-d',
+                    Rule::unique('special_quizzes')->ignore($input['id']),
+                ],
                 'user_id' => 'nullable|exists:users,id',
                 'subject' => 'nullable|string',
                 'description' => 'nullable|string',
