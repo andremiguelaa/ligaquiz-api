@@ -100,9 +100,9 @@ class SpecialQuizController extends BaseController
                 'subject' => 'string',
                 'description' => 'string',
                 'questions' => 'required|array|size:12',
-                'questions.*.content' => 'string',
-                'questions.*.answer' => 'string',
-                'questions.*.media' => 'string',
+                'questions.*.content' => 'nullable|string',
+                'questions.*.answer' => 'nullable|string',
+                'questions.*.media_id' => 'nullable|exists:media,id',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -151,9 +151,9 @@ class SpecialQuizController extends BaseController
                             $query->where('special_quiz_id', $id);
                         }),
                 ],
-                'questions.*.content' => 'string',
-                'questions.*.answer' => 'string',
-                'questions.*.media' => 'string',
+                'questions.*.content' => 'nullable|string',
+                'questions.*.answer' => 'nullable|string',
+                'questions.*.media_id' => 'nullable|exists:media,id',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
