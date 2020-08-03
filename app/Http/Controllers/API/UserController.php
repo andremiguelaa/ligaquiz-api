@@ -21,6 +21,7 @@ use Image;
 use App\Question;
 use App\QuizQuestion;
 use App\Answer;
+use App\NationalRanking;
 
 class UserController extends BaseController
 {
@@ -214,8 +215,26 @@ class UserController extends BaseController
                         }
                     }
                 }
-                $users = $users->map(function ($user) use($statistics) {
+                $currentNationalRanking = NationalRanking::orderBy('date', 'desc')->first();
+                if ($currentNationalRanking) {
+                    $usersRankingPosition = array_reduce(
+                        $currentNationalRanking->getData()->ranking,
+                        function ($acc, $item) {
+                            $acc[$item->individual_quiz_player_id] = $item->rank;
+                            return $acc;
+                        },
+                        []
+                    );
+                }
+                $users = $users->map(function ($user) use ($statistics, $usersRankingPosition) {
                     $user->statistics = $statistics[$user->id];
+                    if (
+                        isset($user->individual_quiz_player) &&
+                        isset($usersRankingPosition[$user->individual_quiz_player->id])
+                    ) {
+                        $user->national_rank =
+                            $usersRankingPosition[$user->individual_quiz_player->id];
+                    }
                     return $user;
                 });
             }
