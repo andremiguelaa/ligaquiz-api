@@ -62,11 +62,15 @@ class SpecialQuizController extends BaseController
                         !Auth::user()->hasPermission('specialquiz_delete')
                     )
                 ) {
-                    $quizzes = SpecialQuiz::where('date', '<=', $now)->get();
+                    $quizzes = SpecialQuiz::where('date', '<=', $now)
+                        ->orderBy('date', 'desc')
+                        ->get();
                 } elseif (array_key_exists('past', $input)) {
-                    $quizzes = SpecialQuiz::where('date', '<', $now)->get();
+                    $quizzes = SpecialQuiz::where('date', '<', $now)
+                        ->orderBy('date', 'desc')
+                        ->get();
                 } else {
-                    $quizzes = SpecialQuiz::all();
+                    $quizzes = SpecialQuiz::orderBy('date', 'desc')->get();
                 }
                 return $this->sendResponse($quizzes, 200);
             }
