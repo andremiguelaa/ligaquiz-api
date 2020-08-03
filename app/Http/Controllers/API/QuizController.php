@@ -154,11 +154,6 @@ class QuizController extends BaseController
             $id = array_key_exists('id', $input) ? $input['id'] : 0;
             $validator = Validator::make($input, [
                 'id' => 'required|exists:quizzes,id',
-                'date' => [
-                    'required',
-                    'date_format:Y-m-d',
-                    Rule::unique('quizzes')->ignore($id),
-                ],
                 'questions' => 'required|array|size:8',
                 'questions.*.id' => [
                     'required',
