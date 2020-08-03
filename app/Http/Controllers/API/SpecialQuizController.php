@@ -95,7 +95,7 @@ class SpecialQuizController extends BaseController
         if (Auth::user()->hasPermission('specialquiz_create')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'date' => 'date_format:Y-m-d|unique:special_quizzes',
+                'date' => 'required|date_format:Y-m-d|unique:special_quizzes',
                 'user_id' => 'exists:users,id',
                 'subject' => 'string',
                 'description' => 'string',
@@ -135,6 +135,7 @@ class SpecialQuizController extends BaseController
             $validator = Validator::make($input, [
                 'id' => 'required|exists:special_quizzes,id',
                 'date' => [
+                    'required',
                     'date_format:Y-m-d',
                     Rule::unique('special_quizzes')->ignore($input['id']),
                 ],
