@@ -209,14 +209,13 @@ class QuizController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $quiz = Quiz::with('questions', 'questions.question')->find($input['id']);
+            $quiz = Quiz::find($input['id']);
             if ($quiz->hasAnswers()) {
                 return $this->sendError('has_answers', null, 400);
             } else {
-                Question::whereIn('id', $quiz->questions->pluck('id')->toArray())->delete();
-                QuizQuestion::whereIn('question_id', $quiz->questions->pluck('id')
-                    ->toArray())
-                    ->delete();
+                $quizQuestions = QuizQuestion::where('quiz_id', $quiz->id)->get();
+                Question::whereIn('id', $quizQuestions->pluck('question_id')->toArray())->delete();
+                QuizQuestion::where('quiz_id', $quiz->id)->delete();
                 $quiz->delete();
                 return $this->sendResponse();
             }

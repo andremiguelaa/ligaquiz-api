@@ -24,6 +24,14 @@ class SpecialQuiz extends Model
         return $this->hasMany('App\SpecialQuizQuestion');
     }
 
+    public function hasAnswers()
+    {
+        return Answer::whereIn(
+            'question_id',
+            $this->questions->pluck('question_id')->toArray()
+        )->count();
+    }
+
     public function answers()
     {
         return Answer::whereIn(

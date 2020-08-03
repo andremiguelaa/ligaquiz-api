@@ -12,7 +12,7 @@ class SpecialQuizQuestion extends Model
     ];
 
     protected $hidden = [
-        'id', 'quiz_id', 'question_id', 'created_at', 'updated_at'
+        'id', 'created_at', 'updated_at'
     ];
 
     public function question()
