@@ -12,6 +12,7 @@ use App\SpecialQuiz;
 use App\SpecialQuizQuestion;
 use App\Question;
 use App\Answer;
+use App\Media;
 
 class SpecialQuizController extends BaseController
 {
@@ -48,10 +49,21 @@ class SpecialQuizController extends BaseController
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
                     });
+                    $mediaIds = $questions->pluck('media_id')->toArray();
+                    $media = array_reduce(
+                        Media::whereIn('id', $mediaIds)->get()->toArray(),
+                        function ($carry, $item) {
+                            $mediaFile = $item;
+                            unset($mediaFile['id']);
+                            $carry[$item['id']] = $mediaFile;
+                            return $carry;
+                        },
+                        []
+                    );
                     unset($quiz->questions);
                     $quiz->questions = $questions;
                     // todo: show percentage and classification for past quizzes
-                    return $this->sendResponse($quiz, 200);
+                    return $this->sendResponse(['quiz' => $quiz, 'media' => $media], 200);
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
