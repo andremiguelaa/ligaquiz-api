@@ -159,22 +159,22 @@ class SeasonController extends BaseController
         if (Auth::user()->hasPermission('league_delete')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'season_id' => 'required|exists:seasons,id',
+                'id' => 'required|exists:seasons,id',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $firstRound = Round::where('season_id', $input['season_id'])
+            $firstRound = Round::where('season_id', $input['id'])
                 ->orderBy('date', 'asc')->first();
             $now = Carbon::now()->format('Y-m-d');
             if ($firstRound->date > $now) {
-                Season::where('id', $input['season_id'])->delete();
-                $oldRoundsIds = Round::where('season_id', $input['season_id'])
+                Season::where('id', $input['id'])->delete();
+                $oldRoundsIds = Round::where('season_id', $input['id'])
                     ->get()
                     ->pluck('id')
                     ->toArray();
-                Round::where('season_id', $input['season_id'])->delete();
-                League::where('season_id', $input['season_id'])->delete();
+                Round::where('season_id', $input['id'])->delete();
+                League::where('season_id', $input['id'])->delete();
                 Game::whereIn('round_id', $oldRoundsIds)->delete();
             } else {
                 return $this->sendError('past_season', [], 400);
