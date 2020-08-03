@@ -215,30 +215,34 @@ class UserController extends BaseController
                         }
                     }
                 }
-                $currentNationalRanking = NationalRanking::orderBy('date', 'desc')->first();
-                if ($currentNationalRanking) {
-                    $usersRankingPosition = array_reduce(
-                        $currentNationalRanking->getData()->ranking,
-                        function ($acc, $item) {
-                            $acc[$item->individual_quiz_player_id] = $item->rank;
-                            return $acc;
-                        },
-                        []
-                    );
-                }
-                $users = $users->map(function ($user) use ($statistics, $usersRankingPosition) {
+
+                $users = $users->map(function ($user) use ($statistics) {
                     $user->statistics = $statistics[$user->id];
-                    if (
-                        isset($user->individual_quiz_player) &&
-                        isset($usersRankingPosition[$user->individual_quiz_player->id])
-                    ) {
-                        $user->national_rank =
-                            $usersRankingPosition[$user->individual_quiz_player->id];
-                    }
                     return $user;
                 });
             }
         }
+        $currentNationalRanking = NationalRanking::orderBy('date', 'desc')->first();
+        if ($currentNationalRanking) {
+            $usersRankingPosition = array_reduce(
+                $currentNationalRanking->getData()->ranking,
+                function ($acc, $item) {
+                    $acc[$item->individual_quiz_player_id] = $item->rank;
+                    return $acc;
+                },
+                []
+            );
+        }
+        $users = $users->map(function ($user) use ($usersRankingPosition) {
+            if (
+                isset($user->individual_quiz_player) &&
+                isset($usersRankingPosition[$user->individual_quiz_player->id])
+            ) {
+                $user->national_rank =
+                    $usersRankingPosition[$user->individual_quiz_player->id];
+            }
+            return $user;
+        });
         return $this->sendResponse(UserResource::collection($users), $partial ? 206 : 200);
     }
 
