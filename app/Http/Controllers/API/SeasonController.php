@@ -60,7 +60,12 @@ class SeasonController extends BaseController
                 $season->genre_stats = (object) $genreStats;
                 return $this->sendResponse($season, 200);
             } else {
-                return $this->sendResponse(Season::orderBy('season', 'desc')->get(), 200);
+                if (isset($input['rounds'])) {
+                    $seasons = Season::with('rounds')->orderBy('season', 'desc')->get();
+                } else {
+                    $seasons = Season::orderBy('season', 'desc')->get();
+                }
+                return $this->sendResponse($seasons, 200);
             }
         }
         return $this->sendError('no_permissions', [], 403);
