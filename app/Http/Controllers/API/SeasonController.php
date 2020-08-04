@@ -90,10 +90,10 @@ class SeasonController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-
             $lastSeason = Season::orderBy('season', 'desc')->first();
             if ($lastSeason) {
                 $newSeason = $lastSeason->season + 1;
+                // todo: avoid to create season beginning while the previous season is running
             } else {
                 $newSeason = 1;
             }
