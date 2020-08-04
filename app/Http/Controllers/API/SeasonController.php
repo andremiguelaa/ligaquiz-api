@@ -62,6 +62,10 @@ class SeasonController extends BaseController
             } else {
                 if (isset($input['rounds'])) {
                     $seasons = Season::with('rounds')->orderBy('season', 'desc')->get();
+                    $seasons = $seasons->map(function($season){
+                        $season->rounds->makeHidden('season_id');
+                        return $season;
+                    });
                 } else {
                     $seasons = Season::orderBy('season', 'desc')->get();
                 }
