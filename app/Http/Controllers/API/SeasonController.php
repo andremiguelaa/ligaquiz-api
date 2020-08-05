@@ -82,7 +82,7 @@ class SeasonController extends BaseController
             $validator = Validator::make($input, [
                 'dates' => 'required|array|size:20',
                 'dates.*'  => 'date_format:Y-m-d|after:today|distinct|unique:rounds,date',
-                'leagues' => 'required|array',
+                'leagues' => 'array',
                 'leagues.*.tier' => 'required|integer|distinct',
                 'leagues.*.user_ids' => ['required', 'array', 'max:10', new Even],
                 'leagues.*.user_ids.*' => 'exists:users,id|distinct',
@@ -109,7 +109,7 @@ class SeasonController extends BaseController
                 array_push($rounds, $createdRound);
             }
             $this->createSeasonLeaguesAndGames($createdSeason->id, $input['leagues'], $rounds);
-            return $this->sendResponse(null, 201);
+            return $this->sendResponse($createdSeason, 201);
         }
         return $this->sendError('no_permissions', [], 403);
     }
