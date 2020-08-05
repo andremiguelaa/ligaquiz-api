@@ -60,10 +60,13 @@ class SeasonController extends BaseController
                 $season->genre_stats = (object) $genreStats;
                 return $this->sendResponse($season, 200);
             } else {
-                if (isset($input['rounds'])) {
-                    $seasons = Season::with('rounds')->orderBy('season', 'desc')->get();
+                if (isset($input['details'])) {
+                    $seasons = Season::with(['rounds', 'leagues'])
+                        ->orderBy('season', 'desc')
+                        ->get();
                     $seasons = $seasons->map(function($season){
                         $season->rounds->makeHidden('season_id');
+                        $season->leagues->makeHidden('season_id');
                         return $season;
                     });
                 } else {
