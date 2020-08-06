@@ -40,7 +40,6 @@ class SeasonController extends BaseController
                     ->first();
                 $season->rounds->makeHidden('season_id');
                 $season->leagues->makeHidden('season_id');
-                $season->leagues->makeHidden('user_ids');
                 $quizzes = Quiz::with('questions')->whereIn('date', $season->rounds->pluck('date')->toArray())->get();
                 $questionIds = [];
                 foreach ($quizzes->pluck('questions.*.question_id')->toArray() as $value) {
