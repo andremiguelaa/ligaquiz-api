@@ -34,8 +34,7 @@ class SeasonController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             if (isset($input['season'])) {
-                $season = Season::with('leagues')
-                    ->with('rounds')
+                $season = Season::with(['rounds', 'leagues'])
                     ->where('season', $input['season'])
                     ->orderBy('season', 'desc')
                     ->first();
@@ -60,18 +59,14 @@ class SeasonController extends BaseController
                 $season->genre_stats = (object) $genreStats;
                 return $this->sendResponse($season, 200);
             } else {
-                if (isset($input['details'])) {
-                    $seasons = Season::with(['rounds', 'leagues'])
+                $seasons = Season::with(['rounds', 'leagues'])
                         ->orderBy('season', 'desc')
                         ->get();
-                    $seasons = $seasons->map(function($season){
-                        $season->rounds->makeHidden('season_id');
-                        $season->leagues->makeHidden('season_id');
-                        return $season;
-                    });
-                } else {
-                    $seasons = Season::orderBy('season', 'desc')->get();
-                }
+                $seasons = $seasons->map(function ($season) {
+                    $season->rounds->makeHidden('season_id');
+                    $season->leagues->makeHidden('season_id');
+                    return $season;
+                });
                 return $this->sendResponse($seasons, 200);
             }
         }
@@ -96,7 +91,7 @@ class SeasonController extends BaseController
             $lastSeason = Season::orderBy('season', 'desc')->first();
             if ($lastSeason) {
                 $newSeason = $lastSeason->season + 1;
-                // todo: avoid to create season beginning while the previous season is running
+            // todo: avoid to create season beginning while the previous season is running
             } else {
                 $newSeason = 1;
             }
@@ -128,7 +123,7 @@ class SeasonController extends BaseController
                     'date_format:Y-m-d',
                     'after:today',
                     'distinct',
-                    Rule::unique('rounds', 'date')->ignore($input['id'], 'id'),
+                    Rule::unique('rounds', 'date')->ignore($input['id'], 'season_id'),
                 ],
                 'leagues' => 'array',
                 'leagues.*.tier' => 'required|integer|distinct',
