@@ -88,6 +88,8 @@ Route::group([
 
         Route::get('games', 'API\GameController@get');
 
+        Route::get('questions', 'API\QuestionController@get');
+
         Route::get('logs', 'API\LogController@get');
         Route::post('logs', 'API\LogController@create');
     });
