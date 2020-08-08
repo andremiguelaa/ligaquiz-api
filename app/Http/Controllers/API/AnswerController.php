@@ -65,7 +65,10 @@ class AnswerController extends BaseController
             if (isset($input['mine'])) {
                 $answers = $answers->where('user_id', Auth::id());
             }
-            if (!Auth::user()->hasPermission('answer_correct') && !isset($input['mine'])) {
+            if (
+                !Auth::user()->hasPermission('answer_correct') && !isset($input['mine']) ||
+                isset($input['season'])
+            ) {
                 $answers = $answers->where('created_at', '<', $startOfDay);
                 $answers->makeHidden('text');
             }
