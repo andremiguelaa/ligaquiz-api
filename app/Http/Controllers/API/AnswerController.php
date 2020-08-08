@@ -8,6 +8,7 @@ use Validator;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\API\BaseController as BaseController;
+use App\Season;
 use App\Quiz;
 use App\SpecialQuiz;
 use App\Answer;
@@ -23,8 +24,9 @@ class AnswerController extends BaseController
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'quiz' => 'required_without:special_quiz|exists:quizzes,id',
-                'special_quiz' => 'required_without:quiz|exists:special_quizzes,id',
+                'season' => 'required_without_all:special_quiz,quiz|exists:seasons,season',
+                'quiz' => 'required_without_all:special_quiz,season|exists:quizzes,id',
+                'special_quiz' => 'required_without_all:quiz,season|exists:special_quizzes,id',
                 'submitted' => 'boolean'
             ]);
             if ($validator->fails()) {
@@ -37,7 +39,24 @@ class AnswerController extends BaseController
             ) {
                 return $this->sendError('no_permissions', [], 403);
             }
-            if (isset($input['quiz'])) {
+            if (isset($input['season'])) {
+                $quizDates = Season::with('rounds')
+                    ->where('season', $input['season'])
+                    ->first()
+                    ->rounds
+                    ->pluck('date')
+                    ->toArray();
+                $quizQuestions = Quiz::with('questions')
+                    ->whereIn('date', $quizDates)
+                    ->get()
+                    ->pluck('questions');
+                $questionIds = $quizQuestions->reduce(function ($carry, $item) {
+                    return array_merge($carry, $item->pluck('question_id')->toArray());
+                }, []);
+                $answers = Answer::whereIn('question_id', $questionIds)
+                    ->select('user_id', 'question_id', 'submitted', 'correct')
+                    ->get();
+            } elseif (isset($input['quiz'])) {
                 $answers = Quiz::with('questions')->find($input['quiz'])->answers();
             } elseif (isset($input['special_quiz'])) {
                 $answers = SpecialQuiz::with('questions')->find($input['special_quiz'])->answers();
@@ -47,6 +66,7 @@ class AnswerController extends BaseController
             }
             if (isset($input['submitted'])) {
                 $answers = $answers->where('submitted', $input['submitted']);
+                $answers->makeHidden('submitted');
             }
             return $this->sendResponse($answers->groupBy('question_id'), 200);
         }

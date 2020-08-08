@@ -27,7 +27,7 @@ class QuestionController extends BaseController
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'id' => 'exists:questions',
+                'id' => 'array|exists:questions',
                 'search' => 'string'
             ]);
             if ($validator->fails()) {
@@ -52,49 +52,54 @@ class QuestionController extends BaseController
                     ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$query.'%"')
                     ->get();
             } elseif (isset($input['id'])) {
-                $response = Question::with(['submittedAnswers', 'media'])
-                    ->find($input['id']);
-                $quizQuestion = QuizQuestion::where('question_id', $input['id'])->first();
-                if ($quizQuestion) {
-                    if (
-                        !(
-                            Auth::user()->isAdmin() ||
-                            Auth::user()->hasPermission('quiz_create') ||
-                            Auth::user()->hasPermission('quiz_edit') ||
-                            Auth::user()->hasPermission('quiz_play')
-                        )
-                    ) {
+                if (count($input['id']) === 1) {
+                    $response = Question::with(['submittedAnswers', 'media'])
+                        ->find($input['id'][0]);
+                    $response = $response->first();
+                    $quizQuestion = QuizQuestion::where('question_id', $input['id'][0])->first();
+                    if ($quizQuestion) {
+                        if (
+                            !(
+                                Auth::user()->isAdmin() ||
+                                Auth::user()->hasPermission('quiz_create') ||
+                                Auth::user()->hasPermission('quiz_edit') ||
+                                Auth::user()->hasPermission('quiz_play')
+                            )
+                        ) {
+                            return $this->sendError('no_permissions', [], 403);
+                        }
+                        $date = Quiz::find($quizQuestion->quiz_id)->date;
+                        $round = Round::where('date', $date)->first();
+                        if ($round && $round->round !== 10 && $round->round !== 20) {
+                            $response->type = 'versus';
+                        } else {
+                            $response->type = 'solo';
+                        }
+                    } else {
+                        $specialQuizId = SpecialQuizQuestion::where('question_id', $input['id'][0])
+                            ->first()
+                            ->special_quiz_id;
+                        $date = SpecialQuiz::find($specialQuizId)->date;
+                        $response->type = 'special';
+                    }
+                    if ($date >= Carbon::now()->format('Y-m-d')) {
                         return $this->sendError('no_permissions', [], 403);
                     }
-                    $date = Quiz::find($quizQuestion->quiz_id)->date;
-                    $round = Round::where('date', $date)->first();
-                    if ($round && $round->round !== 10 && $round->round !== 20) {
-                        $response->type = 'versus';
-                    } else {
-                        $response->type = 'solo';
+                    $response->date = $date;
+                    $response->answers = $response->submittedAnswers->map(function ($item) {
+                        $item->makeHidden('id');
+                        $item->makeHidden('question_id');
+                        $item->makeHidden('submitted');
+                        $item->makeHidden('text');
+                        return $item;
+                    });
+                    unset($response->submittedAnswers);
+                    unset($response->media_id);
+                    if (isset($response->media)) {
+                        unset($response->media->id);
                     }
                 } else {
-                    $specialQuizId = SpecialQuizQuestion::where('question_id', $input['id'])
-                        ->first()
-                        ->special_quiz_id;
-                    $date = SpecialQuiz::find($specialQuizId)->date;
-                    $response->type = 'special';
-                }
-                if ($date >= Carbon::now()->format('Y-m-d')) {
-                    return $this->sendError('no_permissions', [], 403);
-                }
-                $response->date = $date;
-                $response->answers = $response->submittedAnswers->map(function ($item) {
-                    $item->makeHidden('id');
-                    $item->makeHidden('question_id');
-                    $item->makeHidden('submitted');
-                    $item->makeHidden('text');
-                    return $item;
-                });
-                unset($response->submittedAnswers);
-                unset($response->media_id);
-                if (isset($response->media)) {
-                    unset($response->media->id);
+                    $response = Question::whereIn('id', $input['id'])->get();
                 }
             } else {
                 $response = Question::all();
