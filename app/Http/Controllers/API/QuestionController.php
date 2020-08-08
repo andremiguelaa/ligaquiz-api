@@ -12,6 +12,7 @@ use App\QuizQuestion;
 use App\Quiz;
 use App\SpecialQuizQuestion;
 use App\SpecialQuiz;
+use App\Round;
 
 class QuestionController extends BaseController
 {
@@ -21,7 +22,8 @@ class QuestionController extends BaseController
             Auth::user()->isAdmin() ||
             Auth::user()->hasPermission('quiz_create') ||
             Auth::user()->hasPermission('quiz_edit') ||
-            Auth::user()->hasPermission('quiz_play')
+            Auth::user()->hasPermission('quiz_play') ||
+            Auth::user()->hasPermission('specialquiz_play')
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
@@ -54,16 +56,34 @@ class QuestionController extends BaseController
                     ->find($input['id']);
                 $quizQuestion = QuizQuestion::where('question_id', $input['id'])->first();
                 if ($quizQuestion) {
+                    if (
+                        !(
+                            Auth::user()->isAdmin() ||
+                            Auth::user()->hasPermission('quiz_create') ||
+                            Auth::user()->hasPermission('quiz_edit') ||
+                            Auth::user()->hasPermission('quiz_play')
+                        )
+                    ) {
+                        return $this->sendError('no_permissions', [], 403);
+                    }
                     $date = Quiz::find($quizQuestion->quiz_id)->date;
+                    $round = Round::where('date', $date)->first();
+                    if ($round && $round->round !== 10 && $round->round !== 20) {
+                        $response->type = 'versus';
+                    } else {
+                        $response->type = 'solo';
+                    }
                 } else {
                     $specialQuizId = SpecialQuizQuestion::where('question_id', $input['id'])
                         ->first()
                         ->special_quiz_id;
                     $date = SpecialQuiz::find($specialQuizId)->date;
+                    $response->type = 'special';
                 }
                 if ($date >= Carbon::now()->format('Y-m-d')) {
                     return $this->sendError('no_permissions', [], 403);
                 }
+                $response->date = $date;
                 $response->answers = $response->submittedAnswers->map(function ($item) {
                     $item->makeHidden('id');
                     $item->makeHidden('question_id');
