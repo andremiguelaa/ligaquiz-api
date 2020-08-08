@@ -39,6 +39,7 @@ class AnswerController extends BaseController
             ) {
                 return $this->sendError('no_permissions', [], 403);
             }
+            $startOfDay = Carbon::now()->startOfDay();
             if (isset($input['season'])) {
                 $quizDates = Season::with('rounds')
                     ->where('season', $input['season'])
@@ -54,15 +55,19 @@ class AnswerController extends BaseController
                     return array_merge($carry, $item->pluck('question_id')->toArray());
                 }, []);
                 $answers = Answer::whereIn('question_id', $questionIds)
-                    ->select('user_id', 'question_id', 'submitted', 'correct')
+                    ->select('user_id', 'question_id', 'submitted', 'correct', 'created_at')
                     ->get();
             } elseif (isset($input['quiz'])) {
                 $answers = Quiz::with('questions')->find($input['quiz'])->answers();
             } elseif (isset($input['special_quiz'])) {
                 $answers = SpecialQuiz::with('questions')->find($input['special_quiz'])->answers();
             }
-            if (!Auth::user()->hasPermission('answer_correct') || isset($input['mine'])) {
+            if (isset($input['mine'])) {
                 $answers = $answers->where('user_id', Auth::id());
+            }
+            if (!Auth::user()->hasPermission('answer_correct') && !isset($input['mine'])) {
+                $answers = $answers->where('created_at', '<', $startOfDay);
+                $answers->makeHidden('text');
             }
             if (isset($input['submitted'])) {
                 $answers = $answers->where('submitted', $input['submitted']);

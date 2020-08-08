@@ -184,14 +184,14 @@ class UserController extends BaseController
                     $statistics[$userId] = [];
                 }
                 $startOfDay = Carbon::now()->startOfDay();
-                $answers = Answer::whereIn('user_id', $input['id']) // 0.8 seconds
+                $answers = Answer::whereIn('user_id', $input['id'])
                     ->where('submitted', 1)
                     ->where('corrected', 1)
-                    // ->where('created_at', '<', $startOfDay)
+                    ->where('created_at', '<', $startOfDay)
                     ->select('user_id', 'question_id', 'correct')
                     ->get();
-                $questionIds = $answers->pluck('question_id');  // 0.8 seconds
-                $questions = Question::whereIn('id', $questionIds) // 2.2 seconds
+                $questionIds = $answers->pluck('question_id');
+                $questions = Question::whereIn('id', $questionIds)
                     ->whereNotNull('genre_id')
                     ->select('id', 'genre_id')
                     ->get()
