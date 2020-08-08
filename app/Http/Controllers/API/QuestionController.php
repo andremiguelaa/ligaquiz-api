@@ -5,8 +5,13 @@ namespace App\Http\Controllers\API;
 use Request;
 use Validator;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Question;
+use App\QuizQuestion;
+use App\Quiz;
+use App\SpecialQuizQuestion;
+use App\SpecialQuiz;
 
 class QuestionController extends BaseController
 {
@@ -47,6 +52,18 @@ class QuestionController extends BaseController
             } elseif (isset($input['id'])) {
                 $response = Question::with(['submittedAnswers', 'media'])
                     ->find($input['id']);
+                $quizQuestion = QuizQuestion::where('question_id', $input['id'])->first();
+                if ($quizQuestion) {
+                    $date = Quiz::find($quizQuestion->quiz_id)->date;
+                } else {
+                    $specialQuizId = SpecialQuizQuestion::where('question_id', $input['id'])
+                        ->first()
+                        ->special_quiz_id;
+                    $date = SpecialQuiz::find($specialQuizId)->date;
+                }
+                if ($date >= Carbon::now()->format('Y-m-d')) {
+                    return $this->sendError('no_permissions', [], 403);
+                }
                 $response->answers = $response->submittedAnswers->map(function ($item) {
                     $item->makeHidden('id');
                     $item->makeHidden('question_id');
@@ -56,7 +73,9 @@ class QuestionController extends BaseController
                 });
                 unset($response->submittedAnswers);
                 unset($response->media_id);
-                unset($response->media->id);
+                if (isset($response->media)) {
+                    unset($response->media->id);
+                }
             } else {
                 $response = Question::all();
             }
