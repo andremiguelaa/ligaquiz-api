@@ -64,7 +64,7 @@ class AnswerController extends BaseController
             }
             if (isset($input['mine'])) {
                 $array = $answers->where('user_id', Auth::id())->toArray();
-                usort($array, function($a, $b){
+                usort($array, function ($a, $b) {
                     return $b['id'] - $a['id'];
                 });
                 $answers = collect($array)->unique('question_id');
@@ -123,7 +123,7 @@ class AnswerController extends BaseController
                     Rule::in($questionIds)
                 ],
                 'text' => 'nullable|string',
-                'points' => 'integer|min:-1|max:3',
+                'points' => 'integer|min:0|max:3',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
