@@ -14,6 +14,7 @@ use App\Question;
 use App\Answer;
 use App\Round;
 use App\Media;
+use App\Game;
 
 class QuizController extends BaseController
 {
@@ -46,8 +47,8 @@ class QuizController extends BaseController
                     $date = $input['date'];
                 }
                 $quiz = Quiz::with('questions.question')->where('date', $date)->first();
-                $quiz->submitted = $quiz->isSubmitted();
                 if ($quiz) {
+                    $quiz->submitted = $quiz->isSubmitted();
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
                     });
@@ -63,7 +64,10 @@ class QuizController extends BaseController
                         []
                     );
                     unset($quiz->questions);
-                    if (array_key_exists('date', $input)) {
+                    if (
+                        array_key_exists('date', $input) &&
+                        $input['date'] < $now->format('Y-m-d')
+                    ) {
                         $answers = Answer::whereIn(
                             'question_id',
                             $questions->pluck('id')->toArray()
@@ -80,8 +84,20 @@ class QuizController extends BaseController
                             }
                             return $question;
                         });
+                        $quiz->today = false;
                     } else {
                         $quiz->questions = $questions;
+                        $quiz->today = true;
+                        $round = Round::where('date', $date)->first();
+                        if ($round) {
+                            $game = Game::where('round_id', $round->id)
+                                ->where('user_id_1', Auth::id())
+                                ->orWhere('user_id_2', Auth::id())
+                                ->first();
+                            if ($game) {
+                                $quiz->game = $game;
+                            }
+                        }
                     }
                     return $this->sendResponse(
                         ['quiz' => $quiz, 'media' => $media],
