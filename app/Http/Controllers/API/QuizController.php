@@ -89,6 +89,11 @@ class QuizController extends BaseController
                         $quiz->questions = $questions;
                         $quiz->today = true;
                         $round = Round::where('date', $date)->first();
+                        if ($round && $round->round !== 10 && $round->round !== 20) {
+                            $quiz->solo = false;
+                        } else {
+                            $quiz->solo = true;
+                        }
                         if ($round) {
                             $game = Game::where('round_id', $round->id)
                                 ->where('user_id_1', Auth::id())
