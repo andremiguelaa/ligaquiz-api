@@ -40,4 +40,12 @@ class Quiz extends Model
             $this->questions->pluck('question_id')->toArray()
         )->get();
     }
+
+    public function isSubmitted()
+    {
+        $questionIds = $this->questions()->get()->pluck('question_id')->toArray();
+        return boolval(
+            Answer::whereIn('question_id', $questionIds)->where('submitted', 1)->first()
+        );
+    }
 }

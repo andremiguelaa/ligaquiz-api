@@ -46,6 +46,7 @@ class QuizController extends BaseController
                     $date = $input['date'];
                 }
                 $quiz = Quiz::with('questions.question')->where('date', $date)->first();
+                $quiz->submitted = $quiz->isSubmitted();
                 if ($quiz) {
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
