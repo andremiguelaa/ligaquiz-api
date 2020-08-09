@@ -63,7 +63,11 @@ class AnswerController extends BaseController
                 $answers = SpecialQuiz::with('questions')->find($input['special_quiz'])->answers();
             }
             if (isset($input['mine'])) {
-                $answers = $answers->where('user_id', Auth::id());
+                $array = $answers->where('user_id', Auth::id())->toArray();
+                usort($array, function($a, $b){
+                    return $b['id'] - $a['id'];
+                });
+                $answers = collect($array)->unique('question_id');
             }
             if (
                 !Auth::user()->hasPermission('answer_correct') && !isset($input['mine']) ||
