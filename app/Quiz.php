@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use App\Question;
 use App\Answer;
@@ -45,7 +46,10 @@ class Quiz extends Model
     {
         $questionIds = $this->questions()->get()->pluck('question_id')->toArray();
         return boolval(
-            Answer::whereIn('question_id', $questionIds)->where('submitted', 1)->first()
+            Answer::whereIn('question_id', $questionIds)
+                ->where('user_id', Auth::id())
+                ->where('submitted', 1)
+                ->first()
         );
     }
 }
