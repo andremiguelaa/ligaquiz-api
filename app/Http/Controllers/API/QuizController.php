@@ -89,16 +89,20 @@ class QuizController extends BaseController
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
-                if (
+                if (array_key_exists('past', $input)) {
+                    $quizzes = Quiz::where('date', '<', $now->format('Y-m-d'))
+                        ->orderBy('date', 'desc')
+                        ->get();
+                } elseif (
                     (
                         !Auth::user()->hasPermission('quiz_create') &&
                         !Auth::user()->hasPermission('quiz_edit') &&
                         !Auth::user()->hasPermission('quiz_delete')
                     )
                 ) {
-                    $quizzes = Quiz::where('date', '<=', $now)->orderBy('date', 'desc')->get();
-                } elseif (array_key_exists('past', $input)) {
-                    $quizzes = Quiz::where('date', '<', $now)->orderBy('date', 'desc')->get();
+                    $quizzes = Quiz::where('date', '<=', $now->format('Y-m-d'))
+                        ->orderBy('date', 'desc')
+                        ->get();
                 } else {
                     $quizzes = Quiz::orderBy('date', 'desc')->get();
                 }
