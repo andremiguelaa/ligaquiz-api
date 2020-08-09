@@ -122,8 +122,8 @@ class AnswerController extends BaseController
                     'exists:questions,id',
                     Rule::in($questionIds)
                 ],
-                'text' => 'string',
-                'points' => 'integer|min:0|max:3',
+                'text' => 'nullable|string',
+                'points' => 'integer|min:-1|max:3',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
