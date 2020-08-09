@@ -131,7 +131,7 @@ class AnswerController extends BaseController
             $newAnswer = [
                 'question_id' => intval($input['question_id']),
                 'user_id' => Auth::id(),
-                'text' => $input['text'],
+                'text' => isset($input['text']) ? $input['text'] : '',
                 'points' => isset($input['points']) ? $input['points'] : -1,
                 'correct' => 0,
                 'corrected' => 0,
