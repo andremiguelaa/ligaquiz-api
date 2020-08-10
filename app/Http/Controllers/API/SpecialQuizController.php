@@ -67,7 +67,18 @@ class SpecialQuizController extends BaseController
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
-                if (
+                if (array_key_exists('past', $input)) {
+                    $todayQuiz = SpecialQuiz::where('date', $now->format('Y-m-d'))->first();
+                    if ($todayQuiz->isSubmitted()) {
+                        $quizzes = SpecialQuiz::where('date', '<=', $now->format('Y-m-d'))
+                            ->orderBy('date', 'desc')
+                            ->get();
+                    } else {
+                        $quizzes = SpecialQuiz::where('date', '<', $now->format('Y-m-d'))
+                            ->orderBy('date', 'desc')
+                            ->get();
+                    }
+                } elseif (
                     (
                         !Auth::user()->hasPermission('specialquiz_create') &&
                         !Auth::user()->hasPermission('specialquiz_edit') &&
@@ -75,10 +86,6 @@ class SpecialQuizController extends BaseController
                     )
                 ) {
                     $quizzes = SpecialQuiz::where('date', '<=', $now)
-                        ->orderBy('date', 'desc')
-                        ->get();
-                } elseif (array_key_exists('past', $input)) {
-                    $quizzes = SpecialQuiz::where('date', '<', $now)
                         ->orderBy('date', 'desc')
                         ->get();
                 } else {
@@ -189,7 +196,7 @@ class SpecialQuizController extends BaseController
             $quiz = SpecialQuiz::find($input['id']);
             if ($quiz->hasAnswers()) {
                 return $this->sendError('has_answers', null, 400);
-            } else {                
+            } else {
                 $quizQuestions = SpecialQuizQuestion::where('special_quiz_id', $quiz->id)->get();
                 Question::whereIn('id', $quizQuestions->pluck('question_id')->toArray())->delete();
                 SpecialQuizQuestion::where('special_quiz_id', $quiz->id)->delete();
@@ -207,7 +214,7 @@ class SpecialQuizController extends BaseController
             $validator = Validator::make($input, [
                 'answers' => 'required|array|size:12',
                 'answers.*.question_id' => 'required|exists:questions,id',
-                'answers.*.text' => 'string',
+                'answers.*.text' => 'nullable|string',
                 'answers.*.points' => 'integer|min:0|max:1'
             ]);
             if ($validator->fails()) {
