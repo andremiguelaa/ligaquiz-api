@@ -8,25 +8,40 @@ use Validator;
 use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Notification;
+use App\Quiz;
+use App\SpecialQuiz;
 
 class NotificationController extends BaseController
 {
     public function get(Request $request)
     {
-        $current = false;
-        if (array_key_exists('current', $request::all())) {
-            $current = true;
-        }
-        if (Auth::user()->hasPermission('notifications_list') && !$current) {
-            $notifications = Notification::orderBy('start_date', 'desc')->get();
+        $input = $request::all();
+        if (
+            Auth::user()->hasPermission('notifications_list') &&
+            !array_key_exists('current', $input)
+        ) {
+            $response = (object) [
+                'manual' => Notification::orderBy('start_date', 'desc')->get()
+            ];
         } else {
             $now = Carbon::now();
             $notifications = Notification::where('start_date', '<', $now)
                 ->where('end_date', '>', $now)
                 ->orderBy('start_date', 'desc')
                 ->get();
+            $response = (object) [
+                'manual' => $notifications
+            ];
+            if (Auth::user()->hasPermission('quiz_play')) {
+                $quiz = Quiz::where('date', $now->format('Y-m-d'))->count();
+                $response->quiz = boolval($quiz);
+            }
+            if (Auth::user()->hasPermission('specialquiz_play')) {
+                $quiz = SpecialQuiz::where('date', $now->format('Y-m-d'))->count();
+                $response->special_quiz = boolval($quiz);
+            }
         }
-        return $this->sendResponse($notifications, 200);
+        return $this->sendResponse($response, 200);
     }
 
     public function create(Request $request)
