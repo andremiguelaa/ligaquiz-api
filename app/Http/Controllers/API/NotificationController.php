@@ -33,12 +33,20 @@ class NotificationController extends BaseController
                 'manual' => $notifications
             ];
             if (Auth::user()->hasPermission('quiz_play')) {
-                $quiz = Quiz::where('date', $now->format('Y-m-d'))->count();
-                $response->quiz = boolval($quiz);
+                $quiz = Quiz::where('date', $now->format('Y-m-d'))->first();
+                if ($quiz) {
+                    $response->quiz = !$quiz->isSubmitted();
+                } else {
+                    $response->quiz = false;
+                }
             }
             if (Auth::user()->hasPermission('specialquiz_play')) {
-                $quiz = SpecialQuiz::where('date', $now->format('Y-m-d'))->count();
-                $response->special_quiz = boolval($quiz);
+                $quiz = SpecialQuiz::where('date', $now->format('Y-m-d'))->first();
+                if ($quiz) {
+                    $response->special_quiz = !$quiz->isSubmitted();
+                } else {
+                    $response->special_quiz = false;
+                }
             }
         }
         return $this->sendResponse($response, 200);
