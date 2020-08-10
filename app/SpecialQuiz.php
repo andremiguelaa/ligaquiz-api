@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use App\Question;
 use App\Answer;
@@ -38,5 +39,16 @@ class SpecialQuiz extends Model
             'question_id',
             $this->questions->pluck('question_id')->toArray()
         )->get();
+    }
+
+    public function isSubmitted()
+    {
+        $questionIds = $this->questions()->get()->pluck('question_id')->toArray();
+        return boolval(
+            Answer::whereIn('question_id', $questionIds)
+                ->where('user_id', Auth::id())
+                ->where('submitted', 1)
+                ->first()
+        );
     }
 }
