@@ -49,6 +49,12 @@ class QuizController extends BaseController
                 $quiz = Quiz::with('questions.question')->where('date', $date)->first();
                 if ($quiz) {
                     $quiz->submitted = $quiz->isSubmitted();
+                    $round = Round::where('date', $date)->first();
+                    if ($round && $round->round !== 10 && $round->round !== 20) {
+                        $quiz->solo = false;
+                    } else {
+                        $quiz->solo = true;
+                    }
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
                     });
@@ -88,12 +94,6 @@ class QuizController extends BaseController
                     } else {
                         $quiz->questions = $questions;
                         $quiz->today = true;
-                        $round = Round::where('date', $date)->first();
-                        if ($round && $round->round !== 10 && $round->round !== 20) {
-                            $quiz->solo = false;
-                        } else {
-                            $quiz->solo = true;
-                        }
                         if ($round) {
                             $game = Game::where('round_id', $round->id)
                                 ->where('user_id_1', Auth::id())
@@ -262,7 +262,7 @@ class QuizController extends BaseController
             $rules = [
                 'answers' => 'required|array|size:8',
                 'answers.*.question_id' => 'required|exists:questions,id',
-                'answers.*.text' => 'string',
+                'answers.*.text' => 'nullable|string',
                 'answers.*.points' => ['integer', 'min:0', 'max:3']
             ];
             if (!$solo) {
