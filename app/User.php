@@ -47,7 +47,10 @@ class User extends Authenticatable
 
     public function getValidRolesAttribute()
     {
-        return $this->getRoles();
+        return (object) array_reduce($this->getRoles(), function($carry, $item) {
+            $carry[$item] = true;
+            return $carry;
+        }, []);
     }
 
     public function individual_quiz_player()
