@@ -34,7 +34,7 @@ class User extends Authenticatable
         'reminders' => 'array',
     ];
 
-    protected $appends = ['avatar_url'];
+    protected $appends = ['avatar_url', 'valid_roles'];
 
     public function getAvatarUrlAttribute()
     {
@@ -43,6 +43,11 @@ class User extends Authenticatable
         }
 
         return null;
+    }
+
+    public function getValidRolesAttribute()
+    {
+        return $this->getRoles();
     }
 
     public function individual_quiz_player()
