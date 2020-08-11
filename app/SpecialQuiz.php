@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 use App\Question;
 use App\Answer;
 
@@ -19,6 +20,17 @@ class SpecialQuiz extends Model
     protected $hidden = [
         'created_at', 'updated_at', 'laravel_through_key'
     ];
+
+    protected $appends = ['past'];
+
+    public function getPastAttribute()
+    {
+        $now = Carbon::now()->format('Y-m-d');
+        if($this->date < $now){
+            return true;
+        }
+        return false;
+    }
 
     public function questions()
     {
