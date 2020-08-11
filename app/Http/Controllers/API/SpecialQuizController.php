@@ -46,6 +46,7 @@ class SpecialQuizController extends BaseController
                 }
                 $quiz = SpecialQuiz::with('questions.question')->where('date', $date)->first();
                 if ($quiz) {
+                    $quiz->submitted = $quiz->isSubmitted();
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
                     });
