@@ -21,12 +21,21 @@ class SpecialQuiz extends Model
         'created_at', 'updated_at', 'laravel_through_key'
     ];
 
-    protected $appends = ['past'];
+    protected $appends = ['past', 'today'];
 
     public function getPastAttribute()
     {
         $now = Carbon::now()->format('Y-m-d');
-        if($this->date < $now){
+        if ($this->date < $now) {
+            return true;
+        }
+        return false;
+    }
+
+    public function getTodayAttribute()
+    {
+        $now = Carbon::now()->format('Y-m-d');
+        if ($this->date === $now) {
             return true;
         }
         return false;
