@@ -92,5 +92,7 @@ Route::group([
 
         Route::get('logs', 'API\LogController@get');
         Route::post('logs', 'API\LogController@create');
+
+        Route::post('messages', 'API\MessageController@send');
     });
 });
