@@ -87,7 +87,7 @@ class SpecialQuiz extends Model
     {
         $answers = $this->getSubmittedAnswers();
         if ($answers->count() !== $answers->where('corrected', 1)->count()) {
-            return 'not_available';
+            return null;
         }
         $questionStatistics = $answers->reduce(function ($carry, $item) {
             if (!isset($carry[$item->question_id])) {
@@ -137,7 +137,7 @@ class SpecialQuiz extends Model
                 $carry[$item->user_id]->questions->{$item->question_id}->points;
             return $carry;
         }, []);
-        usort($results, function($a, $b){
+        usort($results, function ($a, $b) {
             return $b->score - $a->score;
         });
         $rank = 1;
