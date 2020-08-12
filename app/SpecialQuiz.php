@@ -43,7 +43,7 @@ class SpecialQuiz extends Model
 
     public function questions()
     {
-        return $this->hasMany('App\SpecialQuizQuestion');
+        return $this->hasMany('App\SpecialQuizQuestion')->select('special_quiz_id', 'question_id');
     }
 
     public function hasAnswers()
@@ -54,12 +54,22 @@ class SpecialQuiz extends Model
         )->count();
     }
 
-    public function answers()
+    public function getAnswers()
     {
         return Answer::whereIn(
             'question_id',
             $this->questions->pluck('question_id')->toArray()
         )->get();
+    }
+
+    public function getSubmittedAnswers()
+    {
+        return Answer::whereIn(
+            'question_id',
+            $this->questions->pluck('question_id')->toArray()
+        )
+        ->where('submitted', 1)
+        ->get();
     }
 
     public function isSubmitted()
@@ -71,5 +81,75 @@ class SpecialQuiz extends Model
                 ->where('submitted', 1)
                 ->first()
         );
+    }
+
+    public function getResult()
+    {
+        $answers = $this->getSubmittedAnswers();
+        if ($answers->count() !== $answers->where('corrected', 1)->count()) {
+            return 'not_available';
+        }
+        $questionStatistics = $answers->reduce(function ($carry, $item) {
+            if (!isset($carry[$item->question_id])) {
+                $carry[$item->question_id] = (object) [
+                    'correct' => 0,
+                    'total' => 0,
+                    'bonus' => 0,
+                    'percentage' => 0
+                ];
+            }
+            if ($item->correct) {
+                $carry[$item->question_id]->correct++;
+            }
+            $carry[$item->question_id]->total++;
+            $carry[$item->question_id]->bonus = intval(
+                100 - (
+                    $carry[$item->question_id]->correct / $carry[$item->question_id]->total * 100
+                )
+            );
+            $carry[$item->question_id]->percentage =
+                100 * $carry[$item->question_id]->correct / $carry[$item->question_id]->total;
+            return $carry;
+        }, []);
+        $results = $answers->reduce(function ($carry, $item) use ($questionStatistics) {
+            if (!isset($carry[$item->user_id])) {
+                $carry[$item->user_id] = (object) [
+                    'user_id' => $item->user_id,
+                    'questions' => (object) [],
+                    'score' => 0
+                ];
+            }
+            $carry[$item->user_id]->questions->{$item->question_id} = (object) [
+                'points' => 0,
+                'joker' => false
+            ];
+            if ($item->points) {
+                $carry[$item->user_id]->questions->{$item->question_id}->joker = true;
+            }
+            if ($item->correct) {
+                $bonus = $item->points ? $questionStatistics[$item->question_id]->bonus : 0;
+                $carry[$item->user_id]->questions->{$item->question_id}->points = 20 + $bonus;
+            }
+            if (!$item->correct && $item->points) {
+                $carry[$item->user_id]->questions->{$item->question_id}->points = -20;
+            }
+            $carry[$item->user_id]->score +=
+                $carry[$item->user_id]->questions->{$item->question_id}->points;
+            return $carry;
+        }, []);
+        usort($results, function($a, $b){
+            return $b->score - $a->score;
+        });
+        $rank = 1;
+        foreach ($results as $key => $player) {
+            if (!($key > 0 && $results[$key - 1]->score === $results[$key]->score)) {
+                $rank = $key + 1;
+            }
+            $results[$key]->rank = $rank;
+        }
+        return (object) [
+            'question_statistics' => $questionStatistics,
+            'ranking' => $results,
+        ];
     }
 }

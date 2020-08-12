@@ -55,7 +55,7 @@ class Quiz extends Model
         )->count();
     }
 
-    public function answers()
+    public function getAnswers()
     {
         return Answer::whereIn(
             'question_id',

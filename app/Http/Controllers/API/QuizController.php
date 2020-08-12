@@ -113,10 +113,10 @@ class QuizController extends BaseController
             } else {
                 if (array_key_exists('past', $input)) {
                     $todayQuiz = Quiz::with('questions.question')->where('date', $now->format('Y-m-d'))->first();
-                    if ($todayQuiz->isSubmitted()) {
+                    if ($todayQuiz && $todayQuiz->isSubmitted()) {
                         $quizzes = Quiz::where('date', '<=', $now->format('Y-m-d'))
-                        ->orderBy('date', 'desc')
-                        ->get();
+                            ->orderBy('date', 'desc')
+                            ->get();
                     } else {
                         $quizzes = Quiz::where('date', '<', $now->format('Y-m-d'))
                         ->orderBy('date', 'desc')

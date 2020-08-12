@@ -47,6 +47,9 @@ class SpecialQuizController extends BaseController
                 $quiz = SpecialQuiz::with('questions.question')->where('date', $date)->first();
                 if ($quiz) {
                     $quiz->submitted = $quiz->isSubmitted();
+                    if ($quiz->past) {
+                        $quiz->result = $quiz->getResult();
+                    }
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
                     });
@@ -61,16 +64,18 @@ class SpecialQuizController extends BaseController
                         },
                         []
                     );
+                    if($quiz->past){
+                        $quiz->result = $quiz->getResult();
+                    }
                     unset($quiz->questions);
                     $quiz->questions = $questions;
-                    // todo: show percentage and classification for past quizzes
                     return $this->sendResponse(['quiz' => $quiz, 'media' => $media], 200);
                 }
                 return $this->sendError('not_found', [], 404);
             } else {
                 if (array_key_exists('past', $input)) {
                     $todayQuiz = SpecialQuiz::where('date', $now->format('Y-m-d'))->first();
-                    if ($todayQuiz->isSubmitted()) {
+                    if ($todayQuiz && $todayQuiz->isSubmitted()) {
                         $quizzes = SpecialQuiz::where('date', '<=', $now->format('Y-m-d'))
                             ->orderBy('date', 'desc')
                             ->get();
@@ -242,9 +247,9 @@ class SpecialQuizController extends BaseController
                 return $this->sendError('validation_error', ['wrong_specialquiz'], 400);
             }
             $answers = Answer::whereIn('question_id', $questionIds)
-            ->where('user_id', Auth::id())
-            ->where('submitted', 1)
-            ->first();
+                ->where('user_id', Auth::id())
+                ->where('submitted', 1)
+                ->first();
             if ($answers) {
                 return $this->sendError('validation_error', ['already_submitted'], 409);
             }

@@ -58,9 +58,11 @@ class AnswerController extends BaseController
                     ->select('user_id', 'question_id', 'submitted', 'correct', 'created_at')
                     ->get();
             } elseif (isset($input['quiz'])) {
-                $answers = Quiz::with('questions')->find($input['quiz'])->answers();
+                $answers = Quiz::with('questions')->find($input['quiz'])->getAnswers();
             } elseif (isset($input['special_quiz'])) {
-                $answers = SpecialQuiz::with('questions')->find($input['special_quiz'])->answers();
+                $answers = SpecialQuiz::with('questions')
+                    ->find($input['special_quiz'])
+                    ->getAnswers();
             }
             if (isset($input['mine'])) {
                 $array = $answers->where('user_id', Auth::id())->toArray();

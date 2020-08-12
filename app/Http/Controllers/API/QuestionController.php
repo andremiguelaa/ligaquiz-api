@@ -55,7 +55,6 @@ class QuestionController extends BaseController
                 if (count($input['id']) === 1) {
                     $response = Question::with(['submittedAnswers', 'media'])
                         ->find($input['id'][0]);
-                    $response = $response->first();
                     $quizQuestion = QuizQuestion::where('question_id', $input['id'][0])->first();
                     if ($quizQuestion) {
                         if (
