@@ -16,7 +16,7 @@
         <tr>
             <td>
                 <a href="https://ligaquiz.pt">
-                    <img src="https://ligaquiz.pt/img/logo.png" alt="Liga Quiz">
+                    <img src="https://ligaquiz.pt/logo.png" alt="Liga Quiz">
                 </a>
             </td>
         </tr>
