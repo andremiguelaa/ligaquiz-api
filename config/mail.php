@@ -71,6 +71,9 @@ return [
         ],
     ],
 
+    'send_rate' => env('MAIL_SEND_RATE'),
+    'default_locale' => env('MAIL_DEFAULT_LOCALE'),
+
     /*
     |--------------------------------------------------------------------------
     | Global "From" Address
