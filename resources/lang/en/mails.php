@@ -6,6 +6,7 @@ return [
     'hello' => 'Hi',
     'quiz_availabe' => 'Today\'s quiz is already available!',
     'quiz_opponent' => 'Your opponent',
+    'regular_quiz_link' => 'Click <a href="https://ligaquiz.pt/quiz">here</a> to play.',
     'deadline' => 'You have until midnight to submit your responses.',
     'from' => 'From',
     'rights' => 'All rights reserved.',

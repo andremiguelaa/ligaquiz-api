@@ -6,13 +6,16 @@
 <body>
     @lang('mails.hello'), {{ $user->name }}!<br>
     <br>
-    <a href="https://ligaquiz.pt/quiz">@lang('mails.quiz_availabe')</a><br>
+    @lang('mails.quiz_availabe')<br>
     @if ($opponent)
         @lang('mails.quiz_opponent'): {{ $opponent->name }} {{ $opponent->surname }}
     @endif
     <br>
     <br>
-    @lang('mails.deadline')<br>
+    @lang('mails.regular_quiz_link')
+    <br>
+    @lang('mails.deadline')
+    <br>
     <br>
     <hr>
     <br>

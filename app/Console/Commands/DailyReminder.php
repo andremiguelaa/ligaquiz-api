@@ -45,29 +45,38 @@ class DailyReminder extends Command
     {
         $today = Carbon::now()->format('Y-m-d');
         $todayRound = Round::where('date', $today)->first();
-        if(!$todayRound){
+        if (!$todayRound) {
             return;
         }
         $games = Game::where('round_id', $todayRound->id)->get();
-        $users = User::all()->keyBy('id');;
+        $users = User::all()->keyBy('id');
+        ;
         foreach ($games as $game) {
             $user1 = $users[$game->user_id_1];
             $user2 = $users[$game->user_id_2];
-            if($game->user_id_1 !== $game->user_id_2) {
-                Mail::to($user1->email)
-                    ->locale(config('mail.default_locale'))
-                    ->send(new Reminder($user1, $user2, null, null));
-                usleep(1000000/config('mail.send_rate'));
-                Mail::to($user2->email)
-                    ->locale(config('mail.default_locale'))
-                    ->send(new Reminder($user2, $user1, null, null));
+            $mailsToSend = 0;
+            if ($game->user_id_1 !== $game->user_id_2) {
+                if ($user1->reminders['quiz']['daily']) {
+                    Mail::to($user1->email)
+                        ->locale(config('mail.default_locale'))
+                        ->send(new Reminder($user1, $user2, null, null));
+                    $mailsToSend++;
+                }
+                if ($user2->reminders['quiz']['daily']) {
+                    Mail::to($user2->email)
+                        ->locale(config('mail.default_locale'))
+                        ->send(new Reminder($user2, $user1, null, null));
+                    $mailsToSend++;
+                }
+            } else {
+                if ($user1->reminders['quiz']['daily']) {
+                    Mail::to($user1->email)
+                        ->locale(config('mail.default_locale'))
+                        ->send(new Reminder($user1, null, null, null));
+                    $mailsToSend++;
+                }
             }
-            else {
-                Mail::to($user1->email)
-                    ->locale(config('mail.default_locale'))
-                    ->send(new Reminder($user1, null, null, null));
-            }
-            usleep(1000000/config('mail.send_rate'));
+            usleep(1000000/config('mail.send_rate')*$mailsToSend);
         }
     }
 }
