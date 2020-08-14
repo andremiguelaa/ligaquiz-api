@@ -16,8 +16,9 @@ class Reminder extends Mailable
      *
      * @return void
      */
-    public function __construct($user, $opponent, $quiz, $special_quiz)
+    public function __construct($type, $user, $opponent, $quiz, $special_quiz)
     {
+        $this->type = $type;
         $this->user = $user;
         $this->opponent = $opponent;
         $this->quiz = $quiz;
@@ -34,6 +35,7 @@ class Reminder extends Mailable
         return $this->view('emails.reminder')
             ->subject(__('mails.reminder_subject'))
             ->with([
+                'type' => $this->type,
                 'user' => $this->user,
                 'opponent' => $this->opponent,
                 'quiz' => $this->quiz,

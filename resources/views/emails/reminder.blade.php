@@ -7,7 +7,11 @@
     @lang('mails.hello'), {{ $user->name }}!<br>
     @if($quiz)
         <br>
-        @lang('mails.quiz_availabe')<br>
+        @if($type === 'daily')
+            @lang('mails.quiz_availabe')<br>
+        @else
+            @lang('mails.quiz_availabe_deadline')<br>
+        @endif
         @if ($opponent)
             @lang('mails.quiz_opponent'): {{ $opponent->name }} {{ $opponent->surname }}<br>
         @endif
@@ -15,7 +19,11 @@
     @endif
     @if($special_quiz)
         <br>
-        @lang('mails.specialquiz_available')<br>
+        @if($type === 'daily')
+            @lang('mails.specialquiz_available')<br>
+        @else
+            @lang('mails.specialquiz_available_deadline')<br>
+        @endif
         @lang('mails.specialquiz_subject'): {{ $special_quiz->subject }}<br>
         @if($special_quiz->author)
             @lang('mails.specialquiz_author'): {{ $special_quiz->author }}<br>

@@ -93,6 +93,7 @@ class DailyReminder extends Command
                     ->locale(config('mail.default_locale'))
                     ->send(
                         new Reminder(
+                            'daily',
                             $user,
                             $opponent,
                             $user->hasPermission('quiz_play') &&
