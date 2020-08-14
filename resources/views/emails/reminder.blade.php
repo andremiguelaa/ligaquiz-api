@@ -5,17 +5,25 @@
 </head>
 <body>
     @lang('mails.hello'), {{ $user->name }}!<br>
-    <br>
-    @lang('mails.quiz_availabe')<br>
-    @if ($opponent)
-        @lang('mails.quiz_opponent'): {{ $opponent->name }} {{ $opponent->surname }}
+    @if($quiz)
+        <br>
+        @lang('mails.quiz_availabe')<br>
+        @if ($opponent)
+            @lang('mails.quiz_opponent'): {{ $opponent->name }} {{ $opponent->surname }}<br>
+        @endif
+        @lang('mails.quiz_link')<br>
+    @endif
+    @if($special_quiz)
+        <br>
+        @lang('mails.specialquiz_available')<br>
+        @lang('mails.specialquiz_subject'): {{ $special_quiz->subject }}<br>
+        @if($special_quiz->author)
+            @lang('mails.specialquiz_author'): {{ $special_quiz->author }}<br>
+        @endif
+        @lang('mails.specialquiz_link')<br>
     @endif
     <br>
-    <br>
-    @lang('mails.regular_quiz_link')
-    <br>
-    @lang('mails.deadline')
-    <br>
+    @lang('mails.deadline')<br>
     <br>
     <hr>
     <br>

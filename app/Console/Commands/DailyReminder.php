@@ -8,6 +8,8 @@ use Carbon\Carbon;
 use App\Round;
 use App\Game;
 use App\User;
+use App\Quiz;
+use App\SpecialQuiz;
 use App\Mail\Reminder;
 
 class DailyReminder extends Command
@@ -44,39 +46,65 @@ class DailyReminder extends Command
     public function handle()
     {
         $today = Carbon::now()->format('Y-m-d');
-        $todayRound = Round::where('date', $today)->first();
-        if (!$todayRound) {
-            return;
+        $todayQuiz = Quiz::where('date', $today)->first();
+        $todaySpecialQuiz = SpecialQuiz::where('date', $today)->first();
+        if (!$todayQuiz && !$todaySpecialQuiz) {
+            return null;
         }
-        $games = Game::where('round_id', $todayRound->id)->get();
+
         $users = User::all()->keyBy('id');
-        ;
-        foreach ($games as $game) {
-            $user1 = $users[$game->user_id_1];
-            $user2 = $users[$game->user_id_2];
-            $mailsToSend = 0;
-            if ($game->user_id_1 !== $game->user_id_2) {
-                if ($user1->reminders['quiz']['daily']) {
-                    Mail::to($user1->email)
-                        ->locale(config('mail.default_locale'))
-                        ->send(new Reminder($user1, $user2, null, null));
-                    $mailsToSend++;
+
+        if ($todaySpecialQuiz && $todaySpecialQuiz->user_id) {
+            $todaySpecialQuiz->author =
+                $users[$todaySpecialQuiz->user_id]->name
+                .' '
+                .$users[$todaySpecialQuiz->user_id]->surname;
+        }
+
+        $todayRound = Round::where('date', $today)->first();
+        if ($todayRound) {
+            $games = Game::where('round_id', $todayRound->id)->get();
+            $opponents = (object) $games->reduce(function ($carry, $game) {
+                if ($game->user_id_1 !== $game->user_id_2) {
+                    $carry[$game->user_id_1] = $game->user_id_2;
+                    $carry[$game->user_id_2] = $game->user_id_1;
                 }
-                if ($user2->reminders['quiz']['daily']) {
-                    Mail::to($user2->email)
-                        ->locale(config('mail.default_locale'))
-                        ->send(new Reminder($user2, $user1, null, null));
-                    $mailsToSend++;
-                }
-            } else {
-                if ($user1->reminders['quiz']['daily']) {
-                    Mail::to($user1->email)
-                        ->locale(config('mail.default_locale'))
-                        ->send(new Reminder($user1, null, null, null));
-                    $mailsToSend++;
-                }
+                return $carry;
+            }, []);
+        } else {
+            $opponents = (object) [];
+        }
+        
+        foreach ($users as $user) {
+            if (
+                (
+                    $todayQuiz &&
+                    $user->hasPermission('quiz_play') &&
+                    $user->reminders['quiz']['daily']
+                ) ||
+                (
+                    $todaySpecialQuiz &&
+                    $user->hasPermission('specialquiz_play') &&
+                    $user->reminders['special_quiz']['daily']
+                )
+            ) {
+                $opponent = isset($opponents->{$user->id}) ? $users[$opponents->{$user->id}] : null;
+                Mail::to($user->email)
+                    ->locale(config('mail.default_locale'))
+                    ->send(
+                        new Reminder(
+                            $user,
+                            $opponent,
+                            $user->hasPermission('quiz_play') &&
+                                $user->reminders['quiz']['daily'] ?
+                                    $todayQuiz : null,
+                            $user->hasPermission('specialquiz_play') &&
+                                $user->reminders['special_quiz']['daily'] ?
+                                    $todaySpecialQuiz : null
+                        )
+                    );
+                usleep(1000000/config('mail.send_rate'));
             }
-            usleep(1000000/config('mail.send_rate')*$mailsToSend);
         }
     }
 }
