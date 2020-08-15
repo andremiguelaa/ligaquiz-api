@@ -150,17 +150,18 @@ class AnswerController extends BaseController
         if (Auth::user()->hasPermission('answer_correct')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'id' => 'required|exists:answers,id',
+                'id' => 'required|array',
+                'id.*' => 'exists:answers,id',
                 'correct' => 'required|boolean'
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $answer = Answer::find($input['id']);
-            $answer->correct = $input['correct'];
-            $answer->corrected = true;
-            $answer->save();
-            return $this->sendResponse($answer, 201);
+            $answer = Answer::whereIn('id', $input['id'])->update([
+                'correct' => $input['correct'],
+                'corrected' => true
+            ]);
+            return $this->sendResponse(Answer::whereIn('id', $input['id'])->get(), 201);
         }
         return $this->sendError('no_permissions', [], 403);
     }
