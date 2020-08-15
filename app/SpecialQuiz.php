@@ -83,6 +83,26 @@ class SpecialQuiz extends Model
         );
     }
 
+
+    public function isCompleted()
+    {
+        $questionIds = $this->questions()->get()->pluck('question_id')->toArray();
+        $questions = Question::whereIn('id', $questionIds)->get();
+        $completed = true;
+        if(!boolval($this->subject)){
+            return false; 
+        }
+        foreach ($questions as $question) {
+            if (
+                !boolval($question->content) ||
+                !boolval($question->answer)
+            ) {
+                $completed = false;
+            }
+        }
+        return $completed;
+    }
+
     public function getResult()
     {
         $answers = $this->getSubmittedAnswers();

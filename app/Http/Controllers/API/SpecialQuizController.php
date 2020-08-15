@@ -65,7 +65,7 @@ class SpecialQuizController extends BaseController
                         },
                         []
                     );
-                    if($quiz->past){
+                    if ($quiz->past) {
                         $quiz->result = $quiz->getResult();
                     }
                     unset($quiz->questions);
@@ -97,6 +97,12 @@ class SpecialQuizController extends BaseController
                         ->get();
                 } else {
                     $quizzes = SpecialQuiz::orderBy('date', 'desc')->get();
+                    $quizzes = $quizzes->map(function ($item) {
+                        if (!$item->past) {
+                            $item->completed = $item->isCompleted();
+                        }
+                        return $item;
+                    });
                 }
                 return $this->sendResponse($quizzes, 200);
             }
@@ -272,24 +278,26 @@ class SpecialQuizController extends BaseController
             foreach ($input['answers'] as $answer) {
                 $answerText = isset($answer['text']) ? $answer['text'] : '';
                 $sluggedAnswerText = Transliterator::urlize(str_replace(' ', '', $answerText));
-                $sluggedCorrectAnswer = Transliterator::urlize(str_replace(
-                    ' ',
-                    '',
-                    $keyedQuestions[$answer['question_id']]->question->answer)
+                $sluggedCorrectAnswer = Transliterator::urlize(
+                    str_replace(
+                        ' ',
+                        '',
+                        $keyedQuestions[$answer['question_id']]->question->answer
+                    )
                 );
                 $corrected = 0;
                 $correct = 0;
-                if($sluggedAnswerText === ''){
+                if ($sluggedAnswerText === '') {
                     $corrected = 1;
                     $correct = 0;
-                }
-                else if($sluggedAnswerText === $sluggedCorrectAnswer){
+                } elseif ($sluggedAnswerText === $sluggedCorrectAnswer) {
                     $corrected = 1;
                     $correct = 1;
-                }
-                else {
+                } else {
                     $previousAnswers = Answer::where(
-                        'question_id', $answer['question_id'])
+                        'question_id',
+                        $answer['question_id']
+                    )
                         ->where('submitted', 1)
                         ->where('corrected', 1)
                         ->get();

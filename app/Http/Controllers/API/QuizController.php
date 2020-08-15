@@ -135,6 +135,12 @@ class QuizController extends BaseController
                         ->get();
                 } else {
                     $quizzes = Quiz::orderBy('date', 'desc')->get();
+                    $quizzes = $quizzes->map(function ($item) {
+                        if (!$item->past) {
+                            $item->completed = $item->isCompleted();
+                        }
+                        return $item;
+                    });
                 }
                 return $this->sendResponse($quizzes, 200);
             }

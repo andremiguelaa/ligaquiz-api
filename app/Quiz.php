@@ -73,4 +73,21 @@ class Quiz extends Model
                 ->first()
         );
     }
+
+    public function isCompleted()
+    {
+        $questionIds = $this->questions()->get()->pluck('question_id')->toArray();
+        $questions = Question::whereIn('id', $questionIds)->get();
+        $completed = true;
+        foreach ($questions as $question) {
+            if (
+                !boolval($question->content) ||
+                !boolval($question->answer) ||
+                !boolval($question->genre_id)
+            ) {
+                $completed = false;
+            }
+        }
+        return $completed;
+    }
 }
