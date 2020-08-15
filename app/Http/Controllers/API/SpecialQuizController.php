@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Support\Facades\Auth;
+use Behat\Transliterator\Transliterator;
 use Request;
 use Validator;
 use Carbon\Carbon;
@@ -227,7 +228,7 @@ class SpecialQuizController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $now = Carbon::now()->format('Y-m-d');
-            $quiz = SpecialQuiz::where('date', $now)->first();
+            $quiz = SpecialQuiz::with('questions.question')->where('date', $now)->first();
             if (!$quiz) {
                 return $this->sendError('validation_error', ['no_specialquiz_today'], 400);
             }
@@ -267,15 +268,51 @@ class SpecialQuizController extends BaseController
                 );
             }
             $answersToSubmit = [];
+            $keyedQuestions = $quiz->questions->keyBy('question_id');
             foreach ($input['answers'] as $answer) {
+                $answerText = isset($answer['text']) ? $answer['text'] : '';
+                $sluggedAnswerText = Transliterator::urlize(str_replace(' ', '', $answerText));
+                $sluggedCorrectAnswer = Transliterator::urlize(str_replace(
+                    ' ',
+                    '',
+                    $keyedQuestions[$answer['question_id']]->question->answer)
+                );
+                $corrected = 0;
+                $correct = 0;
+                if($sluggedAnswerText === ''){
+                    $corrected = 1;
+                    $correct = 0;
+                }
+                else if($sluggedAnswerText === $sluggedCorrectAnswer){
+                    $corrected = 1;
+                    $correct = 1;
+                }
+                else {
+                    $previousAnswers = Answer::where(
+                        'question_id', $answer['question_id'])
+                        ->where('submitted', 1)
+                        ->where('corrected', 1)
+                        ->get();
+                    foreach ($previousAnswers as $previousAnswer) {
+                        $sluggedPreviousAnswer =Transliterator::urlize(str_replace(
+                            ' ',
+                            '',
+                            $previousAnswer->text
+                        ));
+                        if ($sluggedPreviousAnswer === $sluggedAnswerText) {
+                            $corrected = 1;
+                            $correct = $previousAnswer->correct;
+                            break;
+                        }
+                    }
+                }
                 array_push($answersToSubmit, [
                     'question_id' => $answer['question_id'],
                     'text' => isset($answer['text']) ? $answer['text'] : '',
                     'points' => isset($answer['points']) ? $answer['points'] : 0,
                     'user_id' => Auth::id(),
-                    'correct' => 0,
-                    'corrected' => 0,
-                    // todo: autocorrect
+                    'corrected' => $corrected,
+                    'correct' => $correct,
                     'submitted' => 1,
                 ]);
             }

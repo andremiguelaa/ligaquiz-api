@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Support\Facades\Auth;
+use Behat\Transliterator\Transliterator;
 use Request;
 use Validator;
 use Carbon\Carbon;
@@ -279,7 +280,7 @@ class QuizController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $quiz = Quiz::where('date', $now)->first();
+            $quiz = Quiz::with('questions.question')->where('date', $now)->first();
             if (!$quiz) {
                 return $this->sendError('validation_error', ['no_quiz_today'], 400);
             }
@@ -323,21 +324,56 @@ class QuizController extends BaseController
                         400
                     );
                 }
-                foreach ($input['answers'] as $answer) {
-                    array_push($answersToSubmit, $this->generateAnswerToSubmit([
-                        'question_id' => $answer['question_id'],
-                        'text' => isset($answer['text']) ? $answer['text'] : '',
-                        'points' => $answer['points']
-                    ]));
+            }
+            $keyedQuestions = $quiz->questions->keyBy('question_id');
+            foreach ($input['answers'] as $answer) {
+                $answerText = isset($answer['text']) ? $answer['text'] : '';
+                $sluggedAnswerText = Transliterator::urlize(str_replace(' ', '', $answerText));
+                $sluggedCorrectAnswer = Transliterator::urlize(
+                    str_replace(
+                        ' ',
+                        '',
+                        $keyedQuestions[$answer['question_id']]->question->answer
+                    )
+                );
+                $corrected = 0;
+                $correct = 0;
+                if ($sluggedAnswerText === '') {
+                    $corrected = 1;
+                    $correct = 0;
+                } elseif ($sluggedAnswerText === $sluggedCorrectAnswer) {
+                    $corrected = 1;
+                    $correct = 1;
+                } else {
+                    $previousAnswers = Answer::where(
+                        'question_id',
+                        $answer['question_id']
+                    )
+                        ->where('submitted', 1)
+                        ->where('corrected', 1)
+                        ->get();
+                    foreach ($previousAnswers as $previousAnswer) {
+                        $sluggedPreviousAnswer =Transliterator::urlize(str_replace(
+                            ' ',
+                            '',
+                            $previousAnswer->text
+                        ));
+                        if ($sluggedPreviousAnswer === $sluggedAnswerText) {
+                            $corrected = 1;
+                            $correct = $previousAnswer->correct;
+                            break;
+                        }
+                    }
                 }
-            } else {
-                foreach ($input['answers'] as $answer) {
-                    array_push($answersToSubmit, $this->generateAnswerToSubmit([
-                        'question_id' => $answer['question_id'],
-                        'text' => isset($answer['text']) ? $answer['text'] : '',
-                        'points' => 0
-                    ]));
-                }
+                array_push($answersToSubmit, [
+                    'question_id' => $answer['question_id'],
+                    'text' => $answerText,
+                    'points' => !$solo ? $answer['points'] : 0,
+                    'user_id' => Auth::id(),
+                    'correct' => $correct,
+                    'corrected' => $corrected,
+                    'submitted' => 1,
+                ]);
             }
             Answer::insert($answersToSubmit);
             $submittedAnswers = Answer::whereIn('question_id', $questionIds)
@@ -350,20 +386,5 @@ class QuizController extends BaseController
             return $this->sendResponse($submittedAnswers, 201);
         }
         return $this->sendError('no_permissions', [], 403);
-    }
-
-    private function generateAnswerToSubmit($answer)
-    {
-        $answerToSubmit = [
-            'question_id' => $answer['question_id'],
-            'text' => $answer['text'],
-            'points' => $answer['points'],
-            'user_id' => Auth::id(),
-            'correct' => 0,
-            'corrected' => 0,
-            // todo: autocorrect
-            'submitted' => 1,
-        ];
-        return $answerToSubmit;
     }
 }
