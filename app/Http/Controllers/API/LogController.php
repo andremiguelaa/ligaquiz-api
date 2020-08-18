@@ -56,6 +56,6 @@ class LogController extends BaseController
             'user_id' => Auth::id(),
             'action' => $input['action']
         ]);
-        return $this->sendResponse($log, 201);
+        return $this->sendResponse(null, 201);
     }
 }

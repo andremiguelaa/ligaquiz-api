@@ -11,6 +11,6 @@ class Log extends Model
     ];
 
     protected $hidden = [
-        'id', 'updated_at'
+        'updated_at'
     ];
 }
