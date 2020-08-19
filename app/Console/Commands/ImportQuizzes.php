@@ -168,8 +168,8 @@ class ImportQuizzes extends Command
                                 'corrected' => $item->corrected,
                                 'points' => $item->points,
                                 'submitted' => 1,
-                                'created_at' => Carbon::now(),
-                                'updated_at' => Carbon::now()
+                                'created_at' => Carbon::parse($year.'-'.$month.'-'.$day)->midDay(),
+                                'updated_at' => Carbon::parse($year.'-'.$month.'-'.$day)->midDay()
                             ];
                         }
                     )
@@ -244,8 +244,8 @@ class ImportQuizzes extends Command
                                     'corrected' => $item->corrected,
                                     'points' => $item->banker,
                                     'submitted' => 1,
-                                    'created_at' => Carbon::now(),
-                                    'updated_at' => Carbon::now()
+                                    'created_at' => Carbon::parse($year.'-'.$month.'-'.$day)->midDay(),
+                                    'updated_at' => Carbon::parse($year.'-'.$month.'-'.$day)->midDay()
                                 ];
                             }
                         )
