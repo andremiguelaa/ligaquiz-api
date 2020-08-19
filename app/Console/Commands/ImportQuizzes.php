@@ -123,11 +123,12 @@ class ImportQuizzes extends Command
             $year = $oldQuestion->year;
             $month = str_pad($oldQuestion->month, 2, '0', STR_PAD_LEFT);
             $day = str_pad($oldQuestion->day, 2, '0', STR_PAD_LEFT);
-            if (isset($insertedQuizzes[$year.'-'.$month.'-'.$day])) {
-                $quizId = $insertedQuizzes[$year.'-'.$month.'-'.$day];
+            $date = $year.'-'.$month.'-'.$day;
+            if (isset($insertedQuizzes[$date])) {
+                $quizId = $insertedQuizzes[$date];
             } else {
-                $quiz = Quiz::create(['date' => $year.'-'.$month.'-'.$day]);
-                $insertedQuizzes[$year.'-'.$month.'-'.$day] = $quiz->id;
+                $quiz = Quiz::create(['date' => $date]);
+                $insertedQuizzes[$date] = $quiz->id;
                 $quizId = $quiz->id;
             }
             if ($oldQuestion->filename) {
@@ -159,7 +160,7 @@ class ImportQuizzes extends Command
             if (isset($oldAnswers[$oldQuestion->id])) {
                 $oldQuestionAnswers = $oldAnswers[$oldQuestion->id]
                     ->map(
-                        function ($item) use ($question) {
+                        function ($item) use ($question, $date) {
                             return [
                                 'question_id' => $question->id,
                                 'user_id' => $item->user_id,
@@ -168,8 +169,8 @@ class ImportQuizzes extends Command
                                 'corrected' => $item->corrected,
                                 'points' => $item->points,
                                 'submitted' => 1,
-                                'created_at' => Carbon::parse($year.'-'.$month.'-'.$day)->midDay(),
-                                'updated_at' => Carbon::parse($year.'-'.$month.'-'.$day)->midDay()
+                                'created_at' => Carbon::parse($date)->midDay(),
+                                'updated_at' => Carbon::parse($date)->midDay()
                             ];
                         }
                     )
@@ -199,11 +200,12 @@ class ImportQuizzes extends Command
             $year = $oldSpecialQuiz->year;
             $month = str_pad($oldSpecialQuiz->month, 2, '0', STR_PAD_LEFT);
             $day = str_pad($oldSpecialQuiz->day, 2, '0', STR_PAD_LEFT);
+            $date = $year.'-'.$month.'-'.$day;
             $specialQuiz = SpecialQuiz::create([
                 'subject' => $oldSpecialQuiz->subject,
                 'description' => $oldSpecialQuiz->description,
                 'user_id' => $oldSpecialQuiz->user_id,
-                'date' => $year.'-'.$month.'-'.$day
+                'date' => $date
             ]);
             foreach ($oldSpecialQuestions[$oldSpecialQuiz->id] as $oldSpecialQuestion) {
                 if ($oldSpecialQuestion->filename) {
@@ -235,7 +237,7 @@ class ImportQuizzes extends Command
                 if (isset($oldSpecialAnswers[$oldSpecialQuestion->id])) {
                     $oldSpecialQuestionAnswers = $oldSpecialAnswers[$oldSpecialQuestion->id]
                         ->map(
-                            function ($item) use ($question) {
+                            function ($item) use ($question, $date) {
                                 return [
                                     'question_id' => $question->id,
                                     'user_id' => $item->user_id,
@@ -244,8 +246,8 @@ class ImportQuizzes extends Command
                                     'corrected' => $item->corrected,
                                     'points' => $item->banker,
                                     'submitted' => 1,
-                                    'created_at' => Carbon::parse($year.'-'.$month.'-'.$day)->midDay(),
-                                    'updated_at' => Carbon::parse($year.'-'.$month.'-'.$day)->midDay()
+                                    'created_at' => Carbon::parse($date)->midDay(),
+                                    'updated_at' => Carbon::parse($date)->midDay()
                                 ];
                             }
                         )
