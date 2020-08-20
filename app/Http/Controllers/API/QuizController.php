@@ -96,10 +96,11 @@ class QuizController extends BaseController
                         $quiz->questions = $questions;
                         $quiz->today = true;
                         if ($round) {
-                            $game = Game::where('round_id', $round->id)
-                                ->where('user_id_1', Auth::id())
-                                ->orWhere('user_id_2', Auth::id())
-                                ->first();
+                            $roundGames = Game::where('round_id', $round->id)->get();
+                            $game = $roundGames->where('user_id_1', Auth::id())->first();
+                            $game = $game ?
+                                $game :
+                                $roundGames->where('user_id_2', Auth::id())->first();
                             if ($game) {
                                 $quiz->game = $game;
                             }
