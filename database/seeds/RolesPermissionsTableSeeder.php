@@ -35,7 +35,7 @@ class RolesPermissionsTableSeeder extends Seeder
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
             ],
             [
-                'role' => 'specialquiz_editor',
+                'role' => 'special_quiz_editor',
                 'permissions' => json_encode((object) [
                     'specialquiz_create' => true,
                     'specialquiz_edit' => true,
@@ -62,7 +62,7 @@ class RolesPermissionsTableSeeder extends Seeder
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
             ],
             [
-                'role' => 'specialquiz_player',
+                'role' => 'special_quiz_player',
                 'permissions' => json_encode((object) [
                     'specialquiz_play' => true,
                 ]),
