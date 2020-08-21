@@ -301,6 +301,9 @@ class UserController extends BaseController
             $user->fill($input);
             $user->save();
             $user->touch();
+            $user = $user->toArray();
+            $user['avatar'] = $user['avatar_url'];
+            unset($user['avatar_url']);
             $success['user'] = $user;
 
             return $this->sendResponse($success);
