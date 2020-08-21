@@ -48,6 +48,7 @@ class NotificationController extends BaseController
                     $response->special_quiz = false;
                 }
             }
+            $response->now = $now->format('Y-m-d');
         }
         return $this->sendResponse($response, 200);
     }
