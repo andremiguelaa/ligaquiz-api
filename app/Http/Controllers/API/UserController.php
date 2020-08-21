@@ -148,6 +148,16 @@ class UserController extends BaseController
         $avatar_filename = 'avatar' . $user->id . '.png';
         Storage::put('avatars/' . $avatar_filename, (string) $avatar);
         $user->avatar = $avatar_filename;
+        $user->reminders = [
+            'quiz' => [
+                'daily' => true,
+                'deadline' => true
+            ],
+            'special_quiz' => [
+                'daily' => true,
+                'deadline' => true
+            ]
+        ];
         $user->save();
 
         return $this->sendResponse(null, 201);
