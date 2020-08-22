@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\DailyReminder::class,
         Commands\DeadlineReminder::class,
+        Commands\CleanMedia::class,
     ];
 
     /**
@@ -25,11 +26,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('reminder:daily')
-                 ->dailyAt('00:00');
-
-        $schedule->command('reminder:deadline')
-                 ->dailyAt('22:00');
+        $schedule->command('reminder:daily')->dailyAt('00:00');
+        $schedule->command('reminder:deadline')->dailyAt('22:00');
+        $schedule->command('clean:media')->dailyAt('04:00');
     }
 
     /**
