@@ -94,5 +94,7 @@ Route::group([
         Route::post('logs', 'API\LogController@create');
 
         Route::post('messages', 'API\MessageController@send');
+
+        Route::get('date', 'API\DateController@get');
     });
 });
