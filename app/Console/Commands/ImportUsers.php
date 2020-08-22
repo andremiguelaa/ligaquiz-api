@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use App\User;
+use Avatar;
 use Storage;
 use Image;
 
@@ -73,7 +74,10 @@ class ImportUsers extends Command
                     $constraint->upsize();
                 })->save(storage_path('app/public/avatars/' . $avatar));
             } else {
-                $avatar = null;
+                $avatarImage = Avatar::create($user->name)->getImageObject()->encode('png');
+                $avatar_filename = 'avatar' . $user->id . '.png';
+                Storage::put('avatars/' . $avatar_filename, (string) $avatarImage);
+                $avatar = $avatar_filename;
             }
             $reminders = [
                 'quiz' => [

@@ -102,41 +102,39 @@ trait GameResults
                         $game->user_id_2_correct_answers = 'P';
                         $game->corrected = false;
                     }
-
-                    $forfeitScore = [
-                        '0' => 0,
-                        '1' => 2,
-                        '2' => 3,
-                        '3' => 5,
-                        '4' => 6,
-                        '5' => 8,
-                        '6' => 9,
-                        '7' => 10,
-                        '8' => 12
-                    ];
                     if (
-                        $game->user_id_1_submitted_answers &&
-                        !$game->user_id_2_submitted_answers
+                        !(
+                            $game->user_id_1_correct_answers === 'P' ||
+                            $game->user_id_2_correct_answers === 'P'
+                        )
                     ) {
-                        $game->user_id_1_game_points =
-                            $forfeitScore[$game->user_id_1_correct_answers];
-                    } elseif (
-                        !$game->user_id_1_submitted_answers &&
-                        $game->user_id_2_submitted_answers
-                    ) {
-                        $game->user_id_2_game_points =
-                            $forfeitScore[$game->user_id_2_correct_answers];
-                    } elseif (
-                        $game->user_id_1_submitted_answers &&
-                        $game->user_id_2_submitted_answers
-                    ) {
+                        $forfeitScore = [
+                            '0' => 0,
+                            '1' => 2,
+                            '2' => 3,
+                            '3' => 5,
+                            '4' => 6,
+                            '5' => 8,
+                            '6' => 9,
+                            '7' => 10,
+                            '8' => 12
+                        ];
                         if (
-                            $game->user_id_1_game_points === 'P' ||
-                            $game->user_id_2_game_points === 'P'
+                            $game->user_id_1_submitted_answers &&
+                            !$game->user_id_2_submitted_answers
                         ) {
-                            $game->user_id_1_game_points = 'P';
-                            $game->user_id_2_game_points = 'P';
-                        } else {
+                            $game->user_id_1_game_points =
+                                $forfeitScore[$game->user_id_1_correct_answers];
+                        } elseif (
+                            !$game->user_id_1_submitted_answers &&
+                            $game->user_id_2_submitted_answers
+                        ) {
+                            $game->user_id_2_game_points =
+                                $forfeitScore[$game->user_id_2_correct_answers];
+                        } elseif (
+                            $game->user_id_1_submitted_answers &&
+                            $game->user_id_2_submitted_answers
+                        ) {
                             foreach ($questionIds as $questionId) {
                                 $game->user_id_1_game_points +=
                                     $answers[$questionId][$game->user_id_1]->first()->correct *
