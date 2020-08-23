@@ -14,6 +14,7 @@ class User extends JsonResource
             'name' => $this->name,
             'surname' => $this->surname,
             'avatar' => $this->getAvatarUrlAttribute(),
+            'valid_roles' => $this->valid_roles,
         ];
         if(!$user['avatar']){
             unset($user['avatar']);
