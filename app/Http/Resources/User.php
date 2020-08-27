@@ -16,13 +16,13 @@ class User extends JsonResource
             'avatar' => $this->getAvatarUrlAttribute(),
             'valid_roles' => $this->valid_roles,
         ];
-        if(!$user['avatar']){
+        if (!$user['avatar']) {
             unset($user['avatar']);
         }
-        if(isset($this->statistics)){
+        if (isset($this->statistics)) {
             $user['statistics'] = (object) $this->statistics;
         }
-        if(isset($this->national_rank)){
+        if (isset($this->national_rank)) {
             $user['national_rank'] = $this->national_rank;
         }
         if ($request->get('id')) {
@@ -34,7 +34,9 @@ class User extends JsonResource
             $user['email'] = $this->email;
             $user['roles'] = $this->roles;
             $user['reminders'] = $this->reminders;
-        };
+        } else {
+            unset($user['valid_roles']);
+        }
         return $user;
     }
 }
