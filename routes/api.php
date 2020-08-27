@@ -25,6 +25,8 @@ Route::get('individual-quiz-players', 'API\IndividualQuizPlayerController@get');
 Route::get('individual-quizzes', 'API\IndividualQuizController@get');
 Route::get('users', 'API\UserController@get');
 
+Route::get('genres', 'API\GenreController@get');
+
 Route::group([
     'middleware' => 'auth:api',
 ], function () {
@@ -56,8 +58,6 @@ Route::group([
         Route::post('notifications', 'API\NotificationController@create');
         Route::patch('notifications', 'API\NotificationController@update');
         Route::delete('notifications', 'API\NotificationController@delete');
-
-        Route::get('genres', 'API\GenreController@get');
 
         Route::get('quizzes', 'API\QuizController@get');
         Route::post('quizzes', 'API\QuizController@create');
