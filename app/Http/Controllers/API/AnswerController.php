@@ -82,6 +82,7 @@ class AnswerController extends BaseController
                 $answers = $answers->where('submitted', $input['submitted']);
                 $answers->makeHidden('submitted');
             }
+            $answers->makeHidden('time');
             return $this->sendResponse($answers->groupBy('question_id'), 200);
         }
         return $this->sendError('no_permissions', [], 403);

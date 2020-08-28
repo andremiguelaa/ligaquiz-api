@@ -380,6 +380,8 @@ class QuizController extends BaseController
                     'correct' => $correct,
                     'corrected' => $corrected,
                     'submitted' => 1,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()
                 ]);
             }
             Answer::insert($answersToSubmit);

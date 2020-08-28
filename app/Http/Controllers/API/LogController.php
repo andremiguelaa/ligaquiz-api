@@ -8,6 +8,7 @@ use Validator;
 use Carbon\Carbon;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Log;
+use App\Answer;
 
 class LogController extends BaseController
 {
@@ -24,21 +25,30 @@ class LogController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $query = (new Log)->newQuery();
+            $queryLog = (new Log)->newQuery();
+            $queryAnswer = (new Answer)->newQuery();
             if (isset($input['user_id'])) {
-                $query = $query->where('user_id', $input['user_id']);
+                $queryLog = $queryLog->where('user_id', $input['user_id']);
+                $queryAnswer = $queryAnswer->where('user_id', $input['user_id']);
             }
             if (isset($input['start_date'])) {
-                $query = $query->where('created_at', '>', $input['start_date']);
+                $queryLog = $queryLog->where('created_at', '>', $input['start_date']);
+                $queryAnswer = $queryAnswer->where('created_at', '>', $input['start_date']);
             }
             if (isset($input['end_date'])) {
                 $endDate = Carbon::parse($input['end_date'])->addDay();
-                $query = $query->where('created_at', '<', $endDate);
+                $queryLog = $queryLog->where('created_at', '<', $endDate);
+                $queryAnswer = $queryAnswer->where('created_at', '<', $endDate);
             }
             if (isset($input['search'])) {
-                $query = $query->where('action', 'like', '%'.$input['search'].'%');
+                $queryLog = $queryLog->where('action', 'like', '%'.$input['search'].'%');
+                $queryAnswer = $queryAnswer->where('text', 'like', '%'.$input['search'].'%');
             }
-            return $this->sendResponse($query->get(), 200);
+            $logs = $queryLog->get();
+            $answers = $queryAnswer->get();
+            $merge = $logs->merge($answers);
+            
+            return $this->sendResponse($merge, 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }

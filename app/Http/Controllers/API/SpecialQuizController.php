@@ -322,6 +322,8 @@ class SpecialQuizController extends BaseController
                     'corrected' => $corrected,
                     'correct' => $correct,
                     'submitted' => 1,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()
                 ]);
             }
             Answer::insert($answersToSubmit);
