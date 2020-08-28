@@ -46,9 +46,9 @@ class LogController extends BaseController
             }
             $logs = $queryLog->get();
             $answers = $queryAnswer->get();
-            $merge = $logs->merge($answers);
+            $data = $logs->merge($answers)->sortBy('time')->values();
             
-            return $this->sendResponse($merge, 200);
+            return $this->sendResponse($data, 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
