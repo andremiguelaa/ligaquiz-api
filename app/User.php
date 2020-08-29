@@ -13,7 +13,6 @@ class User extends Authenticatable
     use HasApiTokens, Notifiable;
 
     protected $fillable = [
-        'id', // todo: remove this line after release
         'email',
         'name',
         'surname',
@@ -21,8 +20,6 @@ class User extends Authenticatable
         'roles',
         'avatar',
         'reminders',
-        'created_at', // todo: remove this line after release
-        'updated_at' // todo: remove this line after release
     ];
 
     protected $hidden = [

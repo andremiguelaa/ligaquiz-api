@@ -90,7 +90,7 @@ class SeasonController extends BaseController
             $lastSeason = Season::orderBy('season', 'desc')->first();
             if ($lastSeason) {
                 $newSeason = $lastSeason->season + 1;
-            // todo: avoid to create season beginning while the previous season is running
+                // todo: avoid to create season beginning while the previous season is running
             } else {
                 $newSeason = 1;
             }
