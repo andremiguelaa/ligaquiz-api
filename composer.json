@@ -20,7 +20,8 @@
         "laravel/passport": "^7.3",
         "laravel/tinker": "^2.0",
         "laravolt/avatar": "^3.2",
-        "melihovv/base64-image-decoder": "^0.2.0"
+        "melihovv/base64-image-decoder": "^0.2.0",
+        "aws/aws-sdk-php": "~3.0"
     },
     "require-dev": {
         "facade/ignition": "^2.0",
