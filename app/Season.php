@@ -15,12 +15,21 @@ class Season extends Model
         'created_at', 'updated_at'
     ];
 
-    protected $appends = ['past'];
+    protected $appends = ['past', 'public'];
 
     public function getPastAttribute()
     {
         $now = Carbon::now()->format('Y-m-d');
         if ($now >= $this->rounds->first()->date) {
+            return true;
+        }
+        return false;
+    }
+
+    public function getPublicAttribute()
+    {
+        $tomorrow = Carbon::tomorrow()->format('Y-m-d');
+        if ($tomorrow >= $this->rounds->first()->date) {
             return true;
         }
         return false;
