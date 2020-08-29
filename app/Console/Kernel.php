@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
         Commands\DailyReminder::class,
         Commands\DeadlineReminder::class,
         Commands\CleanMedia::class,
+        Commands\SpecialQuizGiveaway::class,
     ];
 
     /**
