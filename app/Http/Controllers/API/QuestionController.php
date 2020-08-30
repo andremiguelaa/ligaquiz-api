@@ -52,21 +52,16 @@ class QuestionController extends BaseController
                     ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$query.'%"')
                     ->get();
                 $questionIds = $questions->pluck('id');
-
-
                 $quizQuestions = QuizQuestion::whereIn('question_id', $questionIds)->get();
                 $specialQuizQuestions = SpecialQuizQuestion::whereIn('question_id', $questionIds)->get();
-
                 $quizQuestionsQuiz = $quizQuestions->groupBy('question_id')->map(function ($item) {
                     return $item[0]->quiz_id;
                 })->toArray();
                 $specialQuizQuestionsQuiz = $specialQuizQuestions->groupBy('question_id')->map(function ($item) {
                     return $item[0]->special_quiz_id;
                 })->toArray();
-
                 $quizzes = Quiz::whereIn('id', $quizQuestionsQuiz)->get()->groupBy('id');
                 $specialQuizzes = SpecialQuiz::whereIn('id', $specialQuizQuestionsQuiz)->get()->groupBy('id');
-
                 $mappedQuestions = $questions->map(
                     function ($question) use (
                         $quizQuestionsQuiz,
@@ -89,7 +84,6 @@ class QuestionController extends BaseController
                         return $question;
                     }
                 );
-
                 $response = $mappedQuestions->sortByDesc(function ($question) {
                     return $question->quiz['date'];
                 })->values();
