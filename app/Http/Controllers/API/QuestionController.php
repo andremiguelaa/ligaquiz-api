@@ -48,9 +48,51 @@ class QuestionController extends BaseController
             }
             if (isset($input['search'])) {
                 $query = mb_strtolower($input['search']);
-                $response = Question::whereRaw('LOWER(content) LIKE BINARY "%'.$query.'%"')
+                $questions = Question::whereRaw('LOWER(content) LIKE BINARY "%'.$query.'%"')
                     ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$query.'%"')
                     ->get();
+                $questionIds = $questions->pluck('id');
+
+
+                $quizQuestions = QuizQuestion::whereIn('question_id', $questionIds)->get();
+                $specialQuizQuestions = SpecialQuizQuestion::whereIn('question_id', $questionIds)->get();
+
+                $quizQuestionsQuiz = $quizQuestions->groupBy('question_id')->map(function ($item) {
+                    return $item[0]->quiz_id;
+                })->toArray();
+                $specialQuizQuestionsQuiz = $specialQuizQuestions->groupBy('question_id')->map(function ($item) {
+                    return $item[0]->special_quiz_id;
+                })->toArray();
+
+                $quizzes = Quiz::whereIn('id', $quizQuestionsQuiz)->get()->groupBy('id');
+                $specialQuizzes = SpecialQuiz::whereIn('id', $specialQuizQuestionsQuiz)->get()->groupBy('id');
+
+                $mappedQuestions = $questions->map(
+                    function ($question) use (
+                        $quizQuestionsQuiz,
+                        $specialQuizQuestionsQuiz,
+                        $quizzes,
+                        $specialQuizzes
+                    ) {
+                        if(isset($quizQuestionsQuiz[$question->id])){
+                            $question->quiz = [
+                                "type" => 'quiz',
+                                "date" => $quizzes[$quizQuestionsQuiz[$question->id]][0]->date
+                            ];   
+                        }
+                        else {
+                            $question->quiz = [
+                                "type" => 'special_quiz',
+                                "date" => $specialQuizzes[$specialQuizQuestionsQuiz[$question->id]][0]->date
+                            ];   
+                        }
+                        return $question;
+                    }
+                );
+
+                $response = $mappedQuestions->sortByDesc(function ($question) {
+                    return $question->quiz['date'];
+                })->values();
             } elseif (isset($input['id'])) {
                 if (count($input['id']) === 1) {
                     $response = Question::with(['submittedAnswers', 'media'])
