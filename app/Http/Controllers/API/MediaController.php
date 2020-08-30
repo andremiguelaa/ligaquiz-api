@@ -33,13 +33,12 @@ class MediaController extends BaseController
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'name' => 'required|string',
                 'file' => 'required|file|mimetypes:video/mp4,image/png,image/gif,image/jpeg,audio/mpeg'
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $filename = $input['name'].'_'.round(microtime(true) * 1000).'.'.$input['file']
+            $filename = 'media_'.round(microtime(true) * 1000).'.'.$input['file']
                 ->extension();
             $type = explode("/", $input['file']->getMimeType())[0];
             $path = $request::file('file')->storeAs(
@@ -71,7 +70,7 @@ class MediaController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $media = Media::find($input['id']);
-            if($media->isUsed()) {
+            if ($media->isUsed()) {
                 return $this->sendError('file_in_use', null, 400);
             }
             Media::where('id', $input['id'])->delete();
