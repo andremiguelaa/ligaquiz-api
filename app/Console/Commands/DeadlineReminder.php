@@ -52,10 +52,10 @@ class DeadlineReminder extends Command
         if (!$todayQuiz && !$todaySpecialQuiz) {
             return null;
         }
-        if($todayQuiz){
+        if ($todayQuiz) {
             $todayQuizQuestionIds = $todayQuiz->questions()->get()->pluck('question_id')->toArray();
         }
-        if($todaySpecialQuiz){
+        if ($todaySpecialQuiz) {
             $todaySpecialQuizQuestionIds = $todaySpecialQuiz->questions()->get()->pluck('question_id')->toArray();
         }
 
@@ -97,21 +97,21 @@ class DeadlineReminder extends Command
             ) {
                 $opponent = isset($opponents->{$user->id}) ? $users[$opponents->{$user->id}] : null;
 
-                $todayQuizSumitted = $todayQuiz ? boolval(
+                $todayQuizSubmitted = $todayQuiz ? boolval(
                     Answer::whereIn('question_id', $todayQuizQuestionIds)
                         ->where('user_id', $user->id)
                         ->where('submitted', 1)
                         ->first()
-                ) : false;
+                ) : true;
 
-                $todaySpecialQuizSumitted = $todaySpecialQuiz ? boolval(
+                $todaySpecialQuizSubmitted = $todaySpecialQuiz ? boolval(
                     Answer::whereIn('question_id', $todaySpecialQuizQuestionIds)
                         ->where('user_id', $user->id)
                         ->where('submitted', 1)
                         ->first()
-                ) : false;
+                ) : true;
 
-                if(!($todayQuizSumitted && $todaySpecialQuizSumitted)){
+                if (!$todayQuizSubmitted || !$todaySpecialQuizSubmitted) {
                     Mail::to($user->email)
                         ->locale(config('mail.default_locale'))
                         ->send(
@@ -121,17 +121,16 @@ class DeadlineReminder extends Command
                                 $opponent,
                                 $user->hasPermission('quiz_play') &&
                                     $user->reminders['quiz']['deadline'] &&
-                                        !$todayQuizSumitted ?
+                                        !$todayQuizSubmitted ?
                                             $todayQuiz : null,
                                 $user->hasPermission('specialquiz_play') &&
                                     $user->reminders['special_quiz']['deadline'] &&
-                                        !$todaySpecialQuizSumitted ?
+                                        !$todaySpecialQuizSubmitted ?
                                             $todaySpecialQuiz : null
                             )
                         );
                     usleep(1000000/config('mail.send_rate'));
                 }
-
             }
         }
     }

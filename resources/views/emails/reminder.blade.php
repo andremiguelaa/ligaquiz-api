@@ -8,9 +8,9 @@
     @if($quiz)
         <br>
         @if($type === 'daily')
-            @lang('mails.quiz_availabe')<br>
+            @lang('mails.quiz_available')<br>
         @else
-            @lang('mails.quiz_availabe_deadline')<br>
+            @lang('mails.quiz_available_deadline')<br>
         @endif
         @if ($opponent)
             @lang('mails.quiz_opponent'): {{ $opponent->name }} {{ $opponent->surname }}<br>
@@ -31,8 +31,11 @@
         @lang('mails.specialquiz_link')<br>
     @endif
     <br>
-    @lang('mails.deadline')<br>
-    <br>
+    @if($type === 'daily')
+        @lang('mails.deadline')
+        <br>
+        <br>
+    @endif
     <hr>
     <br>
     <table>
