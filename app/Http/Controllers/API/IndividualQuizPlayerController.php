@@ -49,10 +49,17 @@ class IndividualQuizPlayerController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
+            $players = []; 
             foreach ($request::all() as $player) {
-                IndividualQuizPlayer::create($player);
+                $player = IndividualQuizPlayer::create($player);
+                array_push($players, [
+                    'id' => $player->id,
+                    'name' => $player->name,
+                    'surname' => $player->surname,
+                    'user_id' => $player->user_id,
+                ]);
             }
-            return $this->sendResponse(null, 201);
+            return $this->sendResponse($players, 201);
         }
 
         return $this->sendError('no_permissions', [], 403);
