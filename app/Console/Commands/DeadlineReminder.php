@@ -111,7 +111,10 @@ class DeadlineReminder extends Command
                         ->first()
                 ) : true;
 
-                if (!$todayQuizSubmitted || !$todaySpecialQuizSubmitted) {
+                if (
+                    (!$todayQuizSubmitted && $user->reminders['quiz']['deadline']) ||
+                    (!$todaySpecialQuizSubmitted && $user->reminders['special_quiz']['deadline'])
+                ) {
                     Mail::to($user->email)
                         ->locale(config('mail.default_locale'))
                         ->send(
