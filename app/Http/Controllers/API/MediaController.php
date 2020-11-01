@@ -33,7 +33,7 @@ class MediaController extends BaseController
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'file' => 'required|file|mimetypes:video/mp4,image/png,image/gif,image/jpeg,audio/mpeg'
+                'file' => 'required|file|mimetypes:video/mp4,image/png,image/gif,image/jpeg,audio/mpeg,mpga,mp3,wav'
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
