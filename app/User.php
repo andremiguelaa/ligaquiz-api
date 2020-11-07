@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'roles',
         'avatar',
+        'region',
         'reminders',
     ];
 
@@ -98,5 +99,10 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    public function hasRegion()
+    {
+        return boolval($this->region);
     }
 }

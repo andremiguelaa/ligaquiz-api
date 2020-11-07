@@ -38,6 +38,7 @@ Route::group([
         'middleware' => 'blocked',
     ], function () {
         Route::get('roles', 'API\RoleController@get');
+        Route::get('regions', 'API\RegionController@get');
 
         Route::get('permissions', 'API\PermissionController@get');
 
