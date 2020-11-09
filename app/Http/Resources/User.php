@@ -30,6 +30,9 @@ class User extends JsonResource
                 $user['individual_quiz_player_id'] = $this->individual_quiz_player['id'];
             }
         }
+        if (Auth::user() && (Auth::user()->isAdmin() || Auth::user()->hasBirthday())) {
+            $user['birthday'] = $this->birthday;
+        }
         if (Auth::user() && (Auth::user()->isAdmin() || Auth::user()->hasRegion())) {
             $user['region'] = $this->region;
         }

@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'roles',
         'avatar',
+        'birthday',
         'region',
         'reminders',
     ];
@@ -45,7 +46,7 @@ class User extends Authenticatable
 
     public function getValidRolesAttribute()
     {
-        return (object) array_reduce($this->getRoles(), function($carry, $item) {
+        return (object) array_reduce($this->getRoles(), function ($carry, $item) {
             $carry[$item] = true;
             return $carry;
         }, []);
@@ -99,6 +100,11 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    public function hasBirthday()
+    {
+        return boolval($this->birthday);
     }
 
     public function hasRegion()

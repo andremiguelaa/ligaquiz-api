@@ -137,6 +137,7 @@ class UserController extends BaseController
             'surname' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|min:6|max:255',
+            'birthday' => 'nullable|date_format:Y-m-d|before:today',
             'region' => 'nullable|exists:regions,code',
         ]);
         if ($validator->fails()) {
@@ -279,6 +280,7 @@ class UserController extends BaseController
                 'roles' => 'array',
                 'roles.*' => [new RoleValue],
                 'avatar' => 'base64image|base64max:200',
+                'birthday' => 'nullable|date_format:Y-m-d|before:today',
                 'region' => 'nullable|exists:regions,code',
                 'reminders' => 'array',
             ]);
