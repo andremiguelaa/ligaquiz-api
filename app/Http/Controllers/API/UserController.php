@@ -137,7 +137,7 @@ class UserController extends BaseController
             'surname' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|min:6|max:255',
-            'region' => 'exists:regions,code',
+            'region' => 'nullable|exists:regions,code',
         ]);
         if ($validator->fails()) {
             return $this->sendError('validation_error', $validator->errors(), 400);
@@ -279,7 +279,7 @@ class UserController extends BaseController
                 'roles' => 'array',
                 'roles.*' => [new RoleValue],
                 'avatar' => 'base64image|base64max:200',
-                'region' => 'exists:regions,code',
+                'region' => 'nullable|exists:regions,code',
                 'reminders' => 'array',
             ]);
             if ($validator->fails()) {
