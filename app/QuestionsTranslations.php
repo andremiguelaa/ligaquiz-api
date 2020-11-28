@@ -10,6 +10,7 @@ class QuestionsTranslations extends Model
         'question_id',
         'content',
         'answer',
+        'used',
         'user_id',
     ];
 

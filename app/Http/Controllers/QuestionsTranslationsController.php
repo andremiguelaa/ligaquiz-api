@@ -48,17 +48,25 @@ class QuestionsTranslationsController extends BaseController
             $validator = Validator::make($input, [
                 'id' => 'required|exists:questions_translations,id',
                 'content' => 'required|string',
-                'answer' => 'required|string'
+                'answer' => 'required|string',
+                'user_id' => 'exists:users,id',
+                'used' => 'boolean'
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $translation = QuestionsTranslations::find($input['id']);
-            if($translation->user_id !== Auth::user()->id && !Auth::user()->isAdmin()){
-                return $this->sendError('no_permissions', [], 403);        
+            if ($translation->user_id !== Auth::user()->id && !Auth::user()->isAdmin()) {
+                return $this->sendError('no_permissions', [], 403);
             }
             $translation['content'] = $input['content'];
             $translation['answer'] = $input['answer'];
+            if (isset($input['user_id']) && Auth::user()->isAdmin()) {
+                $translation['user_id'] = $input['user_id'];
+            }
+            if (isset($input['used']) && Auth::user()->isAdmin()) {
+                $translation['used'] = $input['used'];
+            }
             $translation->save();
             return $this->sendResponse($translation, 200);
         }
