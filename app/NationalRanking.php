@@ -77,7 +77,7 @@ class NationalRanking extends Model
         }
 
         usort($rankingPlayers, function ($a, $b) {
-            return $b->score > $a->score;
+            return $b->score - $a->score;
         });
 
         $rank = 1;

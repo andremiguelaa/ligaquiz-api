@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use Behat\Transliterator\Transliterator;
@@ -8,7 +8,7 @@ use Request;
 use Validator;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
-use App\Http\Controllers\API\BaseController as BaseController;
+use App\Http\Controllers\BaseController as BaseController;
 use App\Quiz;
 use App\QuizQuestion;
 use App\Question;

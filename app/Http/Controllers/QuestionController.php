@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers;
 
 use Request;
 use Validator;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use App\Http\Controllers\API\BaseController as BaseController;
+use App\Http\Controllers\BaseController as BaseController;
 use App\Question;
 use App\QuizQuestion;
 use App\Quiz;
