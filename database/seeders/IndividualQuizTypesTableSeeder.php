@@ -1,6 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class IndividualQuizTypesTableSeeder extends Seeder
@@ -10,6 +13,7 @@ class IndividualQuizTypesTableSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('individual_quiz_types')->truncate();
         DB::table('individual_quiz_types')->insert([
             [
                 'slug' => 'hot_100',

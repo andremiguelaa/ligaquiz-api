@@ -1,6 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class RegionsTableSeeder extends Seeder
@@ -10,6 +13,7 @@ class RegionsTableSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('regions')->truncate();
         DB::table('regions')->insert([
             [
                 'code' => 'PT.AC',

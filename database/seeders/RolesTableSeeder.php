@@ -1,6 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class RolesTableSeeder extends Seeder
@@ -10,6 +13,7 @@ class RolesTableSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('roles')->truncate();
         DB::table('roles')->insert([
             [
                 'slug' => 'admin',

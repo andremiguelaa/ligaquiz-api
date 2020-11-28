@@ -1,6 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class SubGenresTableSeeder extends Seeder
@@ -10,6 +13,7 @@ class SubGenresTableSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('genres')->truncate();
         DB::table('genres')->insert([
             [
                 'parent_id' => 1,

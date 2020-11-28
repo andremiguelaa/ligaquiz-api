@@ -1,6 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class RolesPermissionsTableSeeder extends Seeder
@@ -10,6 +13,7 @@ class RolesPermissionsTableSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('roles_permissions')->truncate();
         DB::table('roles_permissions')->insert([
             [
                 'role' => 'national_ranking_manager',

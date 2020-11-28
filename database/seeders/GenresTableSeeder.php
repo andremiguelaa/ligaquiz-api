@@ -1,6 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class GenresTableSeeder extends Seeder
@@ -10,6 +13,7 @@ class GenresTableSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('genres')->truncate();
         DB::table('genres')->insert([
             [
                 'id' => 1,

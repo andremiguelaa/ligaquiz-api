@@ -1,6 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class UsersTableSeeder extends Seeder
@@ -10,6 +13,7 @@ class UsersTableSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('users')->truncate();
         DB::table('users')->insert([
             [
                 'name' => 'admin name',
