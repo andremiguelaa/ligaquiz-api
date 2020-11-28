@@ -18,8 +18,7 @@ class DatabaseSeeder extends Seeder
             PermissionsTableSeeder::class,
             RolesPermissionsTableSeeder::class,
             IndividualQuizTypesTableSeeder::class,
-            GenresTableSeeder::class,
-            SubGenresTableSeeder::class
+            GenresTableSeeder::class
         ]);
     }
 }
