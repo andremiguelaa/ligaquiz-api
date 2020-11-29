@@ -147,7 +147,7 @@ class LeagueController extends BaseController
                 }
             }
             usort($players, function ($a, $b) {
-                return $this->getTiebreakValue($a) - $this->getTiebreakValue($b);
+                return intval($this->getTiebreakValue($a) > $this->getTiebreakValue($b));
             });
             foreach ($players as $key => $player) {
                 $players[$key]['tiebreak'] = $this->getTiebreakValue($player);
