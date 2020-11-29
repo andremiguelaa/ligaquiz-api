@@ -13,6 +13,7 @@ use App\Quiz;
 use App\SpecialQuizQuestion;
 use App\SpecialQuiz;
 use App\Round;
+use App\Genre;
 
 class QuestionController extends BaseController
 {
@@ -23,12 +24,14 @@ class QuestionController extends BaseController
             Auth::user()->hasPermission('quiz_create') ||
             Auth::user()->hasPermission('quiz_edit') ||
             Auth::user()->hasPermission('quiz_play') ||
-            Auth::user()->hasPermission('specialquiz_play')
+            Auth::user()->hasPermission('specialquiz_play') ||
+            Auth::user()->hasPermission('translate')
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
                 'id' => 'array|exists:questions',
-                'search' => 'string'
+                'search' => 'nullable|string',
+                'genre' => 'exists:genres,id',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -36,21 +39,32 @@ class QuestionController extends BaseController
             if (
                 (
                     !isset($input['id']) ||
-                    isset($input['search'])
+                    isset($input['search']) ||
+                    isset($input['genre'])
                 ) &&
                 !(
                     Auth::user()->isAdmin() ||
                     Auth::user()->hasPermission('quiz_create') ||
-                    Auth::user()->hasPermission('quiz_edit')
+                    Auth::user()->hasPermission('quiz_edit') ||
+                    Auth::user()->hasPermission('translate')
                 )
             ) {
                 return $this->sendError('no_permissions', [], 403);
             }
-            if (isset($input['search'])) {
-                $query = mb_strtolower($input['search']);
+            if (array_key_exists('search', $input) || isset($input['genre'])) {
+                $search = isset($input['search']) ? $input['search'] : '';
+                $query = mb_strtolower($search);
                 $questions = Question::whereRaw('LOWER(content) LIKE BINARY "%'.$query.'%"')
-                    ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$query.'%"')
-                    ->get();
+                    ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$query.'%"');
+                $questions = $questions->get();
+                if (isset($input['genre'])) {
+                    $genres = Genre::where('id', $input['genre'])
+                        ->orWhere('parent_id', $input['genre'])
+                        ->get()
+                        ->pluck('id')
+                        ->toArray();
+                    $questions = $questions->whereIn('genre_id', $genres);
+                }
                 $questionIds = $questions->pluck('id');
                 $quizQuestions = QuizQuestion::whereIn('question_id', $questionIds)->get();
                 $specialQuizQuestions = SpecialQuizQuestion::whereIn('question_id', $questionIds)->get();
@@ -69,17 +83,16 @@ class QuestionController extends BaseController
                         $quizzes,
                         $specialQuizzes
                     ) {
-                        if(isset($quizQuestionsQuiz[$question->id])){
+                        if (isset($quizQuestionsQuiz[$question->id])) {
                             $question->quiz = [
                                 "type" => 'quiz',
                                 "date" => $quizzes[$quizQuestionsQuiz[$question->id]][0]->date
-                            ];   
-                        }
-                        else {
+                            ];
+                        } else {
                             $question->quiz = [
                                 "type" => 'special_quiz',
                                 "date" => $specialQuizzes[$specialQuizQuestionsQuiz[$question->id]][0]->date
-                            ];   
+                            ];
                         }
                         return $question;
                     }
