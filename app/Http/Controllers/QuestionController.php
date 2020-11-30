@@ -53,10 +53,11 @@ class QuestionController extends BaseController
             }
             if (array_key_exists('search', $input) || isset($input['genre'])) {
                 $search = isset($input['search']) ? $input['search'] : '';
-                $query = mb_strtolower($search);
-                $questions = Question::whereRaw('LOWER(content) LIKE BINARY "%'.$query.'%"')
-                    ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$query.'%"');
-                $questions = $questions->get();
+                $search = mb_strtolower($search);
+                $questions = Question::where(function($query) use($search){
+                    $query->whereRaw('LOWER(content) LIKE BINARY "%'.$search.'%"')
+                        ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$search.'%"');
+                });
                 if (isset($input['genre'])) {
                     $genres = Genre::where('id', $input['genre'])
                         ->orWhere('parent_id', $input['genre'])
@@ -65,6 +66,7 @@ class QuestionController extends BaseController
                         ->toArray();
                     $questions = $questions->whereIn('genre_id', $genres);
                 }
+                $questions = $questions->paginate(10);
                 $questionIds = $questions->pluck('id');
                 $quizQuestions = QuizQuestion::whereIn('question_id', $questionIds)->get();
                 $specialQuizQuestions = SpecialQuizQuestion::whereIn('question_id', $questionIds)->get();
@@ -76,7 +78,7 @@ class QuestionController extends BaseController
                 })->toArray();
                 $quizzes = Quiz::whereIn('id', $quizQuestionsQuiz)->get()->groupBy('id');
                 $specialQuizzes = SpecialQuiz::whereIn('id', $specialQuizQuestionsQuiz)->get()->groupBy('id');
-                $mappedQuestions = $questions->map(
+                $questions->getCollection()->transform(
                     function ($question) use (
                         $quizQuestionsQuiz,
                         $specialQuizQuestionsQuiz,
@@ -97,9 +99,7 @@ class QuestionController extends BaseController
                         return $question;
                     }
                 );
-                $response = $mappedQuestions->sortByDesc(function ($question) {
-                    return $question->quiz['date'];
-                })->values();
+                $response = $questions;
             } elseif (isset($input['id'])) {
                 if (count($input['id']) === 1) {
                     $response = Question::with(['submittedAnswers', 'media'])
@@ -150,7 +150,7 @@ class QuestionController extends BaseController
                     $response = Question::whereIn('id', $input['id'])->get();
                 }
             } else {
-                $response = Question::all();
+                $response = Question::paginate(10);
             }
             return $this->sendResponse($response, 200);
         }
