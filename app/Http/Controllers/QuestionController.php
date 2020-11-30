@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Request;
 use Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Http\Controllers\BaseController as BaseController;
@@ -31,6 +32,10 @@ class QuestionController extends BaseController
             $validator = Validator::make($input, [
                 'id' => 'array|exists:questions',
                 'search' => 'nullable|string',
+                'search_field' => [
+                    'nullable',
+                    Rule::in(['content', 'answer'])
+                ],
                 'genre' => 'exists:genres,id',
             ]);
             if ($validator->fails()) {
@@ -54,9 +59,18 @@ class QuestionController extends BaseController
             if (array_key_exists('search', $input) || isset($input['genre'])) {
                 $search = isset($input['search']) ? $input['search'] : '';
                 $search = mb_strtolower($search);
-                $questions = Question::where(function($query) use($search){
-                    $query->whereRaw('LOWER(content) LIKE BINARY "%'.$search.'%"')
+                $searchField = isset($input['search_field']) ? $input['search_field'] : null;
+                $questions = Question::where(function ($query) use ($search, $searchField) {
+                    if($searchField === 'content'){
+                        $query->whereRaw('LOWER(content) LIKE BINARY "%'.$search.'%"');
+                    }
+                    else if($searchField === 'answer'){
+                        $query->whereRaw('LOWER(answer) LIKE BINARY "%'.$search.'%"');
+                    }
+                    else {
+                        $query->whereRaw('LOWER(content) LIKE BINARY "%'.$search.'%"')
                         ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$search.'%"');
+                    }
                 });
                 if (isset($input['genre'])) {
                     $genres = Genre::where('id', $input['genre'])
