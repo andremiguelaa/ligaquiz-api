@@ -32,9 +32,13 @@ class User extends JsonResource
         }
         if (Auth::user() && (Auth::user()->isAdmin() || Auth::user()->hasBirthday())) {
             $user['birthday'] = $this->birthday;
+        } else {
+            $user['birthday'] = $this->birthday ? 'hidden' : null;
         }
         if (Auth::user() && (Auth::user()->isAdmin() || Auth::user()->hasRegion())) {
             $user['region'] = $this->region;
+        } else {
+            $user['region'] = $this->region ? 'hidden' : null;
         }
         if (Auth::user() && Auth::user()->isAdmin()) {
             $user['email'] = $this->email;
