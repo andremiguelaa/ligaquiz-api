@@ -114,7 +114,7 @@ class QuestionController extends BaseController
                 );
                 if (Auth::user()->hasPermission('translate')) {
                     $translations = QuestionsTranslations::whereIn('question_id', $questionIds)
-                        ->select('question_id', 'user_id')
+                        ->select('question_id', 'user_id', 'used')
                         ->get()
                         ->keyBy('question_id');
                     $questions->getCollection()->transform(
@@ -122,6 +122,7 @@ class QuestionController extends BaseController
                             if (isset($translations[$question->id])) {
                                 $question->translated = true;
                                 $question->translator = $translations[$question->id]['user_id'];
+                                $question->translation_used = $translations[$question->id]['used'];
                             }
                             else {
                                 $question->translated = false;
