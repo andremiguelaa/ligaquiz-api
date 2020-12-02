@@ -10,9 +10,22 @@ use App\QuestionsTranslations;
 
 class QuestionsTranslationsController extends BaseController
 {
-    public function get()
+    public function get(Request $request)
     {
         if (Auth::user()->hasPermission('translate')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'question_id' => 'exists:questions_translations,question_id',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 404);
+            }
+            if (isset($input['question_id'])) {
+                return $this->sendResponse(
+                    QuestionsTranslations::where('question_id', $input['question_id'])->get(),
+                    200
+                );
+            }
             return $this->sendResponse(QuestionsTranslations::all(), 200);
         }
         return $this->sendError('no_permissions', [], 403);
