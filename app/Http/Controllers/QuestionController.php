@@ -15,6 +15,7 @@ use App\SpecialQuizQuestion;
 use App\SpecialQuiz;
 use App\Round;
 use App\Genre;
+use App\QuestionsTranslations;
 
 class QuestionController extends BaseController
 {
@@ -61,13 +62,11 @@ class QuestionController extends BaseController
                 $search = mb_strtolower($search);
                 $searchField = isset($input['search_field']) ? $input['search_field'] : null;
                 $questions = Question::where(function ($query) use ($search, $searchField) {
-                    if($searchField === 'content'){
+                    if ($searchField === 'content') {
                         $query->whereRaw('LOWER(content) LIKE BINARY "%'.$search.'%"');
-                    }
-                    else if($searchField === 'answer'){
+                    } elseif ($searchField === 'answer') {
                         $query->whereRaw('LOWER(answer) LIKE BINARY "%'.$search.'%"');
-                    }
-                    else {
+                    } else {
                         $query->whereRaw('LOWER(content) LIKE BINARY "%'.$search.'%"')
                         ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$search.'%"');
                     }
@@ -113,6 +112,24 @@ class QuestionController extends BaseController
                         return $question;
                     }
                 );
+                if (Auth::user()->hasPermission('translate')) {
+                    $translations = QuestionsTranslations::whereIn('question_id', $questionIds)
+                        ->select('question_id', 'user_id')
+                        ->get()
+                        ->keyBy('question_id');
+                    $questions->getCollection()->transform(
+                        function ($question) use ($translations) {
+                            if (isset($translations[$question->id])) {
+                                $question->translated = true;
+                                $question->translator = $translations[$question->id]['user_id'];
+                            }
+                            else {
+                                $question->translated = false;
+                            }
+                            return $question;
+                        }
+                    );
+                }
                 $response = $questions;
             } elseif (isset($input['id'])) {
                 if (count($input['id']) === 1) {
