@@ -143,7 +143,8 @@ class QuestionController extends BaseController
                                 Auth::user()->isAdmin() ||
                                 Auth::user()->hasPermission('quiz_create') ||
                                 Auth::user()->hasPermission('quiz_edit') ||
-                                Auth::user()->hasPermission('quiz_play')
+                                Auth::user()->hasPermission('quiz_play') ||
+                                Auth::user()->hasPermission('translate')
                             )
                         ) {
                             return $this->sendError('no_permissions', [], 403);
