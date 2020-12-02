@@ -22,7 +22,7 @@ class QuestionsTranslationsController extends BaseController
             }
             if (isset($input['question_id'])) {
                 return $this->sendResponse(
-                    QuestionsTranslations::where('question_id', $input['question_id'])->get(),
+                    QuestionsTranslations::where('question_id', $input['question_id'])->first(),
                     200
                 );
             }
