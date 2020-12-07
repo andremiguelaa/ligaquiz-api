@@ -26,7 +26,8 @@ class ExternalQuestionController extends BaseController
                     Rule::in(
                         [
                             'formulation',
-                            'answer'
+                            'answer',
+                            'origin'
                         ]
                     )
                 ],
@@ -57,9 +58,12 @@ class ExternalQuestionController extends BaseController
                         $query->whereRaw('LOWER(formulation) LIKE BINARY "%'.$search.'%"');
                     } elseif ($searchField === 'answer') {
                         $query->whereRaw('LOWER(answer) LIKE BINARY "%'.$search.'%"');
+                    } elseif ($searchField === 'origin') {
+                        $query->whereRaw('LOWER(origin) LIKE BINARY "%'.$search.'%"');
                     } else {
                         $query->whereRaw('LOWER(formulation) LIKE BINARY "%'.$search.'%"')
-                            ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$search.'%"');
+                            ->orWhereRaw('LOWER(answer) LIKE BINARY "%'.$search.'%"')
+                            ->orWhereRaw('LOWER(origin) LIKE BINARY "%'.$search.'%"');
                     }
                 });
                 if (isset($input['genre'])) {
@@ -75,7 +79,8 @@ class ExternalQuestionController extends BaseController
         return $this->sendError('no_permissions', [], 403);
     }
 
-    public function update(Request $request){
+    public function update(Request $request)
+    {
         if (
             Auth::user()->isAdmin() ||
             Auth::user()->hasPermission('quiz_create') ||
