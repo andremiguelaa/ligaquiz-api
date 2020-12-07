@@ -13,7 +13,10 @@ class ExternalQuestion extends Model
 
     public function getMediaAttribute($value)
     {
-        return Storage::url('external/'.$value);
+        if ($value) {
+            return Storage::url('external/'.$value);
+        }
+        return null;
     }
 
     protected $hidden = [
