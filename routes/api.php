@@ -130,7 +130,7 @@ Route::group([
         Route::get('external-questions', [ExternalQuestionController::class, 'get']);
         Route::patch('external-questions', [ExternalQuestionController::class, 'update']);
 
-        Route::get('payment', [PaymentController::class, 'getPaymentStatus']);
-        Route::post('payment', [PaymentController::class, 'payWithpaypal']);
+        Route::post('payment/create', [PaymentController::class, 'create']);
+        Route::post('payment/check', [PaymentController::class, 'check']);
     });
 });

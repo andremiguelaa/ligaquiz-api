@@ -4,17 +4,15 @@ namespace App\Http\Controllers;
 
 use Request;
 use Validator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use PayPal\Rest\ApiContext;
-use PayPal\Auth\OAuthTokenCredential;
-use PayPal\Api\Payer;
-use PayPal\Api\Item;
-use PayPal\Api\ItemList;
-use PayPal\Api\Amount;
-use PayPal\Api\Transaction;
-use PayPal\Api\RedirectUrls;
-use PayPal\Api\Payment;
-use PayPal\Api\PaymentExecution;
+use PayPalCheckoutSdk\Core\PayPalHttpClient;
+use PayPalCheckoutSdk\Core\SandboxEnvironment;
+use PayPalCheckoutSdk\Core\LiveEnvironment;
+use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
+use PayPalCheckoutSdk\Orders\OrdersGetRequest;
+use PayPalCheckoutSdk\Orders\OrdersCaptureRequest;
+use App\PaypalTransaction;
 use App\Http\Controllers\BaseController as BaseController;
 
 class PaymentController extends BaseController
@@ -22,16 +20,13 @@ class PaymentController extends BaseController
     public function __construct()
     {
         $paypal_conf = \Config::get('paypal');
-        $this->_api_context = new ApiContext(
-            new OAuthTokenCredential(
-                $paypal_conf['client_id'],
-                $paypal_conf['secret']
-            )
-        );
-        $this->_api_context->setConfig($paypal_conf['settings']);
+        $environment = $paypal_conf['mode'] === 'live' ?
+            new LiveEnvironment($paypal_conf['client_id'], $paypal_conf['secret']) :
+            new SandboxEnvironment($paypal_conf['client_id'], $paypal_conf['secret']);
+        $this->client = new PayPalHttpClient($environment);
     }
 
-    public function payWithpaypal(Request $request)
+    public function create(Request $request)
     {
         $input = $request::all();
         $validator = Validator::make($input, [
@@ -56,74 +51,77 @@ class PaymentController extends BaseController
             '6' => 25.99,
             '12' => 49.99,
         ];
-        $amountToBePaid = $prices[$input['period']];
-        $payer = new Payer();
-        $payer->setPaymentMethod('paypal');
-        $item = new Item();
-        $item->setName('Subscription for '.$input['period'].' month(s)')
-              ->setCurrency('EUR')
-              ->setQuantity(1)
-              ->setPrice($amountToBePaid);
-        $item_list = new ItemList();
-        $item_list->setItems(array($item));
-        $amount = new Amount();
-        $amount->setCurrency('EUR')->setTotal($amountToBePaid);
-        $redirect_urls = new RedirectUrls();
+        $request = new OrdersCreateRequest();
+        $request->prefer('return=representation');
         $url = env('SPA_URL') . '/account/';
-        $redirect_urls->setReturnUrl($url)->setCancelUrl($url);
-        $transaction = new Transaction();
-        $transaction->setAmount($amount)
-              ->setItemList($item_list)
-              ->setDescription('Your transaction description');
-        $payment = new Payment();
-        $payment->setIntent('Sale')
-              ->setPayer($payer)
-              ->setRedirectUrls($redirect_urls)
-              ->setTransactions(array($transaction));
+        $request->body = [
+            'intent' => 'CAPTURE',
+            'application_context' =>
+                [
+                    'return_url' => $url,
+                    'cancel_url' => $url
+                ],
+            'purchase_units' =>
+                [
+                    0 => [
+                        'description' => 'Subscription for '.$input['period'].' month(s)',
+                        'amount' => [
+                            'currency_code' => 'EUR',
+                            'value' => $prices[$input['period']],
+                        ],
+                    ]
+                ]
+        ];
         try {
-            $payment->create($this->_api_context);
-        } catch (\PayPal\Exception\PPConnectionException $ex) {
-            if (\Config::get('app.debug')) {
-                return $this->sendError('connection_timeout', [], 504);
-            } else {
-                return $this->sendError('unknown_error', [], 500);
+            $response = $this->client->execute($request);
+        } catch (Exception $e) {
+            return $this->sendError('paypal_error', $e->getMessage(), 500);
+        }
+        $checkout_url = '';
+        foreach ($response->result->links as $link) {
+            if ($link->rel === 'approve') {
+                $checkout_url = $link->href;
             }
         }
-        foreach ($payment->getLinks() as $link) {
-            if ($link->getRel() == 'approval_url') {
-                $redirect_url = $link->getHref();
-                break;
-            }
-        }
-        if (isset($redirect_url)) {
-            return $this->sendResponse([
-                'redirect_url' => $redirect_url
-            ], 200);
-        }
-        return $this->sendError('unknown_error', [], 500);
+        PaypalTransaction::create([
+            'user_id' => Auth::user()->id,
+            'token' => $response->result->id,
+            'url' => $checkout_url,
+            'status' => $response->result->status,
+            'period' => $input['period'],
+            'ammount' => $prices[$input['period']]
+
+        ]);
+        return $this->sendResponse(['url' => $checkout_url], 200);
     }
     
-    public function getPaymentStatus(Request $request)
+    public function check(Request $request)
     {
         $input = $request::all();
         $validator = Validator::make($input, [
-            'paymentId' => 'required',
+            'token' => 'required',
         ]);
         if ($validator->fails()) {
             return $this->sendError('bad_request', $validator->errors(), 400);
         }
-        $payment_id = $input['paymentId'];
-        if (empty($input['PayerID']) || empty($input['token'])) {
-            return $this->sendError('payment_failed', [], 400);
+        $request = new OrdersGetRequest($input['token']);
+        try {
+            $response = $this->client->execute($request);
+        } catch (Exception $e) {
+            return $this->sendError('paypal_error', $e->getMessage(), 500);
         }
-        $payment = Payment::get($payment_id, $this->_api_context);
-        $execution = new PaymentExecution();
-        $execution->setPayerId($input['PayerID']);
-        $result = $payment->execute($execution, $this->_api_context);
-        if ($result->getState() == 'approved') {
-            // TODO: Update user subscription
-            return $this->sendResponse(['message'=>'payment_success'], 200);
+        if($response->result->status === 'APPROVED'){
+            $request = new OrdersCaptureRequest($input['token']);
+            try {
+                $response = $this->client->execute($request);
+            } catch (Exception $e) {
+                return $this->sendError('paypal_error', $e->getMessage(), 500);
+            }    
+            // TO DO: update user subscription if success
         }
-        return $this->sendError('payment_failed', [], 400);
+        $transaction = PaypalTransaction::where('token', $input['token'])->first();
+        $transaction->status = $response->result->status;
+        $transaction->save();
+        return $this->sendResponse(['status' => $response->result->status], 200);
     }
 }
