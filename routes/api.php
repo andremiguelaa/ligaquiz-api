@@ -25,6 +25,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\DateController;
 use App\Http\Controllers\QuestionsTranslationsController;
 use App\Http\Controllers\ExternalQuestionController;
+use App\Http\Controllers\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -128,5 +129,8 @@ Route::group([
 
         Route::get('external-questions', [ExternalQuestionController::class, 'get']);
         Route::patch('external-questions', [ExternalQuestionController::class, 'update']);
+
+        Route::get('payment', [PaymentController::class, 'getPaymentStatus']);
+        Route::post('payment', [PaymentController::class, 'payWithpaypal']);
     });
 });
