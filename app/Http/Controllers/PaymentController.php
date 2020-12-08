@@ -12,7 +12,9 @@ use PayPalCheckoutSdk\Core\LiveEnvironment;
 use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 use PayPalCheckoutSdk\Orders\OrdersGetRequest;
 use PayPalCheckoutSdk\Orders\OrdersCaptureRequest;
+use Carbon\Carbon;
 use App\PaypalTransaction;
+use App\User;
 use App\Http\Controllers\BaseController as BaseController;
 
 class PaymentController extends BaseController
@@ -47,9 +49,9 @@ class PaymentController extends BaseController
         }
         $prices = [
             '1' => 4.99,
-            '3' => 13.99,
-            '6' => 25.99,
-            '12' => 49.99,
+            '3' => 13.98,
+            '6' => 25.98,
+            '12' => 47.88,
         ];
         $request = new OrdersCreateRequest();
         $request->prefer('return=representation');
@@ -104,24 +106,56 @@ class PaymentController extends BaseController
         if ($validator->fails()) {
             return $this->sendError('bad_request', $validator->errors(), 400);
         }
+        $transaction = PaypalTransaction::where('token', $input['token'])->first();
+        $user = User::find(Auth::user()->id);
         $request = new OrdersGetRequest($input['token']);
         try {
             $response = $this->client->execute($request);
         } catch (Exception $e) {
             return $this->sendError('paypal_error', $e->getMessage(), 500);
         }
-        if($response->result->status === 'APPROVED'){
+        if ($response->result->status === 'APPROVED') {
             $request = new OrdersCaptureRequest($input['token']);
             try {
                 $response = $this->client->execute($request);
             } catch (Exception $e) {
                 return $this->sendError('paypal_error', $e->getMessage(), 500);
-            }    
-            // TO DO: update user subscription if success
+            }
+            if (in_array('regular_player', $user->getRoles())) {
+                $startDate = new Carbon(
+                    $user->roles['regular_player']
+                );
+                $startDate->midDay()->addDays(2);
+            } else {
+                $startDate = Carbon::tomorrow()->midDay();
+                $fisrtMondayThisMonth = Carbon::tomorrow()->firstOfMonth(Carbon::MONDAY)->midDay();
+                if ($startDate >= $fisrtMondayThisMonth) {
+                    $startDate = Carbon::tomorrow()->midDay();
+                    $startDate->day = 15;
+                    $startDate->addMonth();
+                }
+                $startDate->firstOfMonth(Carbon::MONDAY)->midDay();
+            }
+            $month = $startDate->copy();
+            $month->day = 15;
+            $deadlines = [];
+            for ($i=0; $i <= 12; $i++) {
+                $firstMonday = $month->copy()->firstOfMonth(Carbon::MONDAY)->midDay();
+                if ($firstMonday > $startDate) {
+                    array_push($deadlines, $firstMonday->subDays(2)->format('Y-m-d'));
+                }
+                $month->addMonth();
+            }
+            $roles = $user->roles;
+            $roles['regular_player'] = $deadlines[$transaction->period-1];
+            $user->roles = $roles;
+            $user->save();
         }
-        $transaction = PaypalTransaction::where('token', $input['token'])->first();
         $transaction->status = $response->result->status;
         $transaction->save();
-        return $this->sendResponse(['status' => $response->result->status], 200);
+        return $this->sendResponse([
+            'status' => $response->result->status,
+            'user' => $user
+        ], 200);
     }
 }
