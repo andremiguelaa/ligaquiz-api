@@ -26,6 +26,7 @@ use App\Http\Controllers\DateController;
 use App\Http\Controllers\QuestionsTranslationsController;
 use App\Http\Controllers\ExternalQuestionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\InvitationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -132,5 +133,9 @@ Route::group([
 
         Route::post('payment/create', [PaymentController::class, 'create']);
         Route::post('payment/check', [PaymentController::class, 'check']);
+
+        Route::get('invitations', [InvitationController::class, 'get']);
+        Route::post('invitations', [InvitationController::class, 'send']);
+        Route::patch('invitations', [InvitationController::class, 'resend']);
     });
 });
