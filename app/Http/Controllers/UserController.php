@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Validation\Rule;
 use App\Rules\RoleValue;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Http\Controllers\BaseController as BaseController;
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ use App\Question;
 use App\QuizQuestion;
 use App\Answer;
 use App\NationalRanking;
+use App\Mail\NewUser;
 
 class UserController extends BaseController
 {
@@ -161,6 +163,17 @@ class UserController extends BaseController
             ]
         ];
         $user->save();
+
+        $possibleAdmins = User::where('roles', 'like', '%admin%')->get();
+        $adminEmails = $possibleAdmins->reduce(function ($carry, $item) {
+            if ($item->isAdmin()) {
+                array_push($carry, $item->email);
+            }
+            return $carry;
+        }, []);
+        Mail::bcc($adminEmails)
+            ->locale(isset($input['language']) ? $input['language'] : 'en')
+            ->send(new NewUser($user));
 
         return $this->sendResponse(null, 201);
     }
