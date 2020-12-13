@@ -257,17 +257,17 @@ class UserController extends BaseController
                 },
                 []
             );
+            $users = $users->map(function ($user) use ($usersRankingPosition) {
+                if (
+                    isset($user->individual_quiz_player) &&
+                    isset($usersRankingPosition[$user->individual_quiz_player->id])
+                ) {
+                    $user->national_rank =
+                        $usersRankingPosition[$user->individual_quiz_player->id];
+                }
+                return $user;
+            });
         }
-        $users = $users->map(function ($user) use ($usersRankingPosition) {
-            if (
-                isset($user->individual_quiz_player) &&
-                isset($usersRankingPosition[$user->individual_quiz_player->id])
-            ) {
-                $user->national_rank =
-                    $usersRankingPosition[$user->individual_quiz_player->id];
-            }
-            return $user;
-        });
         return $this->sendResponse(UserResource::collection($users), $partial ? 206 : 200);
     }
 
