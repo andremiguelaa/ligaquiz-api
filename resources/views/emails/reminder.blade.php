@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-</head>
-<body>
-    @lang('mails.hello'), {{ $user->name }}!<br>
+@extends('emails.layout.base')
+
+@section('content')
+
+    @lang('mails.hello'), {{ $user->name }}!
     @if($quiz)
+        <br>
         <br>
         @if($type === 'daily')
             @lang('mails.quiz_available')<br>
@@ -15,9 +14,10 @@
         @if ($opponent)
             @lang('mails.quiz_opponent'): {{ $opponent->name }} {{ $opponent->surname }}<br>
         @endif
-        @lang('mails.quiz_link')<br>
+        @lang('mails.quiz_link')
     @endif
     @if($special_quiz)
+        <br>
         <br>
         @if($type === 'daily')
             @lang('mails.specialquiz_available')<br>
@@ -28,25 +28,12 @@
         @if($special_quiz->author)
             @lang('mails.specialquiz_author'): {{ $special_quiz->author }}<br>
         @endif
-        @lang('mails.specialquiz_link')<br>
+        @lang('mails.specialquiz_link')
     @endif
-    <br>
     @if($type === 'daily')
+        <br>
+        <br>
         @lang('mails.deadline')
-        <br>
-        <br>
     @endif
-    <hr>
-    <br>
-    <table>
-        <tr>
-            <td>
-                <a href="https://ligaquiz.pt">
-                    <img src="https://ligaquiz.pt/logo.png" alt="Liga Quiz">
-                </a>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
 
+@endsection
