@@ -5,8 +5,8 @@
 <table>
     <tr>
         <td>
-            <a href="https://ligaquiz.pt">
-                <img src="https://ligaquiz.pt/logo.png" alt="Liga Quiz">
+            <a href="{{ env('APP_URL') }}">
+                <img src="{{ env('APP_URL') }}/logo.png" alt="Liga Quiz">
             </a>
         </td>
     </tr>
