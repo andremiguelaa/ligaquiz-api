@@ -2,7 +2,7 @@
 
 $config = \Config::get('app');
 $app_name = $config['name'];
-$url = $config['url'];
+$url = $config['spa_url'];
 
 return [
     'message_subject' => '['.$app_name.'] Sugestão/Reclamação',
