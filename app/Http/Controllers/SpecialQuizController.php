@@ -20,19 +20,20 @@ class SpecialQuizController extends BaseController
     public function get(Request $request)
     {
         $input = $request::all();
+        $authUser = Auth::user();
         if (
-            Auth::user()->hasPermission('specialquiz_create') ||
-            Auth::user()->hasPermission('specialquiz_edit') ||
-            Auth::user()->hasPermission('specialquiz_delete') ||
-            Auth::user()->hasPermission('specialquiz_play')
+            $authUser->hasPermission('specialquiz_create') ||
+            $authUser->hasPermission('specialquiz_edit') ||
+            $authUser->hasPermission('specialquiz_delete') ||
+            $authUser->hasPermission('specialquiz_play')
         ) {
             $now = Carbon::now();
             if (array_key_exists('date', $input) || array_key_exists('today', $input)) {
                 $rules = ['date' => ['date_format:Y-m-d']];
                 if (
-                    !Auth::user()->hasPermission('specialquiz_create') &&
-                    !Auth::user()->hasPermission('specialquiz_edit') &&
-                    !Auth::user()->hasPermission('specialquiz_delete')
+                    !$authUser->hasPermission('specialquiz_create') &&
+                    !$authUser->hasPermission('specialquiz_edit') &&
+                    !$authUser->hasPermission('specialquiz_delete')
                 ) {
                     array_push($rules['date'], 'before_or_equal:'.$now->format('Y-m-d'));
                 }
@@ -84,9 +85,9 @@ class SpecialQuizController extends BaseController
                     }
                 } elseif (
                     (
-                        !Auth::user()->hasPermission('specialquiz_create') &&
-                        !Auth::user()->hasPermission('specialquiz_edit') &&
-                        !Auth::user()->hasPermission('specialquiz_delete')
+                        !$authUser->hasPermission('specialquiz_create') &&
+                        !$authUser->hasPermission('specialquiz_edit') &&
+                        !$authUser->hasPermission('specialquiz_delete')
                     )
                 ) {
                     $quizzes = SpecialQuiz::where('date', '<=', $now)

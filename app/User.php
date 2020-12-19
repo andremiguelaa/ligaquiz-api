@@ -86,20 +86,28 @@ class User extends Authenticatable
         return [];
     }
 
+    public function getPermissionsList()
+    {
+        if (!isset($this->permissionsList)) {
+            $roles = $this->getRoles();
+            $rolePermissions = RolesPermissions::whereIn('role', $roles)->select('permissions')->get();
+            $permissions = [];
+            foreach ($rolePermissions as $permission) {
+                $permissions = array_unique (array_merge ($permissions, array_keys((array)json_decode($permission->permissions))));
+
+            }
+            $this->permissionsList = $permissions;
+        }
+        return $this->permissionsList;
+    }
+
     public function hasPermission($slug)
     {
         if ($this->isAdmin()) {
             return true;
         }
-        $roles = $this->getRoles();
-        $rolePermissions = RolesPermissions::whereIn('role', $roles)->select('permissions')->get();
-        foreach ($rolePermissions as $permission) {
-            if (isset(json_decode($permission->permissions)->$slug)) {
-                return true;
-            }
-        }
-
-        return false;
+        $permissions = $this->getPermissionsList();
+        return in_array($slug, $permissions);
     }
 
     public function hasBirthday()
