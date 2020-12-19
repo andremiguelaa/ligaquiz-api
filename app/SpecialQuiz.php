@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\Question;
 use App\Answer;
+use App\Cache;
 
 class SpecialQuiz extends Model
 {
@@ -79,7 +80,7 @@ class SpecialQuiz extends Model
             Answer::whereIn('question_id', $questionIds)
                 ->where('user_id', Auth::id())
                 ->where('submitted', 1)
-                ->first()
+                ->count()
         );
     }
 
@@ -89,8 +90,8 @@ class SpecialQuiz extends Model
         $questionIds = $this->questions()->get()->pluck('question_id')->toArray();
         $questions = Question::whereIn('id', $questionIds)->get();
         $completed = true;
-        if(!boolval($this->subject)){
-            return false; 
+        if (!boolval($this->subject)) {
+            return false;
         }
         foreach ($questions as $question) {
             if (
@@ -103,8 +104,12 @@ class SpecialQuiz extends Model
         return $completed;
     }
 
-    public function getResult()
+    public function getResult($rebuild = false, $startTime = null)
     {
+        $cache = Cache::where('type', 'special_quiz')->where('identifier', $this->id)->first();
+        if ($cache && !$rebuild) {
+            return $cache->value;
+        }
         $answers = $this->getSubmittedAnswers();
         if ($answers->count() !== $answers->where('corrected', 1)->count()) {
             return null;
@@ -167,9 +172,21 @@ class SpecialQuiz extends Model
             }
             $results[$key]->rank = $rank;
         }
-        return (object) [
+        $response = (object) [
             'question_statistics' => $questionStatistics,
             'ranking' => $results,
         ];
+        if ($cache) {
+            $cache->value = $response;
+            $cache->updated_at = $startTime;
+            $cache->save();
+        } else {
+            Cache::create([
+                'type' => 'special_quiz',
+                'identifier' => $this->id,
+                'value' => $response
+            ]);
+        }
+        return $response;
     }
 }

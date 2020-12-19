@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Traits\GameResults;
 use App\Game;
 use App\Round;
+use App\Cache;
 
 class League extends Model
 {
@@ -23,7 +24,12 @@ class League extends Model
         'user_ids' => 'array',
     ];
 
-    public function getData() {
+    public function getData($rebuild = false, $startTime = null)
+    {
+        $cache = Cache::where('type', 'league')->where('identifier', $this->id)->first();
+        if ($cache && !$rebuild) {
+            return $cache->value;
+        }
         $users = $this->user_ids;
         $query = Game::with('quiz');
         $roundIds = Round::where('season_id', $this->season_id)->get()->pluck('id')->toArray();
@@ -32,10 +38,22 @@ class League extends Model
         $games = $query->get();
         $rounds = $this->getGameResults($games, true);
         $ranking = $this->getRanking($users, $rounds);
-        return [
+        $response = [
             'ranking' => $ranking,
             'rounds' => $rounds
         ];
+        if ($cache) {
+            $cache->value = $response;
+            $cache->updated_at = $startTime;
+            $cache->save();
+        } else {
+            Cache::create([
+                'type' => 'league',
+                'identifier' => $this->id,
+                'value' => $response
+            ]);
+        }
+        return $response;
     }
 
     private function getRanking($users, $rounds)

@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
         Commands\DailyReminder::class,
         Commands\DeadlineReminder::class,
         Commands\CleanMedia::class,
+        Commands\UpdateCache::class,
         Commands\SpecialQuizGiveaway::class,
     ];
 
@@ -30,6 +31,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('reminder:daily')->dailyAt('00:00');
         $schedule->command('reminder:deadline')->dailyAt('22:00');
         $schedule->command('clean:media')->dailyAt('04:00');
+        $schedule->command('cache:update')->everyTwoMinutes();
     }
 
     /**
