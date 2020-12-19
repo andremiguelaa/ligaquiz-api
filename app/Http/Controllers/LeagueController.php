@@ -54,12 +54,8 @@ class LeagueController extends BaseController
             $games = $query->get();
             $rounds = $this->getGameResults($games, true);
 
-            $playersIds = League::where('season_id', $season->id)
-                ->where('tier', $input['tier'])
-                ->first()
-                ->user_ids;
             $players = [];
-            foreach ($playersIds as $id) {
+            foreach ($users as $id) {
                 $players[$id] = [
                     'id' => $id,
                     'game_points' => 0,
