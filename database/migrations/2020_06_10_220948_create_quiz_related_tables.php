@@ -38,7 +38,7 @@ class CreateQuizRelatedTables extends Migration
         });
         Schema::create('answers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('question_id');
+            $table->integer('question_id')->index();
             $table->integer('user_id');
             $table->text('text')->nullable();
             $table->integer('points');
