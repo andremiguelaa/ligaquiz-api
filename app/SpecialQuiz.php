@@ -16,6 +16,8 @@ class SpecialQuiz extends Model
         'user_id',
         'subject',
         'description',
+        'created_at',
+        'updated_at'
     ];
 
     protected $hidden = [
@@ -178,14 +180,18 @@ class SpecialQuiz extends Model
         ];
         if ($cache) {
             $cache->value = $response;
+            $cache->created_at = $startTime;
             $cache->updated_at = $startTime;
             $cache->save();
         } else {
-            Cache::create([
+            $cache = Cache::create([
                 'type' => 'special_quiz',
                 'identifier' => $this->id,
                 'value' => $response
             ]);
+            $cache->created_at = $startTime;
+            $cache->updated_at = $startTime;
+            $cache->save();
         }
         return $response;
     }

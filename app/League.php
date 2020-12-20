@@ -13,7 +13,7 @@ class League extends Model
     use GameResults;
 
     protected $fillable = [
-        'season_id', 'tier', 'user_ids'
+        'season_id', 'tier', 'user_ids', 'created_at', 'updated_at'
     ];
 
     protected $hidden = [
@@ -44,14 +44,18 @@ class League extends Model
         ];
         if ($cache) {
             $cache->value = $response;
+            $cache->created_at = $startTime;
             $cache->updated_at = $startTime;
             $cache->save();
         } else {
-            Cache::create([
+            $cache = Cache::create([
                 'type' => 'league',
                 'identifier' => $this->id,
-                'value' => $response
+                'value' => $response,
             ]);
+            $cache->created_at = $startTime;
+            $cache->updated_at = $startTime;
+            $cache->save();
         }
         return $response;
     }
