@@ -31,7 +31,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('reminder:daily')->dailyAt('00:00');
         $schedule->command('reminder:deadline')->dailyAt('22:00');
         $schedule->command('clean:media')->dailyAt('04:00');
-        $schedule->command('cache:update')->everyTwoMinutes();
+        $schedule->command('clean:logs')->dailyAt('05:00');
+        $schedule->command('content-cache:update')->everyFiveMinutes();
     }
 
     /**

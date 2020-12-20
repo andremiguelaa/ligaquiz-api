@@ -20,14 +20,14 @@ class UpdateCache extends Command
      *
      * @var string
      */
-    protected $signature = 'cache:update';
+    protected $signature = 'content-cache:update';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Update Cache';
+    protected $description = 'Update Content Cache';
 
     /**
      * Create a new command instance.
