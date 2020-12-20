@@ -190,7 +190,7 @@ class UserController extends BaseController
         }
         $partial = false;
         if (!isset($input['id'])) {
-            $users = User::all();
+            $users = User::with('individual_quiz_player')->get();
         } else {
             if (count($input['id']) > 2 && isset($input['statistics'])) {
                 return $this->sendError(
