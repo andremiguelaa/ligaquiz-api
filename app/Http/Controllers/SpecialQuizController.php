@@ -14,6 +14,7 @@ use App\SpecialQuizQuestion;
 use App\Question;
 use App\Answer;
 use App\Media;
+use App\Cache;
 
 class SpecialQuizController extends BaseController
 {
@@ -83,6 +84,27 @@ class SpecialQuizController extends BaseController
                             ->orderBy('date', 'desc')
                             ->get();
                     }
+                    $cached = Cache::where('type', 'special_quiz')->get()->groupBy('identifier');
+                    $quizzes = $quizzes->map(function ($item) use ($cached) {
+                        $ranking = isset($cached[$item->id]) &&
+                            count($cached[$item->id][0]->value['ranking']) ?
+                                $cached[$item->id][0]->value['ranking'] :
+                                null;
+                        if ($ranking) {
+                            $winners = [];
+                            foreach ($ranking as $player) {
+                                if ($player['rank'] === 1) {
+                                    array_push($winners, $player['user_id']);
+                                } else {
+                                    break;
+                                }
+                            }
+                            $item->winners = $winners;
+                        } else {
+                            $item->winners = null;
+                        }
+                        return $item ;
+                    });
                 } elseif (
                     (
                         !$authUser->hasPermission('specialquiz_create') &&
