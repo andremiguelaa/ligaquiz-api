@@ -74,6 +74,12 @@ class SpecialQuizController extends BaseController
                 return $this->sendError('not_found', [], 404);
             } else {
                 if (array_key_exists('past', $input)) {
+                    $validator = Validator::make($input, [
+                        'user' => 'exists:users,id'
+                    ]);
+                    if ($validator->fails()) {
+                        return $this->sendError('validation_error', $validator->errors(), 400);
+                    }
                     $todayQuiz = SpecialQuiz::where('date', $now->format('Y-m-d'))->first();
                     if ($todayQuiz && $todayQuiz->isSubmitted()) {
                         $quizzes = SpecialQuiz::where('date', '<=', $now->format('Y-m-d'))
@@ -85,7 +91,7 @@ class SpecialQuizController extends BaseController
                             ->get();
                     }
                     $cached = Cache::where('type', 'special_quiz')->get()->groupBy('identifier');
-                    $quizzes = $quizzes->map(function ($item) use ($cached) {
+                    $quizzes = $quizzes->map(function ($item) use ($cached, $input) {
                         $ranking = isset($cached[$item->id]) &&
                             count($cached[$item->id][0]->value['ranking']) ?
                                 $cached[$item->id][0]->value['ranking'] :
@@ -95,8 +101,14 @@ class SpecialQuizController extends BaseController
                             foreach ($ranking as $player) {
                                 if ($player['rank'] === 1) {
                                     array_push($winners, $player['user_id']);
-                                } else {
+                                } elseif (!array_key_exists('user', $input)) {
                                     break;
+                                }
+                                if (
+                                    array_key_exists('user', $input) &&
+                                    $player['user_id'] === intval($input['user'])
+                                ) {
+                                    $item->user_rank = $player['rank'];
                                 }
                             }
                             $item->winners = $winners;
