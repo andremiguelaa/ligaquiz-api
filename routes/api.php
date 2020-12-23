@@ -18,6 +18,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\SeasonController;
 use App\Http\Controllers\LeagueController;
+use App\Http\Controllers\CupController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\LogController;
@@ -112,6 +113,11 @@ Route::group([
         Route::delete('seasons', [SeasonController::class, 'delete']);
 
         Route::get('leagues', [LeagueController::class, 'get']);
+        
+        Route::get('cups', [CupController::class, 'get']);
+        Route::post('cups', [CupController::class, 'create']);
+        Route::patch('cups', [CupController::class, 'update']);
+        Route::delete('cups', [CupController::class, 'delete']);
 
         Route::get('games', [GameController::class, 'get']);
 

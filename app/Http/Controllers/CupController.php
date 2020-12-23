@@ -1,0 +1,171 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Support\Facades\Auth;
+use Request;
+use Validator;
+use Illuminate\Validation\Rule;
+use Carbon\Carbon;
+use App\Http\Controllers\BaseController as BaseController;
+use App\Season;
+use App\Round;
+use App\Cup;
+use App\CupRound;
+use App\CupGame;
+
+class CupController extends BaseController
+{
+    public function get(Request $request)
+    {
+        if (Auth::user()->hasPermission('quiz_play')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'season' => 'required|exists:seasons,season',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $season = Season::where('season', $input['season'])->first();
+            $cup = Cup::where('season_id', $season->id)->first();
+            if ($cup) {
+                // TODO: Include game brackets
+                return $this->sendResponse($cup, 200);
+            }
+            return $this->sendError('not_found', [], 404);
+        }
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function create(Request $request)
+    {
+        if (Auth::user()->hasPermission('league_create')) {
+            $input = $request::all();
+            $totalRounds = 0;
+            $minRound = 1;
+            if (isset($input['user_ids']) && is_array($input['user_ids'])) {
+                $totalRounds = intval(ceil(log(count($input['user_ids']), 2)));
+            }
+            if (isset($input['season']) && is_int($input['season'])) {
+                $season = Season::where('season', $input['season'])->first();
+                if($season){
+                    $input['season_id'] = $season->id;
+                    if (isset($input['rounds']) && is_array($input['rounds'])) {
+                        sort($input['rounds']);
+                        $rounds = Round::where('season_id', $season->id)
+                            ->whereIn('round', $input['rounds'])
+                            ->orderBy('round')
+                            ->get();
+                        $now = Carbon::now()->format('Y-m-d');
+                        $minRound = $rounds->where('date', '>', $now)->first();
+                        if($minRound){
+                            $minRound = $minRound->round;
+                        }
+                        else {
+                            $minRound = 21;
+                        }
+                    }
+                }
+            }
+            $validator = Validator::make($input, [
+                'season' => 'required|exists:seasons,season',
+                'season_id' => 'unique:cups,season_id',
+                'user_ids' => ['required', 'array'],
+                'user_ids.*' => 'exists:users,id|distinct',
+                'rounds' => ['required', 'array', 'size:'.$totalRounds],
+                'rounds.*' => 'distinct|integer|min:'.$minRound.'|max:20',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            shuffle($input['user_ids']);
+            $cup = Cup::create([
+                'season_id' => $season->id,
+                'user_ids' => $input['user_ids']
+            ]);
+            $previousRoundGames = [];
+            foreach ($input['rounds'] as $key => $round) {
+                $cupRound = CupRound::create([
+                    'cup_id' => $cup->id,
+                    'cup_round' => $key + 1,
+                    'round_id' => $rounds[$key]->id
+                ]);
+                $nextRoundPlayers = pow(2, $totalRounds-$key-1);
+                if (!$key) {
+                    $totalRoundGames = count($input['user_ids']) - $nextRoundPlayers;
+                } else {
+                    $totalRoundGames = $nextRoundPlayers;
+                }
+                if (!$key) {
+                    for ($i=0; $i < $totalRoundGames; $i++) {
+                        $game = CupGame::create([
+                            'cup_round_id' => $cupRound->id,
+                            'user_id_1' => $input['user_ids'][$i*2],
+                            'user_id_2' => $input['user_ids'][$i*2+1]
+                        ]);
+                        array_push($previousRoundGames, $game->id);
+                    }
+                    for ($i=$totalRoundGames*2+1; $i <= count($input['user_ids']); $i++) {
+                        $game = CupGame::create([
+                            'cup_round_id' => $cupRound->id,
+                            'user_id_1' => $input['user_ids'][$i-1]
+                        ]);
+                        array_push($previousRoundGames, $game->id);
+                    }
+                } else {
+                    shuffle($previousRoundGames);
+                    $thisRoundGames = [];
+                    for ($i=0; $i < $totalRoundGames; $i++) {
+                        $game = CupGame::create([
+                            'cup_round_id' => $cupRound->id,
+                            'parent_cup_game_ids' => [
+                                $previousRoundGames[$i*2],
+                                $previousRoundGames[$i*2+1]
+                            ],
+                        ]);
+                        array_push($thisRoundGames, $game->id);
+                    }
+                    $previousRoundGames = $thisRoundGames;
+                }
+            }
+            // TODO: Include game brackets
+            return $this->sendResponse($cup, 201);
+        }
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function update(Request $request)
+    {
+        if (Auth::user()->hasPermission('league_edit')) {
+            return $this->sendError('work_in_progress', [], 200);
+        }
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function delete(Request $request)
+    {
+        if (Auth::user()->hasPermission('league_delete')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'id' => 'required|exists:cups,id',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $cupRounds = CupRound::where('cup_id', $input['id'])->get();
+            $roundsIds = $cupRounds->pluck('round_id')->toArray();
+            $firstRound = Round::whereIn('id', $roundsIds)->orderBy('date', 'asc')->first();
+            $now = Carbon::now()->format('Y-m-d');
+            if ($firstRound->date > $now) {
+                Cup::where('id', $input['id'])->delete();
+                CupRound::where('cup_id', $input['id'])->delete();
+                $cupRoundsIds = $cupRounds->pluck('id')->toArray();
+                CupGame::whereIn('cup_round_id', $cupRoundsIds)->delete();
+            } else {
+                return $this->sendError('past_cup', [], 400);
+            }
+            return $this->sendResponse();
+        }
+        return $this->sendError('no_permissions', [], 403);
+    }
+}
