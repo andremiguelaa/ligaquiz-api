@@ -21,18 +21,21 @@ class CupController extends BaseController
         if (Auth::user()->hasPermission('quiz_play')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'season' => 'required|exists:seasons,season',
+                'season' => 'exists:seasons,season',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            $season = Season::where('season', $input['season'])->first();
-            $cup = Cup::where('season_id', $season->id)->first();
-            if ($cup) {
-                // TODO: Include game brackets
-                return $this->sendResponse($cup, 200);
+            if(isset($input['season'])){
+                $season = Season::where('season', $input['season'])->first();
+                $cup = Cup::with('rounds.games')->where('season_id', $season->id)->first();
+                if ($cup) {
+                    // TODO: Include game results when available
+                    return $this->sendResponse($cup, 200);
+                }
+                return $this->sendError('not_found', [], 404);
             }
-            return $this->sendError('not_found', [], 404);
+            return $this->sendResponse(Cup::all(), 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
@@ -128,7 +131,6 @@ class CupController extends BaseController
                     $previousRoundGames = $thisRoundGames;
                 }
             }
-            // TODO: Include game brackets
             return $this->sendResponse($cup, 201);
         }
         return $this->sendError('no_permissions', [], 403);
@@ -137,6 +139,7 @@ class CupController extends BaseController
     public function update(Request $request)
     {
         if (Auth::user()->hasPermission('league_edit')) {
+            // TODO: update cup
             return $this->sendError('work_in_progress', [], 200);
         }
         return $this->sendError('no_permissions', [], 403);

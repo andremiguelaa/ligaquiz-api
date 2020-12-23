@@ -36,6 +36,10 @@ class CreateCupRelatedTables extends Migration
             $table->json('parent_cup_game_ids')->nullable();
             $table->timestamps();
         });
+
+        Schema::table('answers', function (Blueprint $table) {
+            $table->integer('cup_points')->nullable()->after('points');
+        });
     }
 
     /**
@@ -48,5 +52,8 @@ class CreateCupRelatedTables extends Migration
         Schema::dropIfExists('cups');
         Schema::dropIfExists('cup_rounds');
         Schema::dropIfExists('cup_games');
+        Schema::table('answers', function (Blueprint $table) {
+            $table->dropColumn('cup_points');
+        });
     }
 }

@@ -17,4 +17,9 @@ class Cup extends Model
     protected $casts = [
         'user_ids' => 'array',
     ];
+
+    public function rounds()
+    {
+        return $this->hasMany('App\CupRound');
+    }
 }

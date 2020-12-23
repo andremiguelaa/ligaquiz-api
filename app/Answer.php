@@ -12,6 +12,7 @@ class Answer extends Model
         'user_id',
         'text',
         'points',
+        'cup_points',
         'correct',
         'corrected',
         'submitted',

@@ -13,4 +13,9 @@ class CupRound extends Model
     protected $hidden = [
         'created_at', 'updated_at'
     ];
+
+    public function games()
+    {
+        return $this->hasMany('App\CupGame');
+    }
 }
