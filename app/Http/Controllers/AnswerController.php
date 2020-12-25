@@ -127,6 +127,7 @@ class AnswerController extends BaseController
                 ],
                 'text' => 'nullable|string',
                 'points' => 'integer|min:0|max:3',
+                'cup_points' => 'integer|min:0|max:3',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -136,6 +137,7 @@ class AnswerController extends BaseController
                 'user_id' => Auth::id(),
                 'text' => isset($input['text']) ? $input['text'] : '',
                 'points' => isset($input['points']) ? $input['points'] : -1,
+                'cup_points' => isset($input['cup_points']) ? $input['cup_points'] : -1,
                 'correct' => 0,
                 'corrected' => 0,
                 'submitted' => 0,

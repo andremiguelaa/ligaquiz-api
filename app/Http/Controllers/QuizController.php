@@ -16,6 +16,7 @@ use App\Answer;
 use App\Round;
 use App\Media;
 use App\Game;
+use App\CupRound;
 
 class QuizController extends BaseController
 {
@@ -55,6 +56,17 @@ class QuizController extends BaseController
                         $quiz->solo = false;
                     } else {
                         $quiz->solo = true;
+                    }
+                    if($round){
+                        $cupRound = CupRound::with('games')->where('round_id', $round->id)->first();
+                        if($cupRound){
+                            $game = $cupRound->games->filter(function ($game) {
+                                return $game->user_id_1 === Auth::id() || $game->user_id_2 === Auth::id();
+                            })->first();
+                            if($game){
+                                $quiz->cupOpponent = $game->user_id_1 === Auth::id() ? $game->user_id_2 : $game->user_id_1;
+                            }                            
+                        }
                     }
                     $questions = $quiz->questions->map(function ($question) {
                         return $question->question;
@@ -278,10 +290,24 @@ class QuizController extends BaseController
                 'answers' => 'required|array|size:8',
                 'answers.*.question_id' => 'required|exists:questions,id',
                 'answers.*.text' => 'nullable|string',
-                'answers.*.points' => ['integer', 'min:0', 'max:3']
+                'answers.*.points' => ['integer', 'min:0', 'max:3'],
+                'answers.*.cup_points' => ['integer', 'min:0', 'max:3']
             ];
             if (!$solo) {
                 array_push($rules['answers.*.points'], 'required');
+            }
+            $cup = false;
+            if($round){
+                $cupRound = CupRound::with('games')->where('round_id', $round->id)->first();
+                if($cupRound){
+                    $game = $cupRound->games->filter(function ($game) {
+                        return $game->user_id_1 === Auth::id() || $game->user_id_2 === Auth::id();
+                    })->first();
+                    if($game){
+                        array_push($rules['answers.*.cup_points'], 'required');
+                        $cup = true;
+                    }                            
+                }
             }
             $validator = Validator::make($input, $rules);
             if ($validator->fails()) {
@@ -323,6 +349,24 @@ class QuizController extends BaseController
                 ];
                 foreach ($input['answers'] as $answer) {
                     $points[$answer['points']]++;
+                }
+                if ($points !== [0=>1, 1=>3, 2=>3, 3=>1]) {
+                    return $this->sendError(
+                        'validation_error',
+                        ["answers" => 'invalid_points'],
+                        400
+                    );
+                }
+            }
+            if ($cup) {
+                $points = [
+                    0 => 0,
+                    1 => 0,
+                    2 => 0,
+                    3 => 0
+                ];
+                foreach ($input['answers'] as $answer) {
+                    $points[$answer['cup_points']]++;
                 }
                 if ($points !== [0=>1, 1=>3, 2=>3, 3=>1]) {
                     return $this->sendError(
@@ -376,6 +420,7 @@ class QuizController extends BaseController
                     'question_id' => $answer['question_id'],
                     'text' => $answerText,
                     'points' => !$solo ? $answer['points'] : 0,
+                    'cup_points' => $cup ? $answer['cup_points'] : 0,
                     'user_id' => Auth::id(),
                     'correct' => $correct,
                     'corrected' => $corrected,

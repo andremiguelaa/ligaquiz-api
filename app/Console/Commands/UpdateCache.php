@@ -50,6 +50,7 @@ class UpdateCache extends Command
         $lastCacheRebuildTime = Cache::orderBy('updated_at', 'desc')
             ->first()
             ->updated_at;
+        // TODO: Ignore questions created today
         $updatedQuestionsIds = Answer::where('updated_at', '>', $lastCacheRebuildTime)
             ->get()
             ->pluck('question_id')

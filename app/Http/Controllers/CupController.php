@@ -35,7 +35,7 @@ class CupController extends BaseController
                 }
                 return $this->sendError('not_found', [], 404);
             }
-            return $this->sendResponse(Cup::all(), 200);
+            return $this->sendResponse(Cup::select('id', 'season_id')->get(), 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
@@ -81,56 +81,7 @@ class CupController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            shuffle($input['user_ids']);
-            $cup = Cup::create([
-                'season_id' => $season->id,
-                'user_ids' => $input['user_ids']
-            ]);
-            $previousRoundGames = [];
-            foreach ($input['rounds'] as $key => $round) {
-                $cupRound = CupRound::create([
-                    'cup_id' => $cup->id,
-                    'cup_round' => $key + 1,
-                    'round_id' => $rounds[$key]->id
-                ]);
-                $nextRoundPlayers = pow(2, $totalRounds-$key-1);
-                if (!$key) {
-                    $totalRoundGames = count($input['user_ids']) - $nextRoundPlayers;
-                } else {
-                    $totalRoundGames = $nextRoundPlayers;
-                }
-                if (!$key) {
-                    for ($i=0; $i < $totalRoundGames; $i++) {
-                        $game = CupGame::create([
-                            'cup_round_id' => $cupRound->id,
-                            'user_id_1' => $input['user_ids'][$i*2],
-                            'user_id_2' => $input['user_ids'][$i*2+1]
-                        ]);
-                        array_push($previousRoundGames, $game->id);
-                    }
-                    for ($i=$totalRoundGames*2+1; $i <= count($input['user_ids']); $i++) {
-                        $game = CupGame::create([
-                            'cup_round_id' => $cupRound->id,
-                            'user_id_1' => $input['user_ids'][$i-1]
-                        ]);
-                        array_push($previousRoundGames, $game->id);
-                    }
-                } else {
-                    shuffle($previousRoundGames);
-                    $thisRoundGames = [];
-                    for ($i=0; $i < $totalRoundGames; $i++) {
-                        $game = CupGame::create([
-                            'cup_round_id' => $cupRound->id,
-                            'parent_cup_game_ids' => [
-                                $previousRoundGames[$i*2],
-                                $previousRoundGames[$i*2+1]
-                            ],
-                        ]);
-                        array_push($thisRoundGames, $game->id);
-                    }
-                    $previousRoundGames = $thisRoundGames;
-                }
-            }
+            $cup = $this->createCup($input, $season, $rounds, $totalRounds);
             return $this->sendResponse($cup, 201);
         }
         return $this->sendError('no_permissions', [], 403);
@@ -139,8 +90,65 @@ class CupController extends BaseController
     public function update(Request $request)
     {
         if (Auth::user()->hasPermission('league_edit')) {
-            // TODO: update cup
-            return $this->sendError('work_in_progress', [], 200);
+            $input = $request::all();
+            if (isset($input['id']) && is_int($input['id'])) {
+                $oldCup = Cup::with('rounds.games')->find($input['id']);
+                if($oldCup){
+                    $startDate = Round::find($oldCup->rounds[0]->round_id)->date;
+                    $startDate = Carbon::createFromFormat('Y-m-d', $startDate)->startOfDay();
+                    if($startDate->lessThanOrEqualTo(Carbon::now())){
+                        return $this->sendError('running_cup', [], 400);
+                    }
+                }
+            }
+            $totalRounds = 0;
+            $minRound = 1;
+            if (isset($input['user_ids']) && is_array($input['user_ids'])) {
+                $totalRounds = intval(ceil(log(count($input['user_ids']), 2)));
+            }
+            if (isset($input['season']) && is_int($input['season'])) {
+                $season = Season::where('season', $input['season'])->first();
+                if($season){
+                    $input['season_id'] = $season->id;
+                    if (isset($input['rounds']) && is_array($input['rounds'])) {
+                        sort($input['rounds']);
+                        $rounds = Round::where('season_id', $season->id)
+                            ->whereIn('round', $input['rounds'])
+                            ->orderBy('round')
+                            ->get();
+                        $now = Carbon::now()->format('Y-m-d');
+                        $minRound = $rounds->where('date', '>', $now)->first();
+                        if($minRound){
+                            $minRound = $minRound->round;
+                        }
+                        else {
+                            $minRound = 21;
+                        }
+                    }
+                }
+            }
+            $validator = Validator::make($input, [
+                'id' => 'required|exists:cups',
+                'season' => 'required|exists:seasons',
+                'season_id' => [
+                    Rule::unique('cups', 'season_id')->ignore($input['id']),
+                ],
+                'user_ids' => ['required', 'array'],
+                'user_ids.*' => 'exists:users,id|distinct',
+                'rounds' => ['required', 'array', 'size:'.$totalRounds],
+                'rounds.*' => 'distinct|integer|min:'.$minRound.'|max:20',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            foreach ($oldCup->rounds as $oldRound) {
+                foreach ($oldRound->games as $oldGame) {
+                    $oldGame->delete();
+                }
+                $oldRound->delete();
+            }
+            $cup = $this->createCup($input, $season, $rounds, $totalRounds, $oldCup);
+            return $this->sendResponse($cup, 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
@@ -170,5 +178,67 @@ class CupController extends BaseController
             return $this->sendResponse();
         }
         return $this->sendError('no_permissions', [], 403);
+    }
+
+    private function createCup($input, $season, $rounds, $totalRounds, $oldCup = null) {
+        shuffle($input['user_ids']);
+        if($oldCup){
+            $oldCup->season_id = $season->id;
+            $oldCup->user_ids = $input['user_ids'];
+            $oldCup->save();
+            $cup = $oldCup;
+        }
+        else {
+            $cup = Cup::create([
+                'season_id' => $season->id,
+                'user_ids' => $input['user_ids']
+            ]);
+        }
+        $previousRoundGames = [];
+        foreach ($input['rounds'] as $key => $round) {
+            $cupRound = CupRound::create([
+                'cup_id' => $cup->id,
+                'cup_round' => $key + 1,
+                'round_id' => $rounds[$key]->id
+            ]);
+            $nextRoundPlayers = pow(2, $totalRounds-$key-1);
+            if (!$key) {
+                $totalRoundGames = count($input['user_ids']) - $nextRoundPlayers;
+            } else {
+                $totalRoundGames = $nextRoundPlayers;
+            }
+            if (!$key) {
+                for ($i=0; $i < $totalRoundGames; $i++) {
+                    $game = CupGame::create([
+                        'cup_round_id' => $cupRound->id,
+                        'user_id_1' => $input['user_ids'][$i*2],
+                        'user_id_2' => $input['user_ids'][$i*2+1]
+                    ]);
+                    array_push($previousRoundGames, $game->id);
+                }
+                for ($i=$totalRoundGames*2+1; $i <= count($input['user_ids']); $i++) {
+                    $game = CupGame::create([
+                        'cup_round_id' => $cupRound->id,
+                        'user_id_1' => $input['user_ids'][$i-1]
+                    ]);
+                    array_push($previousRoundGames, $game->id);
+                }
+            } else {
+                shuffle($previousRoundGames);
+                $thisRoundGames = [];
+                for ($i=0; $i < $totalRoundGames; $i++) {
+                    $game = CupGame::create([
+                        'cup_round_id' => $cupRound->id,
+                        'parent_cup_game_ids' => [
+                            $previousRoundGames[$i*2],
+                            $previousRoundGames[$i*2+1]
+                        ],
+                    ]);
+                    array_push($thisRoundGames, $game->id);
+                }
+                $previousRoundGames = $thisRoundGames;
+            }
+        }
+        return $cup;
     }
 }
