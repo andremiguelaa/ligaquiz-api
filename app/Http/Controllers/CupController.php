@@ -30,7 +30,7 @@ class CupController extends BaseController
                 $season = Season::where('season', $input['season'])->first();
                 $cup = Cup::with('rounds.games')->where('season_id', $season->id)->first();
                 if ($cup) {
-                    // TODO: Include game results when available
+                    $cup->rounds = $cup->getData();
                     return $this->sendResponse($cup, 200);
                 }
                 return $this->sendError('not_found', [], 404);

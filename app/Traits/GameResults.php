@@ -29,12 +29,6 @@ trait GameResults
             );
         }
 
-        $playerIds = [];
-        foreach ($games as $game) {
-            array_push($playerIds, $game->user_id_1);
-            array_push($playerIds, $game->user_id_2);
-        }
-
         $answers = Answer::whereIn('question_id', $questionIds)
             ->where('submitted', 1)
             ->select('user_id', 'question_id', 'points', 'correct', 'corrected')
