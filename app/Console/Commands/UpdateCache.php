@@ -50,8 +50,9 @@ class UpdateCache extends Command
         $lastCacheRebuildTime = Cache::orderBy('updated_at', 'desc')
             ->first()
             ->updated_at;
-        // TODO: Ignore questions created today
+        $todayStartTime = Carbon::now()->startOfDay();
         $updatedQuestionsIds = Answer::where('updated_at', '>', $lastCacheRebuildTime)
+            ->where('created_at', '<', $todayStartTime)
             ->get()
             ->pluck('question_id')
             ->unique()
