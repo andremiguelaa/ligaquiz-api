@@ -29,6 +29,7 @@ trait CupGameResults
         $quizzesByDate = $quizzes->groupBy('date');
 
         foreach ($rounds as $key => $round) {
+            $round->date = $dates[$key];
             $round->games->map(function ($game) use ($key, $dates, $quizzesByDate, $answers) {
                 $now = Carbon::now()->format('Y-m-d');
                 $roundDate = $dates[$key];
