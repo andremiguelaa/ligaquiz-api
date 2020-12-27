@@ -28,6 +28,6 @@ class Cup extends Model
 
     public function getData()
     {
-        return $this->getRoundResults($this->rounds);
+        return $this->getRoundsResults($this);
     }
 }

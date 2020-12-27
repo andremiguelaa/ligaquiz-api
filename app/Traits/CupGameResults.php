@@ -9,8 +9,9 @@ use App\Answer;
 
 trait CupGameResults
 {
-    public function getRoundResults($rounds)
+    public function getRoundsResults($cup)
     {
+        $rounds = $cup->rounds;
         $roundIds = $rounds->pluck('round_id')->toArray();
         $dates = Round::whereIn('id', $roundIds)->get()->pluck('date')->toArray();
         $quizzes = Quiz::with('questions')->whereIn('date', $dates)->get();
@@ -30,7 +31,7 @@ trait CupGameResults
 
         foreach ($rounds as $key => $round) {
             $round->date = $dates[$key];
-            $round->games->map(function ($game) use ($key, $dates, $quizzesByDate, $answers) {
+            $round->games->map(function ($game) use ($cup, $key, $dates, $quizzesByDate, $answers) {
                 $now = Carbon::now()->format('Y-m-d');
                 $roundDate = $dates[$key];
                 $game->done = $roundDate && $now > $roundDate;
@@ -128,9 +129,67 @@ trait CupGameResults
                         }
                     }
                 }
+                if ($game->solo) {
+                    $game->winner = $game->user_id_1;
+                } elseif (
+                    is_numeric($game->user_id_1_game_points) &&
+                    is_numeric($game->user_id_2_game_points)
+                ) {
+                    if ($game->user_id_1_game_points > $game->user_id_2_game_points) {
+                        $game->winner = $game->user_id_1;
+                    } elseif ($game->user_id_1_game_points < $game->user_id_2_game_points) {
+                        $game->winner = $game->user_id_2;
+                    }
+                } elseif (
+                    is_numeric($game->user_id_1_game_points) &&
+                    $game->user_id_2_game_points !== 'P'
+                ) {
+                    $game->winner = $game->user_id_1;
+                } elseif (
+                    is_numeric($game->user_id_2_game_points) &&
+                    $game->user_id_1_game_points !== 'P'
+                ) {
+                    $game->winner = $game->user_id_2;
+                }
+                if (!isset($game->winner)) {
+                    if (
+                        isset($cup->tiebreakers[$game->user_id_1]) &&
+                        isset($cup->tiebreakers[$game->user_id_1]['current_tier']) &&
+                        isset($cup->tiebreakers[$game->user_id_1]['last_tier']) &&
+                        isset($cup->tiebreakers[$game->user_id_2]) &&
+                        isset($cup->tiebreakers[$game->user_id_2]['current_tier']) &&
+                        isset($cup->tiebreakers[$game->user_id_2]['last_tier'])
+                    ) {
+                        if ($cup->tiebreakers[$game->user_id_1]['current_tier'] > $cup->tiebreakers[$game->user_id_2]['current_tier']) {
+                            $game->winner = $game->user_id_1;
+                        } elseif ($cup->tiebreakers[$game->user_id_1]['current_tier'] < $cup->tiebreakers[$game->user_id_2]['current_tier']) {
+                            $game->winner = $game->user_id_2;
+                        }
+                        if (!isset($game->winner)) {
+                            if ($cup->tiebreakers[$game->user_id_1]['last_tier'] > $cup->tiebreakers[$game->user_id_2]['last_tier']) {
+                                $game->winner = $game->user_id_1;
+                            } elseif ($cup->tiebreakers[$game->user_id_1]['last_tier'] < $cup->tiebreakers[$game->user_id_2]['last_tier']) {
+                                $game->winner = $game->user_id_2;
+                            }
+                            if (!isset($game->winner)) {
+                                if ($cup->tiebreakers[$game->user_id_1]['last_rank'] > $cup->tiebreakers[$game->user_id_2]['last_rank']) {
+                                    $game->winner = $game->user_id_1;
+                                } elseif ($cup->tiebreakers[$game->user_id_1]['last_rank'] < $cup->tiebreakers[$game->user_id_2]['last_rank']) {
+                                    $game->winner = $game->user_id_2;
+                                }   
+                            }
+                        }
+                    }
+                    if (!isset($game->winner)) {
+                        if ($game->user_id_1 > $game->user_id_2) {
+                            $game->winner = $game->user_id_1;
+                        } else {
+                            $game->winner = $game->user_id_2;
+                        }
+                    }
+                }
                 unset($game->solo);
                 unset($game->cup_round_id);
-                // TODO: Calculate game winner
                 return $game;
             });
         }
