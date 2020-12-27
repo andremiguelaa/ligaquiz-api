@@ -126,10 +126,10 @@ trait CupGameResults
                                 foreach ($questionIds as $questionId) {
                                     $game->user_id_1_game_points +=
                                         $answers[$questionId][$game->user_id_1]->first()->correct *
-                                            $answers[$questionId][$game->user_id_2]->first()->points;
+                                            $answers[$questionId][$game->user_id_2]->first()->cup_points;
                                     $game->user_id_2_game_points +=
                                         $answers[$questionId][$game->user_id_2]->first()->correct *
-                                            $answers[$questionId][$game->user_id_1]->first()->points;
+                                            $answers[$questionId][$game->user_id_1]->first()->cup_points;
                                 }
                             }
                         }
