@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use PayPalCheckoutSdk\Core\PayPalHttpClient;
 use PayPalCheckoutSdk\Core\SandboxEnvironment;
-use PayPalCheckoutSdk\Core\LiveEnvironment;
+use PayPalCheckoutSdk\Core\ProductionEnvironment;
 use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 use PayPalCheckoutSdk\Orders\OrdersGetRequest;
 use PayPalCheckoutSdk\Orders\OrdersCaptureRequest;
@@ -23,7 +23,7 @@ class PaymentController extends BaseController
     {
         $paypal_conf = \Config::get('paypal');
         $environment = $paypal_conf['mode'] === 'live' ?
-            new LiveEnvironment($paypal_conf['client_id'], $paypal_conf['secret']) :
+            new ProductionEnvironment($paypal_conf['client_id'], $paypal_conf['secret']) :
             new SandboxEnvironment($paypal_conf['client_id'], $paypal_conf['secret']);
         $this->client = new PayPalHttpClient($environment);
     }
