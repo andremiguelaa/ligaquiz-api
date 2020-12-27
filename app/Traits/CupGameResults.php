@@ -176,7 +176,7 @@ trait CupGameResults
                                     $game->winner = $game->user_id_1;
                                 } elseif ($cup->tiebreakers[$game->user_id_1]['last_rank'] < $cup->tiebreakers[$game->user_id_2]['last_rank']) {
                                     $game->winner = $game->user_id_2;
-                                }   
+                                }
                             }
                         }
                     }
@@ -187,6 +187,9 @@ trait CupGameResults
                             $game->winner = $game->user_id_2;
                         }
                     }
+                }
+                if ($game->corrected) {
+                    unset($game->winner);
                 }
                 unset($game->solo);
                 unset($game->cup_round_id);
