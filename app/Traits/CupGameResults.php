@@ -41,7 +41,6 @@ trait CupGameResults
                     $game->user_id_1_submitted_answers = 0;
                     $game->user_id_1_corrected_answers = 0;
                     $game->user_id_1_correct_answers = 0;
-    
                     if (!$game->solo) {
                         $game->user_id_2_game_points = 0;
                         $game->user_id_2_submitted_answers = 0;
@@ -69,20 +68,13 @@ trait CupGameResults
                             }
                         }
                     }
-                    
                     if (!$game->user_id_1_submitted_answers) {
                         $game->user_id_1_game_points = 'F';
                     } elseif ($game->user_id_1_corrected_answers < 8) {
                         $game->user_id_1_game_points = 'P';
                         $game->user_id_1_correct_answers = 'P';
                         $game->corrected = false;
-                    } else {
-                        if ($game->solo) {
-                            $game->user_id_1_game_points =
-                                1 + 0.5 * $game->user_id_1_correct_answers;
-                        }
                     }
-    
                     if (!$game->solo) {
                         if (!$game->user_id_2_submitted_answers) {
                             $game->user_id_2_game_points = 'F';
@@ -136,8 +128,9 @@ trait CupGameResults
                         }
                     }
                 }
-                $game->makeHidden('quiz');
-                $game->makeHidden('round_id');
+                unset($game->solo);
+                unset($game->cup_round_id);
+                // TODO: Calculate game winner
                 return $game;
             });
         }

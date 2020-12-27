@@ -33,7 +33,6 @@ class CreateCupRelatedTables extends Migration
             $table->integer('cup_round_id');
             $table->integer('user_id_1')->nullable();
             $table->integer('user_id_2')->nullable();
-            $table->json('parent_cup_game_ids')->nullable();
             $table->timestamps();
         });
 
