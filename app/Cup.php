@@ -10,7 +10,7 @@ class Cup extends Model
     use CupGameResults;
 
     protected $fillable = [
-        'season_id', 'user_ids'
+        'season_id', 'tiebreakers'
     ];
 
     protected $hidden = [
@@ -18,7 +18,7 @@ class Cup extends Model
     ];
 
     protected $casts = [
-        'user_ids' => 'array',
+        'tiebreakers' => 'array',
     ];
 
     public function rounds()

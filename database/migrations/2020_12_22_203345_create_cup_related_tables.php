@@ -16,7 +16,7 @@ class CreateCupRelatedTables extends Migration
         Schema::create('cups', function (Blueprint $table) {
             $table->id();
             $table->integer('season_id');
-            $table->json('user_ids');
+            $table->json('tiebreakers');
             $table->timestamps();
         });
 

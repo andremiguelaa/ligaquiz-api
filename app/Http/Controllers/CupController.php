@@ -13,6 +13,7 @@ use App\Round;
 use App\Cup;
 use App\CupRound;
 use App\CupGame;
+use App\Cache;
 
 class CupController extends BaseController
 {
@@ -191,15 +192,31 @@ class CupController extends BaseController
     private function createCup($input, $season, $rounds, $totalRounds, $oldCup = null)
     {
         shuffle($input['user_ids']);
+        $tiebreakers = [];
+        if ($season->season > 1) {
+            $lastSeason = Season::with('leagues')->where('season', $season->season - 1)->first();
+            $lastSeasonLeagues = $lastSeason->leagues;
+            $lastSeasonLeaguesWithData = Cache::where('type', 'league')
+                ->whereIn('identifier', $lastSeasonLeagues->pluck('id')->toArray())
+                ->get();
+            foreach ($lastSeasonLeaguesWithData as $league) {
+                $tier = $lastSeasonLeagues->find($league->identifier)->tier;
+                foreach ($league->value['ranking'] as $player) {
+                    if(in_array($player['id'], $input['user_ids'])){
+                        $tiebreakers[$player['id']] = (1/$tier)*1000000 + (1/$player['rank'])*10000;
+                    }
+                }
+            }
+        }
         if ($oldCup) {
             $oldCup->season_id = $season->id;
-            $oldCup->user_ids = $input['user_ids'];
+            $oldCup->tiebreakers = $tiebreakers;
             $oldCup->save();
             $cup = $oldCup;
         } else {
             $cup = Cup::create([
                 'season_id' => $season->id,
-                'user_ids' => $input['user_ids']
+                'tiebreakers' => $tiebreakers
             ]);
         }
         $previousRoundGames = [];
