@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Carbon\Carbon;
 use App\Log;
 
-class CleanMedia extends Command
+class CleanLogs extends Command
 {
     /**
      * The name and signature of the console command.
