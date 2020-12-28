@@ -7,7 +7,7 @@ use App\Round;
 use App\Quiz;
 use App\Answer;
 
-trait CupGameResults
+trait Cup
 {
     public function getRoundsResults($cup)
     {

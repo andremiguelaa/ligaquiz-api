@@ -3,11 +3,11 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CupGameResults;
+use App\Traits\Cup as CupTrait;
 
 class Cup extends Model
 {
-    use CupGameResults;
+    use CupTrait;
 
     protected $fillable = [
         'season_id', 'tiebreakers'
