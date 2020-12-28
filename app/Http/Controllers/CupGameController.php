@@ -11,6 +11,7 @@ use App\CupRound;
 use App\CupGame;
 use App\Quiz;
 use App\Answer;
+use App\Media;
 use App\Traits\Cup as CupTrait;
 
 class CupGameController extends BaseController
@@ -46,27 +47,56 @@ class CupGameController extends BaseController
                 if (!$cupGames->count()) {
                     return $this->sendError('not_found', [], 404);
                 }
-                $dates = $cupGames->pluck('cupRound.round.date')->toArray();
-                $quizzes = Quiz::with('questions')->whereIn('date', $dates)->get();
-                $questionIds = [];
-                foreach ($quizzes as $quiz) {
-                    $questionIds = array_merge(
-                        $questionIds,
-                        $quiz->questions->pluck('question_id')->toArray()
-                    );
-                }
+                $quiz = Quiz::with('questions')
+                    ->where('date', $input['date'])
+                    ->first()
+                    ->makeHidden(['id','past','today']);
+                $questionIds = $quiz->questions->pluck('question_id')->toArray();
                 $answers = Answer::whereIn('question_id', $questionIds)
                     ->where('submitted', 1)
                     ->select('user_id', 'question_id', 'cup_points', 'correct', 'corrected')
                     ->get()
-                    ->groupBy(['question_id', 'user_id']);
-                $quizzesByDate = $quizzes->groupBy('date');
-                $result = $this->getCupGameResults(
+                    ->makeHidden(['user_id','question_id','time']);
+                $answersByQuestionId = $answers->groupBy(['question_id']);
+                $groupedAnswers = $answers->groupBy(['question_id', 'user_id']);
+                $quizzesByDate = [$input['date'] => array($quiz)];
+                $this->getCupGameResults(
                     $cupGames,
                     $quizzesByDate,
-                    $answers
+                    $groupedAnswers
                 );
-                return $this->sendResponse($cupGames[0], 200);
+                $response = $cupGames[0];
+                $response->quiz = [
+                    'date' => $quiz->date,
+                    'questions' => $quiz
+                        ->questions
+                        ->map(function ($item) use ($answersByQuestionId) {
+                            $question = $item->question;
+                            if ($answersByQuestionId->count()) {
+                                $question->percentage =
+                                    $answersByQuestionId[$item->question_id]->where('correct', 1)->count() /
+                                    $answersByQuestionId[$item->question_id]->count() *
+                                    100;
+                            }
+                            return $question;
+                        })
+                ];
+                $response->answers = $groupedAnswers;
+                $mediaIds = $quiz->questions->map(function ($question) {
+                    return $question->media_id;
+                })->toArray();
+                $response->media = array_reduce(
+                    Media::whereIn('id', $mediaIds)->get()->toArray(),
+                    function ($carry, $item) {
+                        $mediaFile = $item;
+                        unset($mediaFile['id']);
+                        $carry[$item['id']] = $mediaFile;
+                        return $carry;
+                    },
+                    []
+                );
+                unset($response->cupRound);
+                return $this->sendResponse($response, 200);
             } else {
                 $cupGames = CupGame::with('cupRound.round')
                     ->with('cup')
@@ -95,7 +125,7 @@ class CupGameController extends BaseController
                     ->get()
                     ->groupBy(['question_id', 'user_id']);
                 $quizzesByDate = $quizzes->groupBy('date');
-                $result = $this->getCupGameResults(
+                $this->getCupGameResults(
                     $cupGames,
                     $quizzesByDate,
                     $answers
