@@ -18,4 +18,14 @@ class CupRound extends Model
     {
         return $this->hasMany('App\CupGame');
     }
+
+    public function round()
+    {
+        return $this->hasOne('App\Round', 'id', 'round_id');
+    }
+
+    public function cup()
+    {
+        return $this->hasOne('App\Cup', 'id', 'cup_id');
+    }
 }

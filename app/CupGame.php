@@ -13,4 +13,21 @@ class CupGame extends Model
     protected $hidden = [
         'created_at', 'updated_at'
     ];
+
+    public function cupRound()
+    {
+        return $this->hasOne('App\CupRound', 'id', 'cup_round_id');
+    }
+
+    public function cup()
+    {
+        return $this->hasOneThrough(
+            'App\Cup',
+            'App\CupRound',
+            'cup_id',
+            'id',
+            'cup_round_id',
+            'id'
+        );
+    }
 }
