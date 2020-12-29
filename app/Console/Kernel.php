@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         Commands\CleanMedia::class,
         Commands\UpdateCache::class,
         Commands\SpecialQuizGiveaway::class,
+        Commands\CupDraw::class,
     ];
 
     /**
@@ -33,6 +34,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('clean:media')->dailyAt('04:00');
         $schedule->command('clean:logs')->dailyAt('05:00');
         $schedule->command('content-cache:update')->everyFiveMinutes();
+        $schedule->command('cup:draw')->everySixHours();;
     }
 
     /**

@@ -240,7 +240,6 @@ class CupController extends BaseController
                 'tiebreakers' => $tiebreakers
             ]);
         }
-        $previousRoundGames = [];
         foreach ($input['rounds'] as $key => $round) {
             $cupRound = CupRound::create([
                 'cup_id' => $cup->id,
@@ -256,14 +255,12 @@ class CupController extends BaseController
                         'user_id_1' => $input['user_ids'][$i*2],
                         'user_id_2' => $input['user_ids'][$i*2+1]
                     ]);
-                    array_push($previousRoundGames, $game->id);
                 }
                 for ($i=$totalRoundGames*2+1; $i <= count($input['user_ids']); $i++) {
                     $game = CupGame::create([
                         'cup_round_id' => $cupRound->id,
                         'user_id_1' => $input['user_ids'][$i-1]
                     ]);
-                    array_push($previousRoundGames, $game->id);
                 }
             }
         }
