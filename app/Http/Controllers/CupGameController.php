@@ -81,7 +81,14 @@ class CupGameController extends BaseController
                             return $question;
                         })
                 ];
-                $response->answers = $groupedAnswers;
+                $response->answers = $groupedAnswers->map(function ($question) use ($input) {
+                    return [
+                        $input['user'] => $question->get($input['user']) ?
+                            $question->get($input['user'])[0] : null,
+                        $input['opponent'] => $question->get($input['opponent']) ?
+                            $question->get($input['opponent'])[0] : null,
+                    ];
+                });
                 $mediaIds = array_filter($quiz->questions->pluck('question.media_id')->toArray());
                 $response->media = array_reduce(
                     Media::whereIn('id', $mediaIds)->get()->toArray(),
