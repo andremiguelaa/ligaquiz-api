@@ -82,9 +82,7 @@ class CupGameController extends BaseController
                         })
                 ];
                 $response->answers = $groupedAnswers;
-                $mediaIds = $quiz->questions->map(function ($question) {
-                    return $question->media_id;
-                })->toArray();
+                $mediaIds = array_filter($quiz->questions->pluck('question.media_id')->toArray());
                 $response->media = array_reduce(
                     Media::whereIn('id', $mediaIds)->get()->toArray(),
                     function ($carry, $item) {
