@@ -85,7 +85,8 @@ class SeasonController extends BaseController
                     $seasons = $seasons->map(function ($season) use ($userLeagueRanks, $leagueIds) {
                         $league = $season->leagues->whereIn('id', $leagueIds)->first();
                         if ($league) {
-                            $season->user_rank =$userLeagueRanks[$league->id];
+                            $season->user_tier = $league->tier;
+                            $season->user_rank = $userLeagueRanks[$league->id];
                         }
                         $season->makeHidden('rounds');
                         $season->makeHidden('leagues');
