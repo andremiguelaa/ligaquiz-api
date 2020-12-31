@@ -87,8 +87,8 @@ class SeasonController extends BaseController
                         if ($league) {
                             $season->user_rank =$userLeagueRanks[$league->id];
                         }
-                        $season->rounds->makeHidden('season_id');
-                        $season->leagues->makeHidden('season_id');
+                        $season->makeHidden('rounds');
+                        $season->makeHidden('leagues');
                         return $season;
                     });
                 } else {
