@@ -15,6 +15,7 @@ use App\Round;
 use App\Game;
 use App\Quiz;
 use App\Question;
+use App\Cache;
 
 class SeasonController extends BaseController
 {
@@ -40,7 +41,9 @@ class SeasonController extends BaseController
                     ->first();
                 $season->rounds->makeHidden('season_id');
                 $season->leagues->makeHidden('season_id');
-                $quizzes = Quiz::with('questions')->whereIn('date', $season->rounds->pluck('date')->toArray())->get();
+                $quizzes = Quiz::with('questions')
+                    ->whereIn('date', $season->rounds->pluck('date')->toArray())
+                    ->get();
                 $questionIds = [];
                 foreach ($quizzes->pluck('questions.*.question_id')->toArray() as $value) {
                     $questionIds = array_merge($questionIds, $value);
@@ -58,14 +61,46 @@ class SeasonController extends BaseController
                 $season->genre_stats = (object) $genreStats;
                 return $this->sendResponse($season, 200);
             } else {
-                $seasons = Season::with(['rounds', 'leagues'])
+                if (array_key_exists('user', $input)) {
+                    $validator = Validator::make($input, [
+                        'user' => 'exists:users,id'
+                    ]);
+                    if ($validator->fails()) {
+                        return $this->sendError('validation_error', $validator->errors(), 400);
+                    }
+                    $leagues = Cache::where('type', 'league')->get()->toArray();
+                    $userLeagueRanks = array_reduce($leagues, function ($acc, $league) use ($input) {
+                        foreach ($league['value']['ranking'] as $user) {
+                            if ($user['id'] === intval($input['user'])) {
+                                $acc[$league['identifier']] = $user['rank'];
+                                break;
+                            }
+                        }
+                        return $acc;
+                    }, []);
+                    $leagueIds = array_keys($userLeagueRanks);
+                    $seasons = Season::with(['rounds', 'leagues'])
                         ->orderBy('season', 'desc')
                         ->get();
-                $seasons = $seasons->map(function ($season) {
-                    $season->rounds->makeHidden('season_id');
-                    $season->leagues->makeHidden('season_id');
-                    return $season;
-                });
+                    $seasons = $seasons->map(function ($season) use ($userLeagueRanks, $leagueIds) {
+                        $league = $season->leagues->whereIn('id', $leagueIds)->first();
+                        if ($league) {
+                            $season->user_rank =$userLeagueRanks[$league->id];
+                        }
+                        $season->rounds->makeHidden('season_id');
+                        $season->leagues->makeHidden('season_id');
+                        return $season;
+                    });
+                } else {
+                    $seasons = Season::with(['rounds', 'leagues'])
+                        ->orderBy('season', 'desc')
+                        ->get();
+                    $seasons = $seasons->map(function ($season) {
+                        $season->rounds->makeHidden('season_id');
+                        $season->leagues->makeHidden('season_id');
+                        return $season;
+                    });
+                }
                 return $this->sendResponse($seasons, 200);
             }
         }
