@@ -48,10 +48,10 @@ class PaymentController extends BaseController
             return $this->sendError('bad_request', $validator->errors(), 400);
         }
         $prices = [
-            '1' => 4.99,
-            '3' => 13.98,
-            '6' => 25.98,
-            '12' => 47.88,
+            '1' => env('PRICE_1_MONTH'),
+            '3' => env('PRICE_3_MONTHS'),
+            '6' => env('PRICE_6_MONTHS'),
+            '12' => env('PRICE_12_MONTHS'),
         ];
         $request = new OrdersCreateRequest();
         $request->prefer('return=representation');
