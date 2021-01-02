@@ -16,6 +16,9 @@ use App\Game;
 use App\Quiz;
 use App\Question;
 use App\Cache;
+use App\Cup;
+use App\CupRound;
+use App\CupGame;
 
 class SeasonController extends BaseController
 {
@@ -218,6 +221,15 @@ class SeasonController extends BaseController
                 Round::where('season_id', $input['id'])->delete();
                 League::where('season_id', $input['id'])->delete();
                 Game::whereIn('round_id', $oldRoundsIds)->delete();
+                $cup = Cup::where('season_id', $input['id'])->first();
+                if($cup){
+                    $cupRounds = CupRound::where('cup_id', $cup->id)->get();
+                    $roundsIds = $cupRounds->pluck('round_id')->toArray();
+                    $cup->delete();
+                    CupRound::where('cup_id', $cup->id)->delete();
+                    $cupRoundsIds = $cupRounds->pluck('id')->toArray();
+                    CupGame::whereIn('cup_round_id', $cupRoundsIds)->delete();
+                }
             } else {
                 return $this->sendError('past_season', [], 400);
             }
