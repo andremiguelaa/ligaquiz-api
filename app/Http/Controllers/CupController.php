@@ -99,7 +99,7 @@ class CupController extends BaseController
     {
         if (Auth::user()->hasPermission('league_edit')) {
             $input = $request::all();
-            if (isset($input['id']) && is_int($input['id'])) {
+            if (isset($input['id'])) {
                 $oldCup = Cup::with('rounds.games')->find($input['id']);
                 if ($oldCup) {
                     $startDate = Round::find($oldCup->rounds[0]->round_id)->date;
