@@ -262,6 +262,6 @@ class CupController extends BaseController
                 }
             }
         }
-        return $cup;
+        return Cup::with('rounds.games')->find($cup->id);
     }
 }
