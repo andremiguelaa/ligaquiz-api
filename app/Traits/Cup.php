@@ -216,6 +216,7 @@ trait Cup
             ->groupBy(['question_id', 'user_id']);
         $quizzesByDate = $quizzes->groupBy('date');
         foreach ($rounds as $key => $round) {
+            $round->leagueRound = $round->round->round;
             $round->date = $dates[$key];
             $roundDate = $round->date;
             $round->games = $this->getCupGameResults(
