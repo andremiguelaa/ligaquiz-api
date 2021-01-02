@@ -114,7 +114,7 @@ class CupController extends BaseController
             if (isset($input['user_ids']) && is_array($input['user_ids'])) {
                 $totalRounds = intval(ceil(log(count($input['user_ids']), 2)));
             }
-            if (isset($input['season']) && is_int($input['season'])) {
+            if (isset($input['season'])) {
                 $season = Season::with('leagues')->where('season', $input['season'])->first();
                 if ($season) {
                     $input['season_id'] = $season->id;
