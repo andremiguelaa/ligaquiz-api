@@ -134,7 +134,7 @@ trait Cup
                     $game->winner = $game->user_id_2;
                 }
                 if (!isset($game->winner)) {
-                    $cup = $game->cup;
+                    $cup = $game->cupRound->cup;
                     if (
                         isset($cup->tiebreakers[$game->user_id_1]) &&
                         isset($cup->tiebreakers[$game->user_id_1]['current_tier']) &&

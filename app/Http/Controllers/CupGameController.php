@@ -39,7 +39,11 @@ class CupGameController extends BaseController
                 if (!isset($cupRound)) {
                     return $this->sendError('not_found', [], 404);
                 }
-                $cupGames = CupGame::with('cupRound.round.quiz.questions.question')
+                $cupGames = CupGame::with(
+                    [
+                        'cupRound.round.quiz.questions.question',
+                        'cupRound.cup'
+                    ])
                     ->where('cup_round_id', $cupRound->id)
                     ->where('user_id_1', $input['user'])
                     ->where('user_id_2', $input['opponent'])
@@ -103,8 +107,7 @@ class CupGameController extends BaseController
                 unset($response->cupRound);
                 return $this->sendResponse($response, 200);
             } else {
-                $cupGames = CupGame::with('cupRound.round')
-                    ->with('cup')
+                $cupGames = CupGame::with(['cupRound.round', 'cupRound.cup'])
                     ->where(function ($userQuery) use ($input) {
                         $userQuery
                             ->where('user_id_1', $input['user'])

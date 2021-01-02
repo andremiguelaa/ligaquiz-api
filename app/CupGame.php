@@ -18,16 +18,4 @@ class CupGame extends Model
     {
         return $this->hasOne('App\CupRound', 'id', 'cup_round_id');
     }
-
-    public function cup()
-    {
-        return $this->hasOneThrough(
-            'App\Cup',
-            'App\CupRound',
-            'cup_id',
-            'id',
-            'cup_round_id',
-            'id'
-        );
-    }
 }

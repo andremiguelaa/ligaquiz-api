@@ -29,8 +29,7 @@ class CupController extends BaseController
             }
             if (isset($input['season'])) {
                 $season = Season::where('season', $input['season'])->first();
-                $cup = Cup::with('rounds.games.cup')
-                    ->with('rounds.games.cupRound')
+                $cup = Cup::with('rounds.games.cupRound.cup')
                     ->where('season_id', $season->id)->first();
                 if ($cup) {
                     $cup->rounds = $cup->getData();
