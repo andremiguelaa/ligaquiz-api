@@ -25,7 +25,6 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\DateController;
-use App\Http\Controllers\QuestionsTranslationsController;
 use App\Http\Controllers\ExternalQuestionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\InvitationController;
@@ -132,10 +131,6 @@ Route::group([
         Route::post('messages', [MessageController::class, 'send']);
 
         Route::get('date', [DateController::class, 'get']);
-
-        Route::get('questions-translations', [QuestionsTranslationsController::class, 'get']);
-        Route::post('questions-translations', [QuestionsTranslationsController::class, 'create']);
-        Route::patch('questions-translations', [QuestionsTranslationsController::class, 'update']);
 
         Route::get('external-questions', [ExternalQuestionController::class, 'get']);
         Route::patch('external-questions', [ExternalQuestionController::class, 'update']);

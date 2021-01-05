@@ -15,7 +15,6 @@ use App\SpecialQuizQuestion;
 use App\SpecialQuiz;
 use App\Round;
 use App\Genre;
-use App\QuestionsTranslations;
 
 class QuestionController extends BaseController
 {
@@ -26,8 +25,7 @@ class QuestionController extends BaseController
             Auth::user()->hasPermission('quiz_create') ||
             Auth::user()->hasPermission('quiz_edit') ||
             Auth::user()->hasPermission('quiz_play') ||
-            Auth::user()->hasPermission('specialquiz_play') ||
-            Auth::user()->hasPermission('translate')
+            Auth::user()->hasPermission('specialquiz_play')
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
@@ -51,8 +49,7 @@ class QuestionController extends BaseController
                 !(
                     Auth::user()->isAdmin() ||
                     Auth::user()->hasPermission('quiz_create') ||
-                    Auth::user()->hasPermission('quiz_edit') ||
-                    Auth::user()->hasPermission('translate')
+                    Auth::user()->hasPermission('quiz_edit')
                 )
             ) {
                 return $this->sendError('no_permissions', [], 403);
@@ -112,25 +109,6 @@ class QuestionController extends BaseController
                         return $question;
                     }
                 );
-                if (Auth::user()->hasPermission('translate')) {
-                    $translations = QuestionsTranslations::whereIn('question_id', $questionIds)
-                        ->select('question_id', 'user_id', 'used')
-                        ->get()
-                        ->keyBy('question_id');
-                    $questions->getCollection()->transform(
-                        function ($question) use ($translations) {
-                            if (isset($translations[$question->id])) {
-                                $question->translated = true;
-                                $question->translator = $translations[$question->id]['user_id'];
-                                $question->translation_used = $translations[$question->id]['used'];
-                            }
-                            else {
-                                $question->translated = false;
-                            }
-                            return $question;
-                        }
-                    );
-                }
                 $response = $questions;
             } elseif (isset($input['id'])) {
                 if (count($input['id']) === 1) {
@@ -143,8 +121,7 @@ class QuestionController extends BaseController
                                 Auth::user()->isAdmin() ||
                                 Auth::user()->hasPermission('quiz_create') ||
                                 Auth::user()->hasPermission('quiz_edit') ||
-                                Auth::user()->hasPermission('quiz_play') ||
-                                Auth::user()->hasPermission('translate')
+                                Auth::user()->hasPermission('quiz_play')
                             )
                         ) {
                             return $this->sendError('no_permissions', [], 403);
