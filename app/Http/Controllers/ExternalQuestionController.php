@@ -31,20 +31,6 @@ class ExternalQuestionController extends BaseController
                         ]
                     )
                 ],
-                'genre' => [
-                    Rule::in(
-                        [
-                            'culture',
-                            'entertainment',
-                            'history',
-                            'lifestyle',
-                            'media',
-                            'sport',
-                            'science',
-                            'world'
-                        ]
-                    )
-                ],
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
