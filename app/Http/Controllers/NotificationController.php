@@ -66,8 +66,11 @@ class NotificationController extends BaseController
                                 $item->user_rank = $player['rank'];
                             }
                         }
-                        $response->special_quiz_yesterday = $yesterdayQuiz->subject;
-                        $response->special_quiz_yesterday_winners = $winners;
+                        $response->special_quiz_yesterday = [
+                            'subject' => $yesterdayQuiz->subject,
+                            'date' => $yesterdayQuiz->date,
+                            'winners' => $winners,
+                        ];
                     }
                 }
             }
