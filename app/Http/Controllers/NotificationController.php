@@ -47,6 +47,29 @@ class NotificationController extends BaseController
                 } else {
                     $response->special_quiz = false;
                 }
+                $yesterdayQuiz = SpecialQuiz::where('date', Carbon::yesterday()->format('Y-m-d'))
+                    ->first();
+                if ($yesterdayQuiz) {
+                    $results = $yesterdayQuiz->getResult();
+                    if ($results) {
+                        $winners = [];
+                        foreach ($results['ranking'] as $player) {
+                            if ($player['rank'] === 1) {
+                                array_push($winners, $player['user_id']);
+                            } elseif (!array_key_exists('user', $input)) {
+                                break;
+                            }
+                            if (
+                                    array_key_exists('user', $input) &&
+                                    $player['user_id'] === intval($input['user'])
+                                ) {
+                                $item->user_rank = $player['rank'];
+                            }
+                        }
+                        $response->special_quiz_yesterday = $yesterdayQuiz->subject;
+                        $response->special_quiz_yesterday_winners = $winners;
+                    }
+                }
             }
             $response->now = $now->format('Y-m-d');
         }
