@@ -16,7 +16,7 @@ return [
     'quiz_link' => 'Click <a href="'.$url.'/quiz">here</a> to play.',
     'specialquiz_available' => 'Special quiz available today!',
     'specialquiz_available_deadline' => 'You only have 2 hours left to play today\'s special quiz!',
-    'specialquiz_subject' => 'Subject',
+    'specialquiz_subject' => 'Title',
     'specialquiz_author' => 'Author',
     'specialquiz_link' => 'Click <a href="'.$url.'/special-quiz">here</a> to play.',
     'deadline' => 'You have until midnight to submit your responses.',
