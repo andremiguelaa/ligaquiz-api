@@ -10,6 +10,9 @@ use App\Http\Controllers\BaseController as BaseController;
 use App\Notification;
 use App\Quiz;
 use App\SpecialQuiz;
+use App\Answer;
+use App\QuizQuestion;
+use App\SpecialQuizQuestion;
 
 class NotificationController extends BaseController
 {
@@ -32,6 +35,41 @@ class NotificationController extends BaseController
             $response = (object) [
                 'manual' => $notifications
             ];
+            if (Auth::user()->hasPermission('answer_correct')) {
+                $notCorrectedAnswers = Answer::where('submitted', 1)->where('corrected', 0)->select('question_id')->get();
+                if ($notCorrectedAnswers->count()) {
+                    $questionIds = $notCorrectedAnswers->pluck('question_id')->toArray();
+                    $quizIds = array_unique(
+                        QuizQuestion::whereIn('question_id', $questionIds)
+                            ->select('quiz_id')
+                            ->get()
+                            ->pluck('quiz_id')
+                            ->toArray()
+                    );
+                    $specialQuizIds = array_unique(
+                        SpecialQuizQuestion::whereIn('question_id', $questionIds)
+                            ->select('special_quiz_id')
+                            ->get()
+                            ->pluck('special_quiz_id')
+                            ->toArray()
+                    );
+                    if(count($quizIds)){
+                        $response->not_corrected_quizzes = Quiz::whereIn('id', $quizIds)
+                            ->select('date')
+                            ->get()
+                            ->pluck('date')
+                            ->toArray();
+                    }
+                    if(count($specialQuizIds)){
+                        $response->not_corrected_special_quizzes =
+                            SpecialQuiz::whereIn('id', $specialQuizIds)
+                                ->select('date')
+                                ->get()
+                                ->pluck('date')
+                                ->toArray();
+                    }
+                }
+            }
             if (Auth::user()->hasPermission('quiz_play')) {
                 $quiz = Quiz::where('date', $now->format('Y-m-d'))->first();
                 if ($quiz) {

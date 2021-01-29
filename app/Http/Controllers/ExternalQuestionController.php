@@ -31,6 +31,7 @@ class ExternalQuestionController extends BaseController
                         ]
                     )
                 ],
+                'used' => 'nullable|boolean',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -54,6 +55,9 @@ class ExternalQuestionController extends BaseController
                 });
                 if (isset($input['genre'])) {
                     $questions = $questions->where('genre', $input['genre']);
+                }
+                if (isset($input['used'])) {
+                    $questions = $questions->where('used', $input['used']);
                 }
                 $questions = $questions->paginate(10);
                 $response = $questions;
