@@ -303,7 +303,7 @@ class QuizController extends BaseController
                     $game = $cupRound->games->filter(function ($game) {
                         return $game->user_id_1 === Auth::id() || $game->user_id_2 === Auth::id();
                     })->first();
-                    if($game){
+                    if($game && $game->user_id_2){
                         array_push($rules['answers.*.cup_points'], 'required');
                         $cup = true;
                     }                            
