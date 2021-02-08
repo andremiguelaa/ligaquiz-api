@@ -8,7 +8,6 @@ use App\Http\Controllers\IndividualQuizPlayerController;
 use App\Http\Controllers\GenreController;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\IndividualQuizTypeController;
 use App\Http\Controllers\IndividualQuizController;
 use App\Http\Controllers\NotificationController;
@@ -28,6 +27,7 @@ use App\Http\Controllers\DateController;
 use App\Http\Controllers\ExternalQuestionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\SpecialQuizProposalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,8 +67,6 @@ Route::group([
     ], function () {
         Route::get('roles', [RoleController::class, 'get']);
 
-        Route::get('permissions', [PermissionController::class, 'get']);
-
         Route::get('individual-quiz-types', [IndividualQuizTypeController::class, 'get']);
 
         Route::post('individual-quiz-players', [IndividualQuizPlayerController::class, 'create']);
@@ -101,7 +99,6 @@ Route::group([
 
         Route::get('media', [MediaController::class, 'get']);
         Route::post('media', [MediaController::class, 'create']);
-        Route::delete('media', [MediaController::class, 'delete']);
 
         Route::get('answers', [AnswerController::class, 'get']);
         Route::post('answers', [AnswerController::class, 'create']);
@@ -141,5 +138,10 @@ Route::group([
         Route::get('invitations', [InvitationController::class, 'get']);
         Route::post('invitations', [InvitationController::class, 'send']);
         Route::patch('invitations', [InvitationController::class, 'resend']);
+
+        Route::get('special-quiz-proposals', [SpecialQuizProposalController::class, 'get']);
+        Route::post('special-quiz-proposals', [SpecialQuizProposalController::class, 'create']);
+        Route::patch('special-quiz-proposals', [SpecialQuizProposalController::class, 'publish']);
+        Route::delete('special-quiz-proposals', [SpecialQuizProposalController::class, 'delete']);
     });
 });

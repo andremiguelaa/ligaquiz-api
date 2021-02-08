@@ -13,7 +13,7 @@ class CreateSpecialquizProposalsTable extends Migration
      */
     public function up()
     {
-        Schema::create('specialquiz_proposals', function (Blueprint $table) {
+        Schema::create('special_quiz_proposals', function (Blueprint $table) {
             $table->id();
             $table->integer('user_id');
             $table->string('subject');
@@ -65,6 +65,6 @@ class CreateSpecialquizProposalsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('specialquiz_proposals');
+        Schema::dropIfExists('special_quiz_proposals');
     }
 }

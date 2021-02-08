@@ -29,7 +29,8 @@ class MediaController extends BaseController
             Auth::user()->hasPermission('quiz_create') ||
             Auth::user()->hasPermission('quiz_edit') ||
             Auth::user()->hasPermission('specialquiz_create') ||
-            Auth::user()->hasPermission('specialquiz_edit')
+            Auth::user()->hasPermission('specialquiz_edit') ||
+            Auth::user()->hasPermission('specialquiz_proposal_create')
         ) {
             $input = $request::all();
             $validator = Validator::make($input, [
@@ -51,32 +52,6 @@ class MediaController extends BaseController
             ]);
             return $this->sendResponse($media, 201);
         }
-        return $this->sendError('no_permissions', [], 403);
-    }
-
-    public function delete(Request $request)
-    {
-        if (
-            Auth::user()->hasPermission('quiz_create') ||
-            Auth::user()->hasPermission('quiz_edit') ||
-            Auth::user()->hasPermission('specialquiz_create') ||
-            Auth::user()->hasPermission('specialquiz_edit')
-        ) {
-            $input = $request::all();
-            $validator = Validator::make($input, [
-                'id' => 'required|exists:media',
-            ]);
-            if ($validator->fails()) {
-                return $this->sendError('validation_error', $validator->errors(), 400);
-            }
-            $media = Media::find($input['id']);
-            if ($media->isUsed()) {
-                return $this->sendError('file_in_use', null, 400);
-            }
-            Media::where('id', $input['id'])->delete();
-            return $this->sendResponse();
-        }
-
         return $this->sendError('no_permissions', [], 403);
     }
 }

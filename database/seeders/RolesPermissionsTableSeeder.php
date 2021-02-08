@@ -61,6 +61,7 @@ class RolesPermissionsTableSeeder extends Seeder
                 'permissions' => json_encode((object) [
                     'quiz_play' => true,
                     'specialquiz_play' => true,
+                    'specialquiz_proposal_create' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
