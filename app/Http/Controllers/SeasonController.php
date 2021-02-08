@@ -156,7 +156,7 @@ class SeasonController extends BaseController
             $input = $request::all();
             $validator = Validator::make($input, [
                 'id' => 'required|exists:seasons,id',
-                'dates' => 'array|size:20',
+                'dates' => 'required|array|size:20',
                 'dates.*'  => [
                     'date_format:Y-m-d',
                     'after:today',
@@ -171,23 +171,23 @@ class SeasonController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
+            $updatableSeason = Season::orderBy('id', 'desc')->first();
+            if ($updatableSeason && $input['id'] !== $updatableSeason->id) {
+                return $this->sendError('validation_error', 'non-updateable-season', 400);
+            }
 
-            if (isset($input['dates'])) {
-                $oldRoundsIds = Round::where('season_id', $input['id'])
-                    ->get()
-                    ->pluck('id')
-                    ->toArray();
-                Round::where('season_id', $input['id'])->delete();
-                sort($input['dates']);
-                $rounds = [];
-                foreach ($input['dates'] as $key => $date) {
-                    $createdRound = Round::create([
-                        'season_id' => $input['id'],
-                        'round' => $key + 1,
-                        'date' => $date,
-                    ]);
-                    array_push($rounds, $createdRound);
-                }
+            $oldRounds = Round::where('season_id', $input['id'])->get();
+            $oldRoundsIds = $oldRounds->pluck('id')->toArray();
+            Round::where('season_id', $input['id'])->delete();
+            sort($input['dates']);
+            $rounds = [];
+            foreach ($input['dates'] as $key => $date) {
+                $createdRound = Round::create([
+                    'season_id' => $input['id'],
+                    'round' => $key + 1,
+                    'date' => $date,
+                ]);
+                array_push($rounds, $createdRound);
             }
             if (isset($input['leagues'])) {
                 League::where('season_id', $input['id'])->delete();
@@ -222,7 +222,7 @@ class SeasonController extends BaseController
                 League::where('season_id', $input['id'])->delete();
                 Game::whereIn('round_id', $oldRoundsIds)->delete();
                 $cup = Cup::where('season_id', $input['id'])->first();
-                if($cup){
+                if ($cup) {
                     $cupRounds = CupRound::where('cup_id', $cup->id)->get();
                     $roundsIds = $cupRounds->pluck('round_id')->toArray();
                     $cup->delete();
