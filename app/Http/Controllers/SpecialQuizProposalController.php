@@ -16,10 +16,20 @@ class SpecialQuizProposalController extends BaseController
 {
     public function get(Request $request)
     {
-        $input = $request::all();
         if (Auth::user()->hasPermission('specialquiz_proposal_list')) {
-            $quizzes = SpecialQuizProposal::all();
-            return $this->sendResponse($quizzes, 200);
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'id' => 'exists:special_quiz_proposals,id',
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            if (isset($input['id'])) {
+                $response = SpecialQuizProposal::find($input['id']);
+            } else {
+                $response = SpecialQuizProposal::select('id', 'user_id', 'subject')->get();
+            }
+            return $this->sendResponse($response, 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }
