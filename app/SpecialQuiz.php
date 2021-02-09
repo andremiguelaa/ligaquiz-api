@@ -187,11 +187,10 @@ class SpecialQuiz extends Model
             $cache = Cache::create([
                 'type' => 'special_quiz',
                 'identifier' => $this->id,
-                'value' => $response
+                'value' => $response,
+                'created_at' => $startTime ? $startTime : Carbon::now(),
+                'updated_at' => $startTime ? $startTime : Carbon::now(),
             ]);
-            $cache->created_at = $startTime;
-            $cache->updated_at = $startTime;
-            $cache->save();
         }
         return $response;
     }

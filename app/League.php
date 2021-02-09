@@ -52,10 +52,9 @@ class League extends Model
                 'type' => 'league',
                 'identifier' => $this->id,
                 'value' => $response,
+                'created_at' => $startTime ? $startTime : Carbon::now(),
+                'updated_at' => $startTime ? $startTime : Carbon::now(),
             ]);
-            $cache->created_at = $startTime;
-            $cache->updated_at = $startTime;
-            $cache->save();
         }
         return $response;
     }
