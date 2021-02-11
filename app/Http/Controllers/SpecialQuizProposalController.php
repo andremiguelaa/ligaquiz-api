@@ -25,7 +25,86 @@ class SpecialQuizProposalController extends BaseController
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             if (isset($input['id'])) {
-                $response = SpecialQuizProposal::find($input['id']);
+                $quiz = SpecialQuizProposal::find($input['id']);
+                $questions = [
+                    0 => [
+                        'content' => $quiz->content_1,
+                        'answer' => $quiz->answer_1,
+                        'media_id' => $quiz->media_1_id
+                    ],
+                    1 => [
+                        'content' => $quiz->content_2,
+                        'answer' => $quiz->answer_2,
+                        'media_id' => $quiz->media_2_id
+                    ],
+                    2 => [
+                        'content' => $quiz->content_3,
+                        'answer' => $quiz->answer_3,
+                        'media_id' => $quiz->media_3_id
+                    ],
+                    3 => [
+                        'content' => $quiz->content_4,
+                        'answer' => $quiz->answer_4,
+                        'media_id' => $quiz->media_4_id
+                    ],
+                    4 => [
+                        'content' => $quiz->content_5,
+                        'answer' => $quiz->answer_5,
+                        'media_id' => $quiz->media_5_id
+                    ],
+                    5 => [
+                        'content' => $quiz->content_6,
+                        'answer' => $quiz->answer_6,
+                        'media_id' => $quiz->media_6_id
+                    ],
+                    6 => [
+                        'content' => $quiz->content_7,
+                        'answer' => $quiz->answer_7,
+                        'media_id' => $quiz->media_7_id
+                    ],
+                    7 => [
+                        'content' => $quiz->content_8,
+                        'answer' => $quiz->answer_8,
+                        'media_id' => $quiz->media_8_id
+                    ],
+                    8 => [
+                        'content' => $quiz->content_9,
+                        'answer' => $quiz->answer_9,
+                        'media_id' => $quiz->media_9_id
+                    ],
+                    9 => [
+                        'content' => $quiz->content_10,
+                        'answer' => $quiz->answer_10,
+                        'media_id' => $quiz->media_10_id
+                    ],
+                    10 => [
+                        'content' => $quiz->content_11,
+                        'answer' => $quiz->answer_11,
+                        'media_id' => $quiz->media_11_id
+                    ],
+                    11 => [
+                        'content' => $quiz->content_12,
+                        'answer' => $quiz->answer_12,
+                        'media_id' => $quiz->media_12_id
+                    ],
+                ];
+                $mediaIds = array_column($questions, 'media_id');
+                $media = array_reduce(
+                    Media::whereIn('id', $mediaIds)->get()->toArray(),
+                    function ($carry, $item) {
+                        $mediaFile = $item;
+                        unset($mediaFile['id']);
+                        $carry[$item['id']] = $mediaFile;
+                        return $carry;
+                    },
+                    []
+                );
+                $proposal = (object)[];
+                $proposal->subject = $quiz->subject;
+                $proposal->description = $quiz->description;
+                $proposal->user_id = $quiz->user_id;
+                $proposal->questions = $questions;
+                $response = ['quiz' => $proposal, 'media' => $media];
             } else {
                 $response = SpecialQuizProposal::select('id', 'user_id', 'subject')->get();
             }
@@ -103,47 +182,6 @@ class SpecialQuizProposalController extends BaseController
                     $input['questions'][11]['media_id'] : null,
             ]);
             return $this->sendResponse($proposal, 200);
-        }
-        return $this->sendError('no_permissions', [], 403);
-    }
-
-    public function publish(Request $request)
-    {
-        if (Auth::user()->hasPermission('specialquiz_proposal_publish')) {
-            $input = $request::all();
-            $validator = Validator::make($input, [
-                'id' => 'required|exists:special_quiz_proposals,id',
-                'date' => 'required|date_format:Y-m-d|unique:special_quizzes',
-            ]);
-            if ($validator->fails()) {
-                return $this->sendError('validation_error', $validator->errors(), 400);
-            }
-            $proposal = SpecialQuizProposal::find($input['id']);
-            $quiz = SpecialQuiz::create([
-                'date' => $input['date'],
-                'user_id' => $proposal->user_id,
-                'subject' => $proposal->subject,
-                'description' => $proposal->description,
-            ]);
-            for ($i=1; $i <= 12; $i++) {
-                $createdQuestion = Question::create([
-                    'content' => $proposal['content_'.$i],
-                    'answer' => $proposal['answer_'.$i],
-                    'media_id' => $proposal['media_'.$i.'_id'],
-                ]);
-                SpecialQuizQuestion::create([
-                    'special_quiz_id' => $quiz->id,
-                    'question_id' => $createdQuestion->id
-                ]);
-            }
-            $proposal->delete();
-            $quiz = SpecialQuiz::with('questions.question')->find($quiz->id);
-            $questions = $quiz->questions->map(function ($question) {
-                return $question->question;
-            });
-            unset($quiz->questions);
-            $quiz->questions = $questions;
-            return $this->sendResponse($quiz, 200);
         }
         return $this->sendError('no_permissions', [], 403);
     }

@@ -44,6 +44,7 @@ class RolesPermissionsTableSeeder extends Seeder
                     'specialquiz_create' => true,
                     'specialquiz_edit' => true,
                     'specialquiz_delete' => true,
+                    'specialquiz_proposal_list' => true,
                 ]),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
