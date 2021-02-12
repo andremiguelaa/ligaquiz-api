@@ -31,8 +31,6 @@ class LogController extends BaseController
                 $lastWeek = Carbon::now()->addDay(-7);
                 $queryLog = $queryLog->where('created_at', '>', $lastWeek);
                 $data = $queryLog->orderBy('created_at', 'desc')->get();
-                $data =
-
                 $data = $data->groupBy('user_id')->map(function ($item) {
                     $userVersion = 'N/A';
                     foreach ($item as $key => $value) {
@@ -42,12 +40,8 @@ class LogController extends BaseController
                             break;
                         }
                     }
-                    return [
-                        'user_id' => $item[0]->user_id,
-                        'version' => $userVersion,
-                    ];
-                })->toArray();
-                $data = array_values($data);
+                    return $userVersion;
+                });
             }
             else {
                 $queryLog = (new Log)->newQuery();
