@@ -32,18 +32,17 @@ class LogController extends BaseController
                 $queryLog = $queryLog->where('created_at', '>', $lastWeek);
                 $data = $queryLog->orderBy('created_at', 'desc')->get();
                 $data = $data->groupBy('user_id')->map(function ($item) {
-                    $userVersion = 'N/A';
+                    $userVersion = null;
                     foreach ($item as $key => $value) {
                         preg_match('#\((.*?)\)#', $value->action, $version);
-                        if(isset($version[1])){
+                        if (isset($version[1])) {
                             $userVersion = $version[1];
                             break;
                         }
                     }
                     return $userVersion;
                 });
-            }
-            else {
+            } else {
                 $queryLog = (new Log)->newQuery();
                 $queryAnswer = (new Answer)->newQuery();
                 if (isset($input['user_id'])) {
