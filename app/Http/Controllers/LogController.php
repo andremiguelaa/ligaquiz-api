@@ -47,7 +47,7 @@ class LogController extends BaseController
                         'version' => $userVersion,
                     ];
                 })->toArray();
-                dd($data);
+                $data = array_values($data);
             }
             else {
                 $queryLog = (new Log)->newQuery();
