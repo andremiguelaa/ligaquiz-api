@@ -328,4 +328,36 @@ class UserController extends BaseController
 
         return $this->sendError('no_permissions', [], 403);
     }
+
+    public function impersionate(Request $request)
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->sendError('no_permissions', [], 403);
+        }
+
+        $input = $request::all();
+
+        $validator = Validator::make($input, [
+            'id' => 'required|exists:users,id',
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError('validation_error', $validator->errors(), 400);
+        }
+
+        $user = User::find($input['id']);
+        $tokenResult = $user->createToken('Personal Access Token');
+        $success['access_token'] = $tokenResult->accessToken;
+        $success['token_type'] = 'Bearer';
+        $tokenResult->token->expires_at = Carbon::now()->addMonth();
+        $tokenResult->token->save();
+        $success['expires_at'] = Carbon::parse(
+            $tokenResult->token->expires_at
+        )->toDateTimeString();
+        $user = $user->toArray();
+        $user['avatar'] = $user['avatar_url'];
+        unset($user['avatar_url']);
+        $success['user'] = $user;
+
+        return $this->sendResponse($success);
+    }
 }

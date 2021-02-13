@@ -61,6 +61,7 @@ Route::group([
     Route::patch('session', [UserController::class, 'renew']);
     Route::delete('session', [UserController::class, 'logout']);
     Route::patch('users', [UserController::class, 'update']);
+    Route::post('impersionate', [UserController::class, 'impersionate']);
 
     Route::group([
         'middleware' => 'blocked',
