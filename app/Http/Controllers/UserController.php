@@ -71,6 +71,11 @@ class UserController extends BaseController
                 $tokenResult->token->expires_at
             )->toDateTimeString();
         }
+        else {
+            $success['expires_at'] = Carbon::parse(
+                $user->token()->expires_at
+            )->toDateTimeString();
+        }
         $user = $user->toArray();
         $user['avatar'] = $user['avatar_url'];
         unset($user['avatar_url']);
