@@ -356,7 +356,6 @@ class UserController extends BaseController
         $user = $user->toArray();
         $user['avatar'] = $user['avatar_url'];
         unset($user['avatar_url']);
-        $user['impersonating'] = true;
         $success['user'] = $user;
 
         return $this->sendResponse($success);
