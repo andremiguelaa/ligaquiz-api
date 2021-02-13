@@ -329,7 +329,7 @@ class UserController extends BaseController
         return $this->sendError('no_permissions', [], 403);
     }
 
-    public function impersionate(Request $request)
+    public function impersonate(Request $request)
     {
         if (!Auth::user()->isAdmin()) {
             return $this->sendError('no_permissions', [], 403);
@@ -356,6 +356,7 @@ class UserController extends BaseController
         $user = $user->toArray();
         $user['avatar'] = $user['avatar_url'];
         unset($user['avatar_url']);
+        $user['impersonating'] = true;
         $success['user'] = $user;
 
         return $this->sendResponse($success);
