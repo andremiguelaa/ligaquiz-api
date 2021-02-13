@@ -9,6 +9,7 @@ return [
     'reminder_subject' => '['.$app_name.'] Quiz available',
     'invitation_subject' => '['.$app_name.'] Invitation',
     'new_user_subject' => '['.$app_name.'] New user',
+    'new_special_quiz_proposal_subject' => '['.$app_name.'] New special quiz proposal',
     'hello' => 'Hi',
     'quiz_available' => 'Today\'s quiz is already available!',
     'quiz_available_deadline' => 'You only have 2 hours left to play today\'s quiz!',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Request;
 use Validator;
 use App\Http\Controllers\BaseController as BaseController;
@@ -11,6 +12,8 @@ use App\SpecialQuiz;
 use App\SpecialQuizQuestion;
 use App\Question;
 use App\Media;
+use App\User;
+use App\Mail\NewSpecialQuizProposal;
 
 class SpecialQuizProposalController extends BaseController
 {
@@ -181,6 +184,16 @@ class SpecialQuizProposalController extends BaseController
                 'media_12_id' => isset($input['questions'][11]['media_id']) ?
                     $input['questions'][11]['media_id'] : null,
             ]);
+            $possibleAdmins = User::where('roles', 'like', '%admin%')->get();
+            $adminEmails = $possibleAdmins->reduce(function ($carry, $item) {
+                if ($item->isAdmin()) {
+                    array_push($carry, $item->email);
+                }
+                return $carry;
+            }, []);
+            Mail::bcc($adminEmails)
+                ->locale(isset($input['language']) ? $input['language'] : 'en')
+                ->send(new NewSpecialQuizProposal(Auth::user(), $proposal));
             return $this->sendResponse($proposal, 200);
         }
         return $this->sendError('no_permissions', [], 403);
