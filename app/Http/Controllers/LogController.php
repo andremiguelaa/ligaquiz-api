@@ -28,8 +28,6 @@ class LogController extends BaseController
             if (isset($input['versions'])) {
                 $queryLog = (new Log)->newQuery();
                 $queryLog = $queryLog->where('action', 'like', '%Page load%');
-                $lastWeek = Carbon::now()->addDay(-7);
-                $queryLog = $queryLog->where('created_at', '>', $lastWeek);
                 $data = $queryLog->orderBy('created_at', 'desc')->get();
                 $data = $data->groupBy('user_id')->map(function ($item) {
                     $userVersion = null;
