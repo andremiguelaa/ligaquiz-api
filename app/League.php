@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 use App\Traits\GameResults;
 use App\Game;
 use App\Round;
