@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Behat\Transliterator\Transliterator;
+use League\CommonMark\CommonMarkConverter;
 use Request;
 use Validator;
 use Carbon\Carbon;
@@ -17,6 +19,7 @@ use App\Round;
 use App\Media;
 use App\Game;
 use App\CupRound;
+use App\Mail\QuizSubmission;
 
 class QuizController extends BaseController
 {
@@ -57,15 +60,15 @@ class QuizController extends BaseController
                     } else {
                         $quiz->solo = true;
                     }
-                    if($round){
+                    if ($round) {
                         $cupRound = CupRound::with('games')->where('round_id', $round->id)->first();
-                        if($cupRound){
+                        if ($cupRound) {
                             $game = $cupRound->games->filter(function ($game) {
                                 return $game->user_id_1 === Auth::id() || $game->user_id_2 === Auth::id();
                             })->first();
-                            if($game){
+                            if ($game) {
                                 $quiz->cupOpponent = $game->user_id_1 === Auth::id() ? $game->user_id_2 : $game->user_id_1;
-                            }                            
+                            }
                         }
                     }
                     $questions = $quiz->questions->map(function ($question) {
@@ -297,16 +300,16 @@ class QuizController extends BaseController
                 array_push($rules['answers.*.points'], 'required');
             }
             $cup = false;
-            if($round){
+            if ($round) {
                 $cupRound = CupRound::with('games')->where('round_id', $round->id)->first();
-                if($cupRound){
+                if ($cupRound) {
                     $game = $cupRound->games->filter(function ($game) {
                         return $game->user_id_1 === Auth::id() || $game->user_id_2 === Auth::id();
                     })->first();
-                    if($game && $game->user_id_2){
+                    if ($game && $game->user_id_2) {
                         array_push($rules['answers.*.cup_points'], 'required');
                         $cup = true;
-                    }                            
+                    }
                 }
             }
             $validator = Validator::make($input, $rules);
@@ -437,6 +440,36 @@ class QuizController extends BaseController
             $submittedAnswers->makeHidden('id');
             $submittedAnswers->makeHidden('user_id');
             $submittedAnswers->makeHidden('submitted');
+            if (Auth::user()->emails['quiz']) {
+                $converter = new CommonMarkConverter([
+                    'renderer' => [
+                        'soft_break'      => "<br>",
+                    ],
+                ]);
+                $questions = $quiz->questions->map(function ($question) use ($converter) {
+                    $item = $question->question;
+                    $item->content = $converter->convertToHtml($item->content);
+                    return $item;
+                });
+                $mediaIds = $questions->pluck('media_id')->toArray();
+                $media = array_reduce(
+                    Media::whereIn('id', $mediaIds)->get()->toArray(),
+                    function ($carry, $item) {
+                        $mediaFile = $item;
+                        unset($mediaFile['id']);
+                        $carry[$item['id']] = $mediaFile;
+                        return $carry;
+                    },
+                    []
+                );
+                Mail::to(Auth::user()->email)->locale(config('mail.default_locale'))
+                    ->send(new QuizSubmission(
+                        Auth::user(),
+                        $questions,
+                        $media,
+                        $submittedAnswers->keyBy('question_id')
+                    ));
+            }
             return $this->sendResponse($submittedAnswers, 201);
         }
         return $this->sendError('no_permissions', [], 403);

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Behat\Transliterator\Transliterator;
+use League\CommonMark\CommonMarkConverter;
 use Request;
 use Validator;
 use Carbon\Carbon;
@@ -15,6 +17,7 @@ use App\Question;
 use App\Answer;
 use App\Media;
 use App\Cache;
+use App\Mail\QuizSubmission;
 
 class SpecialQuizController extends BaseController
 {
@@ -365,6 +368,36 @@ class SpecialQuizController extends BaseController
             $submittedAnswers->makeHidden('id');
             $submittedAnswers->makeHidden('user_id');
             $submittedAnswers->makeHidden('submitted');
+            if (Auth::user()->emails['special_quiz']) {
+                $converter = new CommonMarkConverter([
+                    'renderer' => [
+                        'soft_break'      => "<br>",
+                    ],
+                ]);
+                $questions = $quiz->questions->map(function ($question) use ($converter) {
+                    $item = $question->question;
+                    $item->content = $converter->convertToHtml($item->content);
+                    return $item;
+                });
+                $mediaIds = $questions->pluck('media_id')->toArray();
+                $media = array_reduce(
+                    Media::whereIn('id', $mediaIds)->get()->toArray(),
+                    function ($carry, $item) {
+                        $mediaFile = $item;
+                        unset($mediaFile['id']);
+                        $carry[$item['id']] = $mediaFile;
+                        return $carry;
+                    },
+                    []
+                );
+                Mail::to(Auth::user()->email)->locale(config('mail.default_locale'))
+                    ->send(new QuizSubmission(
+                        Auth::user(),
+                        $questions,
+                        $media,
+                        $submittedAnswers->keyBy('question_id')
+                    ));
+            }
             return $this->sendResponse($submittedAnswers, 201);
         }
         return $this->sendError('no_permissions', [], 403);

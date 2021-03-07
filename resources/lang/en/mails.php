@@ -9,6 +9,7 @@ return [
     'reminder_subject' => '['.$app_name.'] Quiz available',
     'invitation_subject' => '['.$app_name.'] Invitation',
     'new_user_subject' => '['.$app_name.'] New user',
+    'quiz_submission_subject' => '['.$app_name.'] Quiz submission',
     'new_special_quiz_proposal_subject' => '['.$app_name.'] New special quiz proposal',
     'hello' => 'Hi',
     'quiz_available' => 'Today\'s quiz is already available!',
@@ -24,4 +25,8 @@ return [
     'from' => 'From',
     'rights' => 'All rights reserved.',
     'invite_message' => 'You have been invited by a current player (:name) to play the '.$app_name.'.<br>If you want to accept the invitation, sign up <a href="'.$url.'/register/" target="_blank">here</a>.',
+    'quiz_submission_copy' => 'This is a copy of your quiz submission.',
+    'quiz_question' => 'Question',
+    'correct_answer' => 'Correct answer',
+    'your_answer' => 'Your answer'
 ];

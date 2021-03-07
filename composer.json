@@ -27,6 +27,7 @@
         "laravel/passport": "^10.1.0",
         "laravel/tinker": "^2.0",
         "laravolt/avatar": "^4.0",
+        "league/commonmark": "^1.5",
         "melihovv/base64-image-decoder": "^0.2.0",
         "paypal/paypal-checkout-sdk": "1.0.1"
     },
