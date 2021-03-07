@@ -167,6 +167,10 @@ class UserController extends BaseController
                 'deadline' => true
             ]
         ];
+        $user->emails = [
+            'quiz' => false,
+            'special_quiz' => false
+        ];
         $user->save();
 
         $possibleAdmins = User::where('roles', 'like', '%admin%')->get();
@@ -301,6 +305,7 @@ class UserController extends BaseController
                 'birthday' => 'nullable|date_format:Y-m-d|before:today',
                 'region' => 'nullable|exists:regions,code',
                 'reminders' => 'array',
+                'emails' => 'array',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
