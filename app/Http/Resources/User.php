@@ -44,6 +44,7 @@ class User extends JsonResource
             $user['email'] = $this->email;
             $user['roles'] = $this->roles;
             $user['reminders'] = $this->reminders;
+            $user['emails'] = $this->emails;
         } else {
             unset($user['valid_roles']);
         }

@@ -22,6 +22,7 @@ class User extends Authenticatable
         'birthday',
         'region',
         'reminders',
+        'emails',
     ];
 
     protected $hidden = [
@@ -31,6 +32,7 @@ class User extends Authenticatable
     protected $casts = [
         'roles' => 'array',
         'reminders' => 'array',
+        'emails' => 'array',
     ];
 
     protected $appends = ['avatar_url', 'valid_roles'];
