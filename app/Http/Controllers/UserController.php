@@ -160,11 +160,11 @@ class UserController extends BaseController
         $user->reminders = [
             'quiz' => [
                 'daily' => true,
-                'deadline' => true
+                'deadline' => 22
             ],
             'special_quiz' => [
                 'daily' => true,
-                'deadline' => true
+                'deadline' => 22
             ]
         ];
         $user->emails = [
