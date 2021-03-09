@@ -89,8 +89,9 @@ class DeadlineReminder extends Command
             $specialQuizDeadline = $user->reminders['special_quiz']['deadline'] === true ?
                 22 : $user->reminders['special_quiz']['deadline'];
 
-            $sendQuizDeadlineReminder = intval($quizDeadline) === $currentHour;
-            $sendSpecialQuizDeadlineReminder = intval($specialQuizDeadline) === $currentHour;
+            $sendQuizDeadlineReminder = $quizDeadline && intval($quizDeadline) === $currentHour;
+            $sendSpecialQuizDeadlineReminder = $specialQuizDeadline &&
+                intval($specialQuizDeadline) === $currentHour;
 
             if (
                 (
