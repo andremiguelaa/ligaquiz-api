@@ -22,7 +22,7 @@ class UpdateUsersTable extends Migration
                     'deadline' => $user->reminders['quiz']['deadline'] ? 22 : false
                 ],
                 'special_quiz' => [
-                    'daily' => true,
+                    'daily' => $user->reminders['special_quiz']['daily'] ? 22 : false,
                     'deadline' => $user->reminders['special_quiz']['deadline'] ? 22 : false
                 ]
             ];
