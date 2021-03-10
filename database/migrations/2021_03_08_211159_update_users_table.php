@@ -18,7 +18,7 @@ class UpdateUsersTable extends Migration
         foreach ($users as $user) {
             $user->reminders = [
                 'quiz' => [
-                    'daily' => true,
+                    'daily' => $user->reminders['quiz']['daily'] ? 22 : false,
                     'deadline' => $user->reminders['quiz']['deadline'] ? 22 : false
                 ],
                 'special_quiz' => [
@@ -42,11 +42,11 @@ class UpdateUsersTable extends Migration
         foreach ($users as $user) {
             $user->reminders = [
                 'quiz' => [
-                    'daily' => true,
+                    'daily' => $user->reminders['quiz']['daily'] ? true : false,
                     'deadline' => $user->reminders['quiz']['deadline'] ? true : false
                 ],
                 'special_quiz' => [
-                    'daily' => true,
+                    'daily' => $user->reminders['special_quiz']['daily'] ? true : false,
                     'deadline' => $user->reminders['special_quiz']['deadline'] ? true : false
                 ]
             ];
