@@ -129,7 +129,14 @@ class SeasonController extends BaseController
             $lastSeason = Season::orderBy('season', 'desc')->first();
             if ($lastSeason) {
                 $newSeason = $lastSeason->season + 1;
-                // TODO: avoid to create season while the previous season is still running
+                $lastDate = $lastSeason->rounds()->orderBy('date', 'desc')->first()->date;
+                if (
+                    Carbon::now()->lessThanOrEqualTo(
+                        Carbon::createFromFormat('Y-m-d', $lastDate)->endOfDay()
+                    )
+                ) {
+                    return $this->sendError('validation_error', 'still-running-season', 400);
+                }
             } else {
                 $newSeason = 1;
             }
@@ -193,6 +200,19 @@ class SeasonController extends BaseController
                 League::where('season_id', $input['id'])->delete();
                 Game::whereIn('round_id', $oldRoundsIds)->delete();
                 $this->createSeasonLeaguesAndGames($input['id'], $input['leagues'], $rounds);
+                $cup = Cup::with('rounds')->where('season_id', $input['id'])->first();
+                if ($cup) {
+                    $oldRoundsGrouped = $oldRounds->groupBy('id');
+                    $newRoundsGrouped = Round::where('season_id', $input['id'])->get()
+                        ->groupBy('round');
+                    $cupRounds = $cup->rounds()->get();
+                    foreach ($cupRounds as $cupRound) {
+                        $oldSeasonRound = $oldRoundsGrouped[$cupRound->round_id][0]['round'];
+                        $newRoundId = $newRoundsGrouped[$oldSeasonRound][0]['id'];
+                        $cupRound->round_id = $newRoundId;
+                        $cupRound->save();
+                    }
+                }
             }
             return $this->sendResponse(null, 201);
         }
