@@ -16,6 +16,10 @@ use App\SpecialQuiz;
 use App\Round;
 use App\Genre;
 
+Validator::extend('null_or_integer', function ($attribute, $value) {
+    return $value === 'null' || strval(intval($value)) === $value;
+});
+
 class QuestionController extends BaseController
 {
     public function get(Request $request)
@@ -35,7 +39,7 @@ class QuestionController extends BaseController
                     'nullable',
                     Rule::in(['content', 'answer'])
                 ],
-                'genre' => 'exists:genres,id',
+                'genre' => 'null_or_integer',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -69,12 +73,16 @@ class QuestionController extends BaseController
                     }
                 });
                 if (isset($input['genre'])) {
-                    $genres = Genre::where('id', $input['genre'])
-                        ->orWhere('parent_id', $input['genre'])
-                        ->get()
-                        ->pluck('id')
-                        ->toArray();
-                    $questions = $questions->whereIn('genre_id', $genres);
+                    if ($input['genre'] === 'null') {
+                        $questions = $questions->whereNull('genre_id');
+                    } else {
+                        $genres = Genre::where('id', $input['genre'])
+                            ->orWhere('parent_id', $input['genre'])
+                            ->get()
+                            ->pluck('id')
+                            ->toArray();
+                        $questions = $questions->whereIn('genre_id', $genres);
+                    }
                 }
                 $questions = $questions->paginate(10);
                 $questionIds = $questions->pluck('id');
