@@ -7,6 +7,7 @@ use Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Support\Collection;
 use App\Http\Controllers\BaseController as BaseController;
 use App\Question;
 use App\QuizQuestion;
@@ -40,6 +41,10 @@ class QuestionController extends BaseController
                     Rule::in(['content', 'answer'])
                 ],
                 'genre' => 'null_or_integer',
+                'type' => [
+                    'nullable',
+                    Rule::in(['quiz', 'special_quiz'])
+                ],
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
@@ -58,7 +63,7 @@ class QuestionController extends BaseController
             ) {
                 return $this->sendError('no_permissions', [], 403);
             }
-            if (array_key_exists('search', $input) || isset($input['genre'])) {
+            if (array_key_exists('search', $input) || isset($input['genre']) || isset($input['type'])) {
                 $search = isset($input['search']) ? $input['search'] : '';
                 $search = mb_strtolower($search);
                 $searchField = isset($input['search_field']) ? $input['search_field'] : null;
@@ -84,39 +89,54 @@ class QuestionController extends BaseController
                         $questions = $questions->whereIn('genre_id', $genres);
                     }
                 }
-                $questions = $questions->paginate(10);
+
                 $questionIds = $questions->pluck('id');
                 $quizQuestions = QuizQuestion::whereIn('question_id', $questionIds)->get();
-                $specialQuizQuestions = SpecialQuizQuestion::whereIn('question_id', $questionIds)->get();
                 $quizQuestionsQuiz = $quizQuestions->groupBy('question_id')->map(function ($item) {
                     return $item[0]->quiz_id;
                 })->toArray();
+                $specialQuizQuestions = SpecialQuizQuestion::whereIn('question_id', $questionIds)->get();
                 $specialQuizQuestionsQuiz = $specialQuizQuestions->groupBy('question_id')->map(function ($item) {
                     return $item[0]->special_quiz_id;
                 })->toArray();
                 $quizzes = Quiz::whereIn('id', $quizQuestionsQuiz)->get()->groupBy('id');
                 $specialQuizzes = SpecialQuiz::whereIn('id', $specialQuizQuestionsQuiz)->get()->groupBy('id');
-                $questions->getCollection()->transform(
-                    function ($question) use (
+
+                $type = isset($input['type']) ? $input['type'] : null;
+                $questions = $questions->get()->reduce(
+                    function ($acc, $question) use (
                         $quizQuestionsQuiz,
                         $specialQuizQuestionsQuiz,
                         $quizzes,
-                        $specialQuizzes
+                        $specialQuizzes,
+                        $type
                     ) {
                         if (isset($quizQuestionsQuiz[$question->id])) {
                             $question->quiz = [
                                 "type" => 'quiz',
                                 "date" => $quizzes[$quizQuestionsQuiz[$question->id]][0]->date
                             ];
+                            if ($type && $type === 'quiz') {
+                                array_push($acc, $question);
+                            }
                         } else {
                             $question->quiz = [
                                 "type" => 'special_quiz',
                                 "date" => $specialQuizzes[$specialQuizQuestionsQuiz[$question->id]][0]->date
                             ];
+                            if ($type && $type === 'special_quiz') {
+                                array_push($acc, $question);
+                            }
                         }
-                        return $question;
-                    }
+                        if (!$type) {
+                            array_push($acc, $question);
+                        }
+                        return $acc;
+                    },
+                    []
                 );
+
+                $questions = (new Collection($questions))->paginate(10);
                 $response = $questions;
             } elseif (isset($input['id'])) {
                 if (count($input['id']) === 1) {
