@@ -103,10 +103,10 @@ class QuestionController extends BaseController
                 $specialQuizzes = SpecialQuiz::whereIn('id', $specialQuizQuestionsQuiz)->get()->groupBy('id');
 
                 $type = isset($input['type']) ? $input['type'] : null;
-                if($type && $type === 'quiz'){
+                if ($type && $type === 'quiz') {
                     $questions = $questions->whereIn('id', array_keys($quizQuestionsQuiz));
                 }
-                if($type && $type === 'special_quiz'){
+                if ($type && $type === 'special_quiz') {
                     $questions = $questions->whereIn('id', array_keys($specialQuizQuestionsQuiz));
                 }
 
@@ -188,6 +188,33 @@ class QuestionController extends BaseController
             return $this->sendResponse($response, 200);
         }
 
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function update(Request $request)
+    {
+        if (
+            Auth::user()->isAdmin() ||
+            Auth::user()->hasPermission('quiz_create') ||
+            Auth::user()->hasPermission('quiz_edit')
+        ) {
+            $input = $request::all();
+            $genres = Genre::whereNotNull('parent_id')->get()->pluck('id')->toArray();
+            $validator = Validator::make($input, [
+                'id' => 'exists:questions',
+                'genre' => [
+                    'required',
+                    Rule::in($genres)
+                ],
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $question = Question::find($input['id']);
+            $question->genre_id = $input['genre'];
+            $question->save();
+            return $this->sendResponse($question, 200);
+        }
         return $this->sendError('no_permissions', [], 403);
     }
 }

@@ -122,6 +122,7 @@ Route::group([
         Route::get('cup-games', [CupGameController::class, 'get']);
 
         Route::get('questions', [QuestionController::class, 'get']);
+        Route::patch('questions', [QuestionController::class, 'update']);
 
         Route::get('logs', [LogController::class, 'get']);
         Route::post('logs', [LogController::class, 'create']);
