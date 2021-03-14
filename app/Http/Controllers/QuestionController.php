@@ -103,40 +103,35 @@ class QuestionController extends BaseController
                 $specialQuizzes = SpecialQuiz::whereIn('id', $specialQuizQuestionsQuiz)->get()->groupBy('id');
 
                 $type = isset($input['type']) ? $input['type'] : null;
-                $questions = $questions->get()->reduce(
-                    function ($acc, $question) use (
+                if($type && $type === 'quiz'){
+                    $questions = $questions->whereIn('id', array_keys($quizQuestionsQuiz));
+                }
+                if($type && $type === 'special_quiz'){
+                    $questions = $questions->whereIn('id', array_keys($specialQuizQuestionsQuiz));
+                }
+
+                $questions = $questions->paginate(10);
+                $questions->getCollection()->transform(
+                    function ($question) use (
                         $quizQuestionsQuiz,
                         $specialQuizQuestionsQuiz,
                         $quizzes,
-                        $specialQuizzes,
-                        $type
+                        $specialQuizzes
                     ) {
                         if (isset($quizQuestionsQuiz[$question->id])) {
                             $question->quiz = [
                                 "type" => 'quiz',
                                 "date" => $quizzes[$quizQuestionsQuiz[$question->id]][0]->date
                             ];
-                            if ($type && $type === 'quiz') {
-                                array_push($acc, $question);
-                            }
                         } else {
                             $question->quiz = [
                                 "type" => 'special_quiz',
                                 "date" => $specialQuizzes[$specialQuizQuestionsQuiz[$question->id]][0]->date
                             ];
-                            if ($type && $type === 'special_quiz') {
-                                array_push($acc, $question);
-                            }
                         }
-                        if (!$type) {
-                            array_push($acc, $question);
-                        }
-                        return $acc;
-                    },
-                    []
+                        return $question;
+                    }
                 );
-
-                $questions = (new Collection($questions))->paginate(10);
                 $response = $questions;
             } elseif (isset($input['id'])) {
                 if (count($input['id']) === 1) {
