@@ -19,14 +19,20 @@ class SpecialQuizProposalController extends BaseController
 {
     public function get(Request $request)
     {
-        if (Auth::user()->hasPermission('specialquiz_proposal_list')) {
-            $input = $request::all();
+        $input = $request::all();
+        if (
+            Auth::user()->hasPermission('specialquiz_proposal_list') ||
+            (
+                Auth::user()->hasPermission('specialquiz_proposal_create') && 
+                array_key_exists('draft', $input)
+            )
+        ) {
             $validator = Validator::make($input, [
                 'id' => 'exists:special_quiz_proposals,id',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
-            }
+            }            
             if (isset($input['id']) || array_key_exists('draft', $input)) {
                 if (isset($input['id'])) {
                     $quiz = SpecialQuizProposal::find($input['id']);
