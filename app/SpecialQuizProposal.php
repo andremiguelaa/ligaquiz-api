@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class SpecialQuizProposal extends Model
 {
     protected $fillable = [
+        'draft',
         'user_id',
         'subject',
         'description',

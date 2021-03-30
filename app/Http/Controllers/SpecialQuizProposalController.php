@@ -27,8 +27,17 @@ class SpecialQuizProposalController extends BaseController
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
-            if (isset($input['id'])) {
-                $quiz = SpecialQuizProposal::find($input['id']);
+            if (isset($input['id']) || array_key_exists('draft', $input)) {
+                if (isset($input['id'])) {
+                    $quiz = SpecialQuizProposal::find($input['id']);
+                } else {
+                    $quiz = SpecialQuizProposal::where('draft', 1)
+                        ->where('user_id', Auth::user()->id)
+                        ->first();
+                }
+                if (!$quiz) {
+                    return $this->sendError('not_found', [], 404);
+                }
                 $questions = [
                     0 => [
                         'content' => $quiz->content_1,
@@ -109,7 +118,9 @@ class SpecialQuizProposalController extends BaseController
                 $proposal->questions = $questions;
                 $response = ['quiz' => $proposal, 'media' => $media];
             } else {
-                $response = SpecialQuizProposal::select('id', 'user_id', 'subject')->get();
+                $response = SpecialQuizProposal::select('id', 'user_id', 'subject')
+                    ->where('draft', 0)
+                    ->get();
             }
             return $this->sendResponse($response, 200);
         }
@@ -121,17 +132,18 @@ class SpecialQuizProposalController extends BaseController
         if (Auth::user()->hasPermission('specialquiz_proposal_create')) {
             $input = $request::all();
             $validator = Validator::make($input, [
-                'subject' => 'required|string',
+                'subject' => 'nullable|string',
                 'description' => 'nullable|string',
-                'questions' => 'required|array|size:12',
-                'questions.*.content' => 'required|string',
-                'questions.*.answer' => 'required|string',
+                'questions' => 'array|size:12',
+                'questions.*.content' => 'nullable|string',
+                'questions.*.answer' => 'nullable|string',
                 'questions.*.media_id' => 'nullable|exists:media,id',
             ]);
             if ($validator->fails()) {
                 return $this->sendError('validation_error', $validator->errors(), 400);
             }
             $proposal = SpecialQuizProposal::create([
+                'draft' => 1,
                 'user_id' => Auth::user()->id,
                 'subject' => $input['subject'],
                 'description' => isset($input['description']) ? $input['description'] : null,
@@ -184,16 +196,97 @@ class SpecialQuizProposalController extends BaseController
                 'media_12_id' => isset($input['questions'][11]['media_id']) ?
                     $input['questions'][11]['media_id'] : null,
             ]);
-            $possibleAdmins = User::where('roles', 'like', '%admin%')->get();
-            $adminEmails = $possibleAdmins->reduce(function ($carry, $item) {
-                if ($item->isAdmin()) {
-                    array_push($carry, $item->email);
-                }
-                return $carry;
-            }, []);
-            Mail::bcc($adminEmails)
-                ->locale(isset($input['language']) ? $input['language'] : 'en')
-                ->send(new NewSpecialQuizProposal(Auth::user(), $proposal));
+            return $this->sendResponse($proposal, 200);
+        }
+        return $this->sendError('no_permissions', [], 403);
+    }
+
+    public function update(Request $request)
+    {
+        if (Auth::user()->hasPermission('specialquiz_proposal_create')) {
+            $input = $request::all();
+            $validator = Validator::make($input, [
+                'subject' => 'nullable|string',
+                'description' => 'nullable|string',
+                'questions' => 'nullable|array|size:12',
+                'questions.*.content' => 'nullable|string',
+                'questions.*.answer' => 'nullable|string',
+                'questions.*.media_id' => 'nullable|exists:media,id',
+                'draft' => 'required|boolean'
+            ]);
+            if ($validator->fails()) {
+                return $this->sendError('validation_error', $validator->errors(), 400);
+            }
+            $proposal = SpecialQuizProposal::where('draft', 1)
+                ->where('user_id', Auth::user()->id)
+                ->first();
+            if (!$proposal) {
+                return $this->sendError('not_found', [], 404);
+            }
+            $proposal->draft = $input['draft'];
+            $proposal->subject = $input['subject'];
+            $proposal->description = isset($input['description']) ? $input['description'] : null;
+            $proposal->content_1 = $input['questions'][0]['content'];
+            $proposal->answer_1 = $input['questions'][0]['answer'];
+            $proposal->media_1_id = isset($input['questions'][0]['media_id']) ?
+                $input['questions'][0]['media_id'] : null;
+            $proposal->content_2 = $input['questions'][1]['content'];
+            $proposal->answer_2 = $input['questions'][1]['answer'];
+            $proposal->media_2_id = isset($input['questions'][1]['media_id']) ?
+                $input['questions'][1]['media_id'] : null;
+            $proposal->content_3 = $input['questions'][2]['content'];
+            $proposal->answer_3 = $input['questions'][2]['answer'];
+            $proposal->media_3_id = isset($input['questions'][2]['media_id']) ?
+                $input['questions'][2]['media_id'] : null;
+            $proposal->content_4 = $input['questions'][3]['content'];
+            $proposal->answer_4 = $input['questions'][3]['answer'];
+            $proposal->media_4_id = isset($input['questions'][3]['media_id']) ?
+                $input['questions'][3]['media_id'] : null;
+            $proposal->content_5 = $input['questions'][4]['content'];
+            $proposal->answer_5 = $input['questions'][4]['answer'];
+            $proposal->media_5_id = isset($input['questions'][4]['media_id']) ?
+                $input['questions'][4]['media_id'] : null;
+            $proposal->content_6 = $input['questions'][5]['content'];
+            $proposal->answer_6 = $input['questions'][5]['answer'];
+            $proposal->media_6_id = isset($input['questions'][5]['media_id']) ?
+                $input['questions'][5]['media_id'] : null;
+            $proposal->content_7 = $input['questions'][6]['content'];
+            $proposal->answer_7 = $input['questions'][6]['answer'];
+            $proposal->media_7_id = isset($input['questions'][6]['media_id']) ?
+                $input['questions'][6]['media_id'] : null;
+            $proposal->content_8 = $input['questions'][7]['content'];
+            $proposal->answer_8 = $input['questions'][7]['answer'];
+            $proposal->media_8_id = isset($input['questions'][7]['media_id']) ?
+                $input['questions'][7]['media_id'] : null;
+            $proposal->content_9 = $input['questions'][8]['content'];
+            $proposal->answer_9 = $input['questions'][8]['answer'];
+            $proposal->media_9_id = isset($input['questions'][8]['media_id']) ?
+                $input['questions'][8]['media_id'] : null;
+            $proposal->content_10 = $input['questions'][9]['content'];
+            $proposal->answer_10 = $input['questions'][9]['answer'];
+            $proposal->media_10_id = isset($input['questions'][9]['media_id']) ?
+                $input['questions'][9]['media_id'] : null;
+            $proposal->content_11 = $input['questions'][10]['content'];
+            $proposal->answer_11 = $input['questions'][10]['answer'];
+            $proposal->media_11_id = isset($input['questions'][10]['media_id']) ?
+                $input['questions'][10]['media_id'] : null;
+            $proposal->content_12 = $input['questions'][11]['content'];
+            $proposal->answer_12 = $input['questions'][11]['answer'];
+            $proposal->media_12_id = isset($input['questions'][11]['media_id']) ?
+                $input['questions'][11]['media_id'] : null;
+            $proposal->save();
+            if (!$input['draft']) {
+                $possibleAdmins = User::where('roles', 'like', '%admin%')->get();
+                $adminEmails = $possibleAdmins->reduce(function ($carry, $item) {
+                    if ($item->isAdmin()) {
+                        array_push($carry, $item->email);
+                    }
+                    return $carry;
+                }, []);
+                Mail::bcc($adminEmails)
+                    ->locale(isset($input['language']) ? $input['language'] : 'en')
+                    ->send(new NewSpecialQuizProposal(Auth::user(), $proposal));
+            }
             return $this->sendResponse($proposal, 200);
         }
         return $this->sendError('no_permissions', [], 403);

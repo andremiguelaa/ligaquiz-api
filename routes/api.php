@@ -143,7 +143,7 @@ Route::group([
 
         Route::get('special-quiz-proposals', [SpecialQuizProposalController::class, 'get']);
         Route::post('special-quiz-proposals', [SpecialQuizProposalController::class, 'create']);
-        Route::patch('special-quiz-proposals', [SpecialQuizProposalController::class, 'publish']);
+        Route::patch('special-quiz-proposals', [SpecialQuizProposalController::class, 'update']);
         Route::delete('special-quiz-proposals', [SpecialQuizProposalController::class, 'delete']);
     });
 });
