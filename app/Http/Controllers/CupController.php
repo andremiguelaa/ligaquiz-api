@@ -201,17 +201,13 @@ class CupController extends BaseController
         $tiebreakers = [];
         if ($season->season > 1) {
             $currentSeasonLeagues = $season->leagues;
-            $currentSeasonLeaguesWithData = Cache::where('type', 'league')
-                ->whereIn('identifier', $currentSeasonLeagues->pluck('id')->toArray())
-                ->get();
-            foreach ($currentSeasonLeaguesWithData as $league) {
-                $tier = $currentSeasonLeagues->find($league->identifier)->tier;
-                foreach ($league->value['ranking'] as $player) {
-                    if (in_array($player['id'], $input['user_ids'])) {
-                        $tiebreakers[$player['id']]['current_tier'] = $tier;
-                    }
+            foreach ($currentSeasonLeagues as $league) {
+                $tier = $league->tier;
+                $players = $league->user_ids;
+                foreach ($players as $player) {
+                    $tiebreakers[$player]['current_tier'] = $tier;
                 }
-            }
+            }            
             $lastSeason = Season::with('leagues')->where('season', $season->season - 1)->first();
             $lastSeasonLeagues = $lastSeason->leagues;
             $lastSeasonLeaguesWithData = Cache::where('type', 'league')

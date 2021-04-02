@@ -206,6 +206,38 @@ class SeasonController extends BaseController
                     $newRoundsGrouped = Round::where('season_id', $input['id'])->get()
                         ->groupBy('round');
                     $cupRounds = $cup->rounds()->get();
+
+                    $tiebreakers = [];
+                    $cupPlayersIds = array_keys($cup->tiebreakers);
+                    if ($updatableSeason->season > 1) {
+                        $currentSeasonLeagues = $updatableSeason->leagues;
+                        foreach ($currentSeasonLeagues as $league) {
+                            $tier = $league->tier;
+                            $players = $league->user_ids;
+                            foreach ($players as $player) {
+                                $tiebreakers[$player]['current_tier'] = $tier;
+                            }
+                        }
+                        $lastSeason = Season::with('leagues')
+                            ->where('season', $updatableSeason->season - 1)
+                            ->first();
+                        $lastSeasonLeagues = $lastSeason->leagues;
+                        $lastSeasonLeaguesWithData = Cache::where('type', 'league')
+                            ->whereIn('identifier', $lastSeasonLeagues->pluck('id')->toArray())
+                            ->get();
+                        foreach ($lastSeasonLeaguesWithData as $league) {
+                            $tier = $lastSeasonLeagues->find($league->identifier)->tier;
+                            foreach ($league->value['ranking'] as $player) {
+                                if (in_array($player['id'], $cupPlayersIds)) {
+                                    $tiebreakers[$player['id']]['last_tier'] = $tier;
+                                    $tiebreakers[$player['id']]['last_rank'] = $player['rank'];
+                                }
+                            }
+                        }
+                    }
+                    $cup->tiebreakers = $tiebreakers;
+                    $cup->save();
+
                     foreach ($cupRounds as $cupRound) {
                         $oldSeasonRound = $oldRoundsGrouped[$cupRound->round_id][0]['round'];
                         $newRoundId = $newRoundsGrouped[$oldSeasonRound][0]['id'];
